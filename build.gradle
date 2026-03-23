@@ -20,8 +20,10 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 
     // JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -39,7 +41,7 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     // Testcontainers
-    testImplementation 'org.springframework.boot:spring-boot-testcontainers:3.3.5'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers:4.0.4'
     testImplementation 'org.testcontainers:testcontainers:1.19.3'
     testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
     testImplementation 'org.testcontainers:mysql:1.20.0'
@@ -48,4 +50,13 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.register('generateApiDocs', JavaExec) {
+    group = 'documentation'
+    description = 'Generates static HTML API docs from @ApiContract interfaces.'
+    dependsOn classes
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'kr.ac.knu.comit.docs.ApiDocGenerator'
+    args = ['kr.ac.knu.comit', "${projectDir}/docs/api"]
 }

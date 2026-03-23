@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMIT API Docs</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #1b2a41;
+            --muted: #607086;
+            --line: #d8e2ef;
+            --accent: #3182f6;
+            --accent-soft: #e9f2ff;
+            --code: #0f172a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "SUIT", "Pretendard", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 50%, #edf3fa 100%);
+            color: var(--text);
+        }
+        .shell {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 48px 20px 72px;
+        }
+        .hero {
+            margin-bottom: 28px;
+            padding: 28px;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(49,130,246,0.12), rgba(255,255,255,0.96));
+            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+        }
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+        }
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            display: block;
+            padding: 22px;
+            border-radius: 24px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+            transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(49,130,246,0.45);
+            box-shadow: 0 24px 48px rgba(49,130,246,0.14);
+        }
+        .pill {
+            display: inline-block;
+            margin-bottom: 12px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .card h2 {
+            margin: 0 0 10px;
+            font-size: 1.1rem;
+        }
+        .card p {
+            margin: 0 0 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .meta {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <h1>COMIT API Docs</h1>
+            <p>@ApiContract 인터페이스에서 추출한 정적 API 문서입니다. 각 페이지에서 엔드포인트, 요청/응답 필드, 예시 JSON을 확인할 수 있습니다.</p>
+        </section>
+        <section class="grid" id="doc-grid"></section>
+    </main>
+    <script src="./index.js"></script>
+    <script>
+        const docs = window.API_DOCS ?? [];
+        const grid = document.getElementById('doc-grid');
+        docs.forEach((doc) => {
+            const link = document.createElement('a');
+            link.className = 'card';
+            link.href = typeof doc.href === 'string' ? doc.href : '#';
+
+            const pill = document.createElement('span');
+            pill.className = 'pill';
+            pill.textContent = doc.sectionPath || 'root';
+
+            const title = document.createElement('h2');
+            title.textContent = doc.title || '';
+
+            const summary = document.createElement('p');
+            summary.textContent = doc.summary || '';
+
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = `${doc.endpointCount ?? 0} endpoint(s)`;
+
+            link.append(pill, title, summary, meta);
+            grid.appendChild(link);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+reviews:
+  path_instructions:
+    - path: "src/main/java/**/controller/**"
+      instructions: |
+        컨트롤러가 수정됐다면 controller/api/ 하위 해당 인터페이스 파일과
+        docs/api/ 하위 HTML 파일도 함께 변경됐는지 확인하세요.
+        누락 시 ./gradlew generateApiDocs 실행이 필요합니다.
