@@ -75,6 +75,52 @@ public interface PostControllerApi {
     );
 
     @ApiDoc(
+            summary = "인기글 상위 5개 조회",
+            description = "최근 7일 기준 좋아요, 댓글, unique 방문자 반응을 가중치로 계산한 인기글 상위 5개를 조회합니다. 점수는 외부에 노출하지 않고 rank만 반환합니다.",
+            descriptions = {
+                    @FieldDesc(name = "posts", value = "인기글 목록입니다. 점수 0 초과인 게시글만 포함되며 최대 5개까지 반환합니다."),
+                    @FieldDesc(name = "rank", value = "인기글 순위입니다. 1부터 시작합니다."),
+                    @FieldDesc(name = "id", value = "게시글 ID입니다."),
+                    @FieldDesc(name = "boardType", value = "게시글이 속한 게시판 유형입니다."),
+                    @FieldDesc(name = "title", value = "게시글 제목입니다."),
+                    @FieldDesc(name = "authorNickname", value = "게시글 작성자의 닉네임입니다."),
+                    @FieldDesc(name = "likeCount", value = "현재 게시글의 좋아요 수입니다."),
+                    @FieldDesc(name = "commentCount", value = "삭제되지 않은 댓글 수입니다."),
+                    @FieldDesc(name = "tags", value = "게시글에 연결된 태그 목록입니다."),
+                    @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다.")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": {
+                                "posts": [
+                                  {
+                                    "rank": 1,
+                                    "id": 101,
+                                    "boardType": "QNA",
+                                    "title": "JPA fetch join 질문",
+                                    "authorNickname": "backend-dev",
+                                    "likeCount": 3,
+                                    "commentCount": 4,
+                                    "tags": [
+                                      "spring",
+                                      "jpa"
+                                    ],
+                                    "createdAt": "2026-03-24T10:00:00"
+                                  }
+                                ]
+                              }
+                            }
+                            """
+            )
+    )
+    @GetMapping("/hot")
+    ResponseEntity<ApiResponse<HotPostListResponse>> getHotPosts(
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
             summary = "게시글 상세 조회",
             description = "게시글 하나의 상세 정보를 조회합니다. 조회가 성공하면 응답의 viewCount에 반영된 누적 조회수가 1 증가합니다.",
             descriptions = {

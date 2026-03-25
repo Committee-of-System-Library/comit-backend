@@ -25,6 +25,12 @@ public class PostController implements PostControllerApi {
     }
 
     @Override
+    public ResponseEntity<ApiResponse<HotPostListResponse>> getHotPosts(
+            MemberPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(postService.getHotPosts()));
+    }
+
+    @Override
     public ResponseEntity<ApiResponse<PostDetailResponse>> getPost(
             Long postId, MemberPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
