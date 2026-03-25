@@ -52,7 +52,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * 좋아요 수를 단일 DB update로 증가시킨다.
      */
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId")
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId AND p.deletedAt IS NULL")
     void incrementLikeCount(@Param("postId") Long postId);
 
     /**
@@ -71,6 +71,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * 좋아요 수를 단일 DB update로 감소시킨다.
      */
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId AND p.likeCount > 0")
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId AND p.deletedAt IS NULL AND p.likeCount > 0")
     void decrementLikeCount(@Param("postId") Long postId);
 }
