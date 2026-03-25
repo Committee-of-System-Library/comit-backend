@@ -174,6 +174,18 @@ public interface PaymentControllerApi {
 - `LocalDateTime` → `"2024-01-01T12:00:00"`
 - enum → 첫 번째 enum 상수
 
+## 시간 필드 표현
+
+- 공개 응답의 `LocalDateTime` 필드는 기본적으로 `yyyy-MM-dd'T'HH:mm:ss` 문자열로 직렬화된다.
+- 현재 계약에는 타임존 오프셋이 포함되지 않으므로, 프론트엔드는 이 값을 로컬 날짜시간 문자열로 해석해야 한다.
+- 시간 필드를 설명할 때는 `descriptions`에 포맷을 함께 적어준다.
+
+예시
+
+```java
+@FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다.")
+```
+
 ## 문서 생성 방법
 
 ```bash

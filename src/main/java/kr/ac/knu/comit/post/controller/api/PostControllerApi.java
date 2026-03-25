@@ -20,13 +20,20 @@ public interface PostControllerApi {
 
     @ApiDoc(
             summary = "게시글 목록 조회",
-            description = "게시판별 게시글 목록을 cursor 기반으로 조회합니다.",
+            description = "게시판별 게시글 목록을 cursor 기반으로 최신순 조회합니다.",
             descriptions = {
                     @FieldDesc(name = "boardType", value = "조회할 게시판 유형입니다. QNA 또는 FREE를 사용합니다."),
                     @FieldDesc(name = "cursor", value = "이전 응답의 nextCursorId. 첫 페이지는 생략합니다."),
                     @FieldDesc(name = "size", value = "조회할 게시글 수입니다. 기본값은 20이고 최대 20입니다."),
-                    @FieldDesc(name = "posts", value = "게시글 요약 목록입니다. 각 항목은 게시글 ID, 제목, 작성자, 좋아요 수, 댓글 수, 태그, 작성 시각을 포함합니다."),
-                    @FieldDesc(name = "nextCursorId", value = "다음 페이지 조회에 사용할 cursor ID입니다. 마지막 페이지면 null입니다."),
+                    @FieldDesc(name = "posts", value = "게시글 요약 목록입니다. 최신 게시글부터 최대 size개를 반환하며 각 항목은 게시글 ID, 제목, 작성자 닉네임, 좋아요 수, 댓글 수, 태그, 생성 시각을 포함합니다."),
+                    @FieldDesc(name = "id", value = "게시글 ID입니다."),
+                    @FieldDesc(name = "title", value = "게시글 제목입니다."),
+                    @FieldDesc(name = "authorNickname", value = "게시글 작성자의 닉네임입니다."),
+                    @FieldDesc(name = "likeCount", value = "현재 게시글의 좋아요 수입니다."),
+                    @FieldDesc(name = "commentCount", value = "삭제되지 않은 댓글 수입니다."),
+                    @FieldDesc(name = "tags", value = "게시글에 연결된 태그 목록입니다."),
+                    @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다."),
+                    @FieldDesc(name = "nextCursorId", value = "다음 페이지 조회에 사용할 마지막 게시글 ID입니다. 마지막 페이지면 null입니다."),
                     @FieldDesc(name = "hasNext", value = "다음 페이지 존재 여부입니다.")
             },
             errors = {
@@ -69,7 +76,7 @@ public interface PostControllerApi {
 
     @ApiDoc(
             summary = "게시글 상세 조회",
-            description = "게시글 하나의 상세 정보를 조회합니다.",
+            description = "게시글 하나의 상세 정보를 조회합니다. 조회가 성공하면 응답의 viewCount에 반영된 누적 조회수가 1 증가합니다.",
             descriptions = {
                     @FieldDesc(name = "postId", value = "조회할 게시글 ID입니다."),
                     @FieldDesc(name = "id", value = "게시글 ID입니다."),
@@ -78,11 +85,11 @@ public interface PostControllerApi {
                     @FieldDesc(name = "content", value = "게시글 본문입니다."),
                     @FieldDesc(name = "authorNickname", value = "게시글 작성자의 닉네임입니다."),
                     @FieldDesc(name = "likeCount", value = "현재 게시글의 좋아요 수입니다."),
-                    @FieldDesc(name = "viewCount", value = "현재 게시글의 누적 조회수입니다."),
+                    @FieldDesc(name = "viewCount", value = "상세 조회 성공이 반영된 최신 누적 조회수입니다."),
                     @FieldDesc(name = "likedByMe", value = "현재 로그인한 사용자의 좋아요 여부입니다."),
                     @FieldDesc(name = "tags", value = "게시글에 연결된 태그 목록입니다."),
-                    @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다."),
-                    @FieldDesc(name = "updatedAt", value = "마지막 수정 시각입니다. 수정 이력이 없으면 null입니다.")
+                    @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다."),
+                    @FieldDesc(name = "updatedAt", value = "마지막 수정 시각입니다. 수정 이력이 없으면 null입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다.")
             },
             errors = {
                     @ApiError(code = "POST_NOT_FOUND", when = "조회 대상 게시글이 없거나 삭제된 상태일 때")
@@ -119,7 +126,7 @@ public interface PostControllerApi {
 
     @ApiDoc(
             summary = "게시글 작성",
-            description = "새 게시글을 작성합니다.",
+            description = "새 게시글을 작성합니다. 제목은 최대 30자, 본문은 최대 500자까지 허용합니다.",
             descriptions = {
                     @FieldDesc(name = "boardType", value = "게시글을 작성할 게시판 유형입니다."),
                     @FieldDesc(name = "title", value = "게시글 제목입니다. 최대 30자입니다."),
@@ -158,7 +165,7 @@ public interface PostControllerApi {
 
     @ApiDoc(
             summary = "게시글 수정",
-            description = "기존 게시글의 제목, 본문, 태그를 수정합니다.",
+            description = "기존 게시글의 제목, 본문, 태그를 수정합니다. 제목은 최대 30자, 본문은 최대 500자까지 허용합니다.",
             descriptions = {
                     @FieldDesc(name = "postId", value = "수정할 게시글 ID입니다."),
                     @FieldDesc(name = "title", value = "수정할 게시글 제목입니다. 최대 30자입니다."),

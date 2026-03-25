@@ -22,7 +22,7 @@ window.API_DOCS = [
 },
 {
   title: "PostControllerApi",
-  summary: "새 게시글을 작성합니다.",
+  summary: "새 게시글을 작성합니다. 제목은 최대 30자, 본문은 최대 500자까지 허용합니다.",
   href: "./post/PostControllerApi.html",
   endpointCount: 6,
   sectionPath: "post"
