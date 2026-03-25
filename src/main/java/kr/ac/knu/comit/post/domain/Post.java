@@ -147,20 +147,20 @@ public class Post {
     }
 
     private static void validateTitle(String title) {
-        if (title == null || title.isBlank() || title.length() > 255) {
+        if (title == null || title.isBlank() || title.length() > PostConstraints.TITLE_MAX_LENGTH) {
             throw new BusinessException(PostErrorCode.INVALID_TITLE);
         }
     }
 
     private static void validateContent(String content) {
-        if (content == null || content.isBlank()) {
+        if (content == null || content.isBlank() || content.length() > PostConstraints.CONTENT_MAX_LENGTH) {
             throw new BusinessException(PostErrorCode.INVALID_CONTENT);
         }
     }
 
     private static void validateTagNames(List<String> tagNames) {
         if (tagNames == null) return;
-        if (tagNames.size() > 5) {
+        if (tagNames.size() > PostConstraints.TAG_MAX_COUNT) {
             throw new BusinessException(PostErrorCode.TAG_LIMIT_EXCEEDED);
         }
         tagNames.forEach(PostTag::validateName);

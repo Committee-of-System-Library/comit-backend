@@ -31,7 +31,7 @@ public class PostTag {
     }
 
     static void validateName(String name) {
-        if (name == null || name.isBlank() || name.strip().length() > 20) {
+        if (name == null || name.isBlank() || name.strip().length() > PostConstraints.TAG_NAME_MAX_LENGTH) {
             throw new BusinessException(PostErrorCode.INVALID_TAG);
         }
     }
