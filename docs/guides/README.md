@@ -10,7 +10,7 @@
 | `api-contract.md` | API 계약 인터페이스 사용법과 작성 규칙 |
 | `api-doc-generator-flow.md` | 문서 생성기 내부 동작 과정과 확장 포인트 |
 | `java-comment-convention.md` | `@apiNote`, `@implNote` 기반 Java 주석 규칙 |
-| `testing-strategy.md` | 테스트 층, 네이밍, 작성 순서 기준 |
+| `testing-strategy.md` | 테스트 층, 네이밍, fixture, `given/when/then` 작성 기준 |
 
 ## 작성 원칙
 
