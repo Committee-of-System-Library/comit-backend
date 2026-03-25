@@ -2,7 +2,6 @@ package kr.ac.knu.comit.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,6 +28,9 @@ class MemberServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private MemberRegistrationService memberRegistrationService;
 
     @InjectMocks
     private MemberService memberService;
@@ -57,17 +58,17 @@ class MemberServiceTest {
         @DisplayName("기존 회원이 없으면 새 회원을 저장한다")
         void createsMemberWhenMemberDoesNotExist() {
             MemberPrincipal principal = principal("sso-1", "comit-user", "20230001");
+            Member createdMember = Member.create("sso-1", "comit-user", "20230001");
             given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-1")).willReturn(Optional.empty());
-            given(memberRepository.saveAndFlush(any(Member.class))).willAnswer(invocation -> invocation.getArgument(0));
+            given(memberRegistrationService.register(principal)).willReturn(createdMember);
 
             Member result = memberService.findOrCreateBySso(principal);
 
-            ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
-            then(memberRepository).should().saveAndFlush(captor.capture());
+            assertThat(result).isSameAs(createdMember);
             assertThat(result.getSsoSub()).isEqualTo("sso-1");
             assertThat(result.getNickname()).isEqualTo("comit-user");
             assertThat(result.getStudentNumber()).isEqualTo("20230001");
-            assertThat(captor.getValue().getNickname()).isEqualTo("comit-user");
+            then(memberRegistrationService).should().register(principal);
         }
 
         @Test
@@ -78,13 +79,27 @@ class MemberServiceTest {
             given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-1"))
                     .willReturn(Optional.empty())
                     .willReturn(Optional.of(existingMember));
-            given(memberRepository.saveAndFlush(any(Member.class)))
+            given(memberRegistrationService.register(principal))
                     .willThrow(new DataIntegrityViolationException("duplicate"));
 
             Member result = memberService.findOrCreateBySso(principal);
 
             assertThat(result).isSameAs(existingMember);
             assertThat(result.getStudentNumber()).isEqualTo("20239999");
+        }
+
+        @Test
+        @DisplayName("동시 생성 충돌 후 재조회에서도 없으면 원래 예외를 다시 던진다")
+        void rethrowsWhenReloadFailsAfterConcurrentInsertCollision() {
+            MemberPrincipal principal = principal("sso-1", "comit-user", "20239999");
+            DataIntegrityViolationException exception = new DataIntegrityViolationException("duplicate");
+            given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-1"))
+                    .willReturn(Optional.empty())
+                    .willReturn(Optional.empty());
+            given(memberRegistrationService.register(principal)).willThrow(exception);
+
+            assertThatThrownBy(() -> memberService.findOrCreateBySso(principal))
+                    .isSameAs(exception);
         }
     }
 

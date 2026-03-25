@@ -2,6 +2,7 @@ package kr.ac.knu.comit;
 
 import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.comment.service.CommentService;
+import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import kr.ac.knu.comit.post.service.PostService;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,9 @@ class ComitApplicationTests {
 
     @MockitoBean
     MemberService memberService;
+
+    @MockitoBean
+    MemberRegistrationService memberRegistrationService;
 
     @MockitoBean
     PostService postService;

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final MemberRegistrationService memberRegistrationService;
 
     public MemberProfileResponse getMyProfile(Long memberId) {
         return MemberProfileResponse.from(findMemberOrThrow(memberId));
@@ -67,9 +68,7 @@ public class MemberService {
 
     private Member createOrLoadMember(MemberPrincipal principal) {
         try {
-            return memberRepository.saveAndFlush(
-                    Member.create(principal.ssoSub(), principal.name(), principal.studentNumber())
-            );
+            return memberRegistrationService.register(principal);
         } catch (DataIntegrityViolationException exception) {
             return memberRepository.findBySsoSubAndDeletedAtIsNull(principal.ssoSub())
                     .map(member -> syncStudentNumber(member, principal.studentNumber()))
