@@ -14,13 +14,6 @@ window.API_DOCS = [
   sectionPath: "member"
 },
 {
-  title: "PaymentControllerApi",
-  summary: "결제 승인 요청을 처리하고 승인 결과를 반환합니다.",
-  href: "./payment/PaymentControllerApi.html",
-  endpointCount: 2,
-  sectionPath: "payment"
-},
-{
   title: "PostControllerApi",
   summary: "새 게시글을 작성합니다. 제목은 최대 30자, 본문은 최대 500자까지 허용합니다.",
   href: "./post/PostControllerApi.html",
