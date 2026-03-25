@@ -58,6 +58,18 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Modifying(clearAutomatically = true)
     @Query("""
             UPDATE Comment c
+            SET c.deletedAt = :now
+            WHERE c.parentComment.id = :parentCommentId
+              AND c.deletedAt IS NULL
+            """)
+    void softDeleteRepliesByParentCommentId(
+            @Param("parentCommentId") Long parentCommentId,
+            @Param("now") java.time.LocalDateTime now
+    );
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            UPDATE Comment c
             SET c.helpfulCount = c.helpfulCount + 1
             WHERE c.id = :commentId
               AND c.deletedAt IS NULL

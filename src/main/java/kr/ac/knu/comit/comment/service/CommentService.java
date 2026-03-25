@@ -1,8 +1,14 @@
 package kr.ac.knu.comit.comment.service;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import kr.ac.knu.comit.comment.domain.Comment;
 import kr.ac.knu.comit.comment.domain.CommentHelpfulRepository;
 import kr.ac.knu.comit.comment.domain.CommentRepository;
@@ -81,8 +87,7 @@ public class CommentService {
         Comment comment = findCommentOrThrow(commentId);
         checkOwnership(comment, memberId);
         if (!comment.isReply()) {
-            commentRepository.findActiveRepliesByParentCommentId(commentId)
-                    .forEach(Comment::delete);
+            commentRepository.softDeleteRepliesByParentCommentId(commentId, LocalDateTime.now());
         }
         comment.delete();
     }
@@ -108,22 +113,22 @@ public class CommentService {
     }
 
     private List<Long> combineCommentIds(List<Comment> comments, List<Comment> replies) {
-        return java.util.stream.Stream.concat(comments.stream(), replies.stream())
+        return Stream.concat(comments.stream(), replies.stream())
                 .map(Comment::getId)
                 .toList();
     }
 
     private Map<Long, List<ReplyResponse>> groupRepliesByParentId(List<Comment> replies, Set<Long> helpfulIds, Long memberId) {
         return replies.stream()
-                .collect(java.util.stream.Collectors.groupingBy(
+                .collect(groupingBy(
                         Comment::getParentCommentId,
-                        java.util.stream.Collectors.mapping(
+                        mapping(
                                 reply -> ReplyResponse.from(
                                         reply,
                                         helpfulIds.contains(reply.getId()),
                                         reply.isWrittenBy(memberId)
                                 ),
-                                java.util.stream.Collectors.toList()
+                                toList()
                         )
                 ));
     }

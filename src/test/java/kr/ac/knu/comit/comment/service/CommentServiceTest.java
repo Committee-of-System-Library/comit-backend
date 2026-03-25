@@ -14,6 +14,7 @@ import kr.ac.knu.comit.comment.domain.CommentHelpfulRepository;
 import kr.ac.knu.comit.comment.domain.CommentRepository;
 import kr.ac.knu.comit.comment.dto.CommentListResponse;
 import kr.ac.knu.comit.comment.dto.CreateCommentRequest;
+import kr.ac.knu.comit.comment.dto.HelpfulToggleResponse;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommentErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
@@ -125,25 +126,72 @@ class CommentServiceTest {
     }
 
     @Nested
+    @DisplayName("toggleHelpful")
+    class ToggleHelpful {
+
+        @Test
+        @DisplayName("처음 helpful을 누르면 카운트를 올리고 helpfulState를 반환한다")
+        void incrementsCountAndReturnsHelpfulStateOnFirstToggle() {
+            Post post = post(10L);
+            Comment comment = topLevelComment(201L, post, member(2L, "writer"), "댓글", 0);
+
+            given(commentRepository.findActiveById(201L)).willReturn(Optional.of(comment));
+            given(commentHelpfulRepository.insertIgnore(201L, 1L)).willReturn(1);
+
+            HelpfulToggleResponse response = commentService.toggleHelpful(201L, 1L);
+
+            assertThat(response.helpful()).isTrue();
+            then(commentRepository).should().incrementHelpfulCount(201L);
+        }
+
+        @Test
+        @DisplayName("이미 helpful 상태에서 다시 누르면 카운트를 내리고 notHelpfulState를 반환한다")
+        void decrementsCountAndReturnsNotHelpfulStateOnSecondToggle() {
+            Post post = post(10L);
+            Comment comment = topLevelComment(201L, post, member(2L, "writer"), "댓글", 1);
+
+            given(commentRepository.findActiveById(201L)).willReturn(Optional.of(comment));
+            given(commentHelpfulRepository.insertIgnore(201L, 1L)).willReturn(0);
+
+            HelpfulToggleResponse response = commentService.toggleHelpful(201L, 1L);
+
+            assertThat(response.helpful()).isFalse();
+            then(commentHelpfulRepository).should().deleteByCommentIdAndMemberId(201L, 1L);
+            then(commentRepository).should().decrementHelpfulCount(201L);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 댓글에 helpful을 누르면 COMMENT_NOT_FOUND 예외를 던진다")
+        void throwsWhenCommentNotFound() {
+            given(commentRepository.findActiveById(999L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> commentService.toggleHelpful(999L, 1L))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(CommentErrorCode.COMMENT_NOT_FOUND);
+        }
+    }
+
+    @Nested
     @DisplayName("deleteComment")
     class DeleteComment {
 
         @Test
-        @DisplayName("최상위 댓글을 삭제하면 대댓글도 함께 삭제한다")
+        @DisplayName("최상위 댓글을 삭제하면 대댓글도 벌크 쿼리로 함께 삭제한다")
         void deletesRepliesTogetherWhenDeletingTopLevelComment() {
             Post post = post(10L);
             Member author = member(1L, "writer");
             Comment parent = topLevelComment(201L, post, author, "부모 댓글", 0);
-            Comment reply = replyComment(202L, post, parent, member(2L, "child"), "대댓글", 0);
 
             given(commentRepository.findActiveById(201L)).willReturn(Optional.of(parent));
-            given(commentRepository.findActiveRepliesByParentCommentId(201L)).willReturn(List.of(reply));
 
             commentService.deleteComment(201L, 1L);
 
-            then(commentRepository).should().findActiveRepliesByParentCommentId(201L);
+            then(commentRepository).should().softDeleteRepliesByParentCommentId(
+                    org.mockito.ArgumentMatchers.eq(201L),
+                    org.mockito.ArgumentMatchers.any(LocalDateTime.class)
+            );
             assertThat(ReflectionTestUtils.getField(parent, "deletedAt")).isInstanceOf(LocalDateTime.class);
-            assertThat(ReflectionTestUtils.getField(reply, "deletedAt")).isInstanceOf(LocalDateTime.class);
         }
     }
 
