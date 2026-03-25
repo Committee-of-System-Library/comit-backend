@@ -122,8 +122,8 @@ public interface PostControllerApi {
             description = "새 게시글을 작성합니다.",
             descriptions = {
                     @FieldDesc(name = "boardType", value = "게시글을 작성할 게시판 유형입니다."),
-                    @FieldDesc(name = "title", value = "게시글 제목입니다."),
-                    @FieldDesc(name = "content", value = "게시글 본문입니다."),
+                    @FieldDesc(name = "title", value = "게시글 제목입니다. 최대 30자입니다."),
+                    @FieldDesc(name = "content", value = "게시글 본문입니다. 최대 500자입니다."),
                     @FieldDesc(name = "tags", value = "선택 항목입니다. 최대 5개, 각 20자 이하입니다.")
             },
             errors = {
@@ -161,8 +161,8 @@ public interface PostControllerApi {
             description = "기존 게시글의 제목, 본문, 태그를 수정합니다.",
             descriptions = {
                     @FieldDesc(name = "postId", value = "수정할 게시글 ID입니다."),
-                    @FieldDesc(name = "title", value = "수정할 게시글 제목입니다."),
-                    @FieldDesc(name = "content", value = "수정할 게시글 본문입니다."),
+                    @FieldDesc(name = "title", value = "수정할 게시글 제목입니다. 최대 30자입니다."),
+                    @FieldDesc(name = "content", value = "수정할 게시글 본문입니다. 최대 500자입니다."),
                     @FieldDesc(name = "tags", value = "수정할 태그 목록입니다. null이면 빈 목록으로 처리합니다.")
             },
             errors = {
