@@ -26,6 +26,8 @@ import kr.ac.knu.comit.member.service.MemberService;
 import kr.ac.knu.comit.post.controller.PostController;
 import kr.ac.knu.comit.post.domain.BoardType;
 import kr.ac.knu.comit.post.domain.PostConstraints;
+import kr.ac.knu.comit.post.dto.HotPostListResponse;
+import kr.ac.knu.comit.post.dto.HotPostResponse;
 import kr.ac.knu.comit.post.dto.PostDetailResponse;
 import kr.ac.knu.comit.post.service.PostService;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,9 +73,13 @@ class AuthenticatedApiWebTest {
 
     @Test
     void injectsAuthenticatedMemberIntoMemberEndpoint() throws Exception {
+        // given
+        // 인증된 사용자의 프로필 응답을 준비한다.
         given(memberService.getMyProfile(1L))
                 .willReturn(new MemberProfileResponse(1L, "comit-user", "2020111111", true));
 
+        // when & then
+        // 인증 헤더가 컨트롤러까지 주입되고 응답이 정상 직렬화되는지 확인한다.
         mockMvc.perform(get("/members/me")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "comit-user")
@@ -86,6 +92,8 @@ class AuthenticatedApiWebTest {
 
     @Test
     void returnsUnauthorizedWhenAuthenticationHeaderIsMissing() throws Exception {
+        // when & then
+        // 인증 헤더 없이 요청하면 401 ProblemDetail이 반환되어야 한다.
         mockMvc.perform(get("/members/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.type").value("/problems/common/unauthorized"))
@@ -95,8 +103,12 @@ class AuthenticatedApiWebTest {
 
     @Test
     void mapsPostCreateRequestUsingInterfaceAnnotationsAndAuthInjection() throws Exception {
+        // given
+        // 게시글 생성 서비스 응답을 준비한다.
         given(postService.createPost(eq(1L), any())).willReturn(10L);
 
+        // when & then
+        // 인터페이스 선언 기반 요청 매핑과 인증 주입이 함께 동작하는지 확인한다.
         mockMvc.perform(post("/posts")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "writer")
@@ -116,6 +128,8 @@ class AuthenticatedApiWebTest {
 
     @Test
     void mapsPostDetailResponseIncludingViewCountUsingInterfaceAnnotationsAndAuthInjection() throws Exception {
+        // given
+        // 조회수까지 포함된 게시글 상세 응답을 준비한다.
         given(postService.getPost(eq(101L), eq(1L))).willReturn(
                 new PostDetailResponse(
                         101L,
@@ -132,6 +146,8 @@ class AuthenticatedApiWebTest {
                 )
         );
 
+        // when & then
+        // 상세 조회 응답이 문서 계약대로 직렬화되는지 확인한다.
         mockMvc.perform(get("/posts/101")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "reader"))
@@ -145,9 +161,44 @@ class AuthenticatedApiWebTest {
     }
 
     @Test
+    void mapsHotPostListResponseUsingInterfaceAnnotationsAndAuthInjection() throws Exception {
+        // given
+        // 인기글 목록 응답을 준비한다.
+        given(postService.getHotPosts()).willReturn(new HotPostListResponse(List.of(
+                new HotPostResponse(
+                        1,
+                        101L,
+                        BoardType.QNA,
+                        "JPA fetch join 질문",
+                        "backend-dev",
+                        3,
+                        4,
+                        List.of("spring", "jpa"),
+                        LocalDateTime.parse("2026-03-24T10:00:00")
+                )
+        )));
+
+        // when & then
+        // 인기글 전용 응답 구조가 rank 포함 형태로 내려가는지 확인한다.
+        mockMvc.perform(get("/posts/hot")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "reader"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.posts[0].rank").value(1))
+                .andExpect(jsonPath("$.data.posts[0].id").value(101L))
+                .andExpect(jsonPath("$.data.posts[0].boardType").value("QNA"))
+                .andExpect(jsonPath("$.data.posts[0].commentCount").value(4));
+    }
+
+    @Test
     void mapsCommentCreateRequestUsingPathVariableAndRequestBodyFromInterfaceAnnotations() throws Exception {
+        // given
+        // 댓글 생성 서비스 응답을 준비한다.
         given(commentService.createComment(eq(10L), eq(1L), any())).willReturn(77L);
 
+        // when & then
+        // path variable과 request body가 선언된 계약대로 매핑되는지 확인한다.
         mockMvc.perform(post("/posts/10/comments")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "commenter")
@@ -164,8 +215,12 @@ class AuthenticatedApiWebTest {
 
     @Test
     void mapsReplyCreateRequestUsingOptionalParentCommentId() throws Exception {
+        // given
+        // parentCommentId가 포함된 대댓글 생성 응답을 준비한다.
         given(commentService.createComment(eq(10L), eq(1L), any())).willReturn(78L);
 
+        // when & then
+        // 선택 필드인 parentCommentId가 요청 본문에서 정상 매핑되는지 확인한다.
         mockMvc.perform(post("/posts/10/comments")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "commenter")
@@ -183,6 +238,8 @@ class AuthenticatedApiWebTest {
 
     @Test
     void mapsNestedCommentListResponseUsingInterfaceAnnotations() throws Exception {
+        // given
+        // 부모 댓글과 대댓글이 함께 포함된 응답을 준비한다.
         given(commentService.getComments(eq(10L), eq(1L))).willReturn(
                 new CommentListResponse(List.of(
                         new CommentResponse(
@@ -208,6 +265,8 @@ class AuthenticatedApiWebTest {
                 ))
         );
 
+        // when & then
+        // replies 중첩 구조가 JSON 응답으로 올바르게 직렬화되는지 확인한다.
         mockMvc.perform(get("/posts/10/comments")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "reader"))
@@ -220,6 +279,8 @@ class AuthenticatedApiWebTest {
 
     @Test
     void validatesRequestBodyDeclaredOnInterface() throws Exception {
+        // when & then
+        // 인터페이스에 선언한 Bean Validation 규칙이 실제 요청 검증에 반영되는지 확인한다.
         mockMvc.perform(patch("/members/me")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "editor")
@@ -237,9 +298,13 @@ class AuthenticatedApiWebTest {
 
     @Test
     void validatesPostCreateLengthConstraintsDeclaredOnInterface() throws Exception {
+        // given
+        // 제목과 본문 길이 제한을 초과하는 요청을 준비한다.
         String tooLongTitle = "가".repeat(PostConstraints.TITLE_MAX_LENGTH + 1);
         String tooLongContent = "나".repeat(PostConstraints.CONTENT_MAX_LENGTH + 1);
 
+        // when & then
+        // 길이 제한 위반이 INVALID_REQUEST로 변환되는지 확인한다.
         mockMvc.perform(post("/posts")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "writer")
