@@ -56,6 +56,12 @@ docs/api/ 전체 재생성
 - `docs/api/index.js`
 - `docs/api/**/<ControllerApi>.html`
 
+배포값
+
+- `main` 브랜치 push 시 GitHub Pages workflow가 `docs/api`를 정적 사이트로 배포한다.
+- Pages가 활성화되어 있으면 기본 진입점은 `https://<org>.github.io/<repo>/` 이다.
+- artifact 루트가 `docs/api`라서 별도 `/docs/api/index.html`을 붙이지 않아도 된다.
+
 ## 2. 계약 인터페이스 스캔
 
 `ApiDocIntrospector.inspect()`는 두 가지를 찾는다.
@@ -217,7 +223,28 @@ required 판단 규칙
 
 이 규칙 덕분에 같은 입력에서 같은 HTML/JS가 나와 `git diff`가 안정적으로 유지된다.
 
-## 8. 현재 지원 범위
+## 8. GitHub Pages 배포
+
+API 문서는 저장소 안에 커밋될 뿐 아니라 `main` 브랜치 기준으로 GitHub Pages에도 배포된다.
+
+배포 워크플로
+
+- [deploy-api-docs-pages.yml](../../.github/workflows/deploy-api-docs-pages.yml)
+
+동작 순서
+
+1. `main` 브랜치에 push
+2. workflow가 `./gradlew generateApiDocs` 실행
+3. `docs/api`를 Pages artifact로 업로드
+4. GitHub Pages가 정적 사이트로 배포
+
+주의할 점
+
+- 저장소 Settings > Pages 에서 source를 `GitHub Actions`로 한 번 설정해야 한다.
+- Pages는 workflow 안에서 다시 문서를 생성하므로, 로컬 커밋본과 CI 생성 결과가 달라지지 않게 `validate-api-docs.yml` 검증을 계속 통과해야 한다.
+- 공개 URL 루트는 `docs/api/index.html`이 아니라 Pages 사이트 루트다.
+
+## 9. 현재 지원 범위
 
 ### 자동 지원
 
@@ -252,7 +279,7 @@ required 판단 규칙
 
 이 타입들은 "문서는 생성돼도 정확한 스키마를 보장하지 못할 수 있다".
 
-## 9. 지원 범위를 늘릴 때 어디를 고치나
+## 10. 지원 범위를 늘릴 때 어디를 고치나
 
 ### 새 요청 어노테이션 지원 예: `@RequestHeader`
 

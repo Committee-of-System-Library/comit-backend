@@ -20,7 +20,7 @@
 | `guides/` | 개발자가 따라야 하는 규칙, 작성법, 내부 구조 설명 |
 | `features/` | 기능 설계, 전환 계획, 예외 케이스 |
 | `ops/` | 로컬 실행, 배포, 환경변수, 운영 체크리스트 |
-| `api/` | `./gradlew generateApiDocs`로 생성되는 산출물 |
+| `api/` | `./gradlew generateApiDocs`로 생성되는 산출물, `main` 기준 GitHub Pages 배포 대상 |
 
 ## 문서 동기화 순서
 
@@ -32,6 +32,12 @@
    API 계약 또는 생성기 변경이면 `./gradlew generateApiDocs`로 `docs/api/`를 재생성한다.
 4. 인덱스 README를 마지막에 맞춘다.
    새 문서가 생기거나 문서 성격이 바뀌면 이 파일과 하위 폴더 `README.md`까지 함께 수정한다.
+
+## API 문서 공개 경로
+
+- API 문서는 저장소 안의 `docs/api/`에 커밋된다.
+- `main` 브랜치 push 시 GitHub Pages workflow가 같은 산출물을 정적 사이트로 배포한다.
+- Pages가 활성화되어 있으면 기본 접근 경로는 `https://<org>.github.io/<repo>/` 이다.
 
 ## 변경 유형별 업데이트 대상
 

@@ -111,6 +111,7 @@ kr.ac.knu.comit/
 - 생성 명령: `./gradlew generateApiDocs`
 - 컨트롤러 변경 시 반드시 문서 재생성 후 커밋
 - CI에서 `git diff docs/api/` 검증 — 문서 미업데이트 시 PR 통과 불가
+- `main` 브랜치 push 시 GitHub Pages workflow가 `docs/api/`를 정적 사이트로 배포한다.
 
 ---
 
