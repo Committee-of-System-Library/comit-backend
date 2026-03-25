@@ -538,17 +538,20 @@ final class ApiDocIntrospector {
             return constants.length == 0 ? null : constants[0].toString();
         }
         if (rawType.isArray()) {
-            return List.of(generateExampleValue(rawType.getComponentType(), depth + 1, visitingTypes));
+            Object element = generateExampleValue(rawType.getComponentType(), depth + 1, visitingTypes);
+            return element == null ? List.of() : List.of(element);
         }
         if (Collection.class.isAssignableFrom(rawType)) {
             Type elementType = firstTypeArgument(type);
-            return List.of(generateExampleValue(elementType, depth + 1, visitingTypes));
+            Object element = generateExampleValue(elementType, depth + 1, visitingTypes);
+            return element == null ? List.of() : List.of(element);
         }
         if (Map.class.isAssignableFrom(rawType)) {
             Type valueType = type instanceof ParameterizedType parameterizedType
                     ? parameterizedType.getActualTypeArguments()[1]
                     : String.class;
-            return Map.of("key", generateExampleValue(valueType, depth + 1, visitingTypes));
+            Object value = generateExampleValue(valueType, depth + 1, visitingTypes);
+            return value == null ? Map.of() : Map.of("key", value);
         }
 
         String typeName = rawType.getName();

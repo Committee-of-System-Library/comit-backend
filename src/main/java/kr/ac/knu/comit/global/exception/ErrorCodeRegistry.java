@@ -29,6 +29,15 @@ public final class ErrorCodeRegistry {
     }
 
     private static void register(Map<String, ErrorCode> registry, ErrorCode[] codes) {
-        Arrays.stream(codes).forEach(code -> registry.put(code.getCode(), code));
+        Arrays.stream(codes).forEach(code -> {
+            ErrorCode previous = registry.putIfAbsent(code.getCode(), code);
+            if (previous != null) {
+                throw new IllegalStateException(
+                        "Duplicate error code: " + code.getCode()
+                                + " (" + previous.getClass().getSimpleName()
+                                + " vs " + code.getClass().getSimpleName() + ")"
+                );
+            }
+        });
     }
 }
