@@ -31,6 +31,10 @@ public class Comment {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private Comment parentComment;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
@@ -47,11 +51,21 @@ public class Comment {
     }
 
     public static Comment create(Post post, Member author, String content) {
+        return create(post, null, author, content);
+    }
+
+    public static Comment reply(Post post, Comment parentComment, Member author, String content) {
+        validateParentComment(post, parentComment);
+        return create(post, parentComment, author, content);
+    }
+
+    private static Comment create(Post post, Comment parentComment, Member author, String content) {
         validateContent(content);
 
         Comment comment = new Comment();
         comment.post = post;
         comment.member = author;
+        comment.parentComment = parentComment;
         comment.content = content.strip();
         comment.helpfulCount = 0;
         comment.createdAt = LocalDateTime.now();
@@ -80,6 +94,10 @@ public class Comment {
         return post;
     }
 
+    public Long getParentCommentId() {
+        return parentComment == null ? null : parentComment.getId();
+    }
+
     public Member getMember() {
         return member;
     }
@@ -100,9 +118,21 @@ public class Comment {
         return updatedAt;
     }
 
+    public boolean isReply() {
+        return parentComment != null;
+    }
+
     private static void validateContent(String content) {
         if (content == null || content.isBlank()) {
             throw new BusinessException(CommentErrorCode.INVALID_COMMENT_CONTENT);
+        }
+    }
+
+    private static void validateParentComment(Post post, Comment parentComment) {
+        if (parentComment == null
+                || parentComment.isReply()
+                || !parentComment.getPost().getId().equals(post.getId())) {
+            throw new BusinessException(CommentErrorCode.INVALID_PARENT_COMMENT);
         }
     }
 }

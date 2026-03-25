@@ -1,10 +1,9 @@
 package kr.ac.knu.comit.comment.dto;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import kr.ac.knu.comit.comment.domain.Comment;
 
-public record CommentResponse(
+public record ReplyResponse(
         Long id,
         String content,
         String authorNickname,
@@ -12,11 +11,10 @@ public record CommentResponse(
         boolean helpfulByMe,
         boolean mine,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        List<ReplyResponse> replies
+        LocalDateTime updatedAt
 ) {
-    public static CommentResponse from(Comment comment, boolean helpfulByMe, boolean mine, List<ReplyResponse> replies) {
-        return new CommentResponse(
+    public static ReplyResponse from(Comment comment, boolean helpfulByMe, boolean mine) {
+        return new ReplyResponse(
                 comment.getId(),
                 comment.getContent(),
                 comment.getMember().getNickname(),
@@ -24,8 +22,7 @@ public record CommentResponse(
                 helpfulByMe,
                 mine,
                 comment.getCreatedAt(),
-                comment.getUpdatedAt(),
-                replies
+                comment.getUpdatedAt()
         );
     }
 }

@@ -22,9 +22,29 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             JOIN FETCH c.member
             WHERE c.post.id = :postId
               AND c.deletedAt IS NULL
+              AND c.parentComment IS NULL
             ORDER BY c.helpfulCount DESC, c.id ASC
             """)
-    List<Comment> findActiveByPostId(@Param("postId") Long postId);
+    List<Comment> findActiveTopLevelByPostId(@Param("postId") Long postId);
+
+    @Query("""
+            SELECT c FROM Comment c
+            JOIN FETCH c.member
+            JOIN FETCH c.parentComment parent
+            WHERE c.post.id = :postId
+              AND c.deletedAt IS NULL
+              AND parent.deletedAt IS NULL
+            ORDER BY parent.id ASC, c.id ASC
+            """)
+    List<Comment> findActiveRepliesByPostId(@Param("postId") Long postId);
+
+    @Query("""
+            SELECT c FROM Comment c
+            WHERE c.parentComment.id = :parentCommentId
+              AND c.deletedAt IS NULL
+            ORDER BY c.id ASC
+            """)
+    List<Comment> findActiveRepliesByParentCommentId(@Param("parentCommentId") Long parentCommentId);
 
     @Query("""
             SELECT c.post.id AS postId, COUNT(c) AS commentCount

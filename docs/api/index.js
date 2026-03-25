@@ -1,7 +1,7 @@
 window.API_DOCS = [
 {
   title: "CommentControllerApi",
-  summary: "게시글에 새 댓글을 작성합니다.",
+  summary: "게시글에 새 댓글 또는 대댓글을 작성합니다. parentCommentId가 없으면 일반 댓글, 있으면 해당 댓글의 대댓글로 생성됩니다.",
   href: "./comment/CommentControllerApi.html",
   endpointCount: 5,
   sectionPath: "comment"

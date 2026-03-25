@@ -277,7 +277,7 @@
         <section class="content"><article class="endpoint" id="createComment">
     <div class="eyebrow">POST</div>
     <h2>댓글 작성</h2>
-    <p>게시글에 새 댓글을 작성합니다.</p>
+    <p>게시글에 새 댓글 또는 대댓글을 작성합니다. parentCommentId가 없으면 일반 댓글, 있으면 해당 댓글의 대댓글로 생성됩니다.</p>
     <div class="path-box"><span class="method">POST</span>/posts/{postId}/comments</div>
     <div class="section-grid"><section class="card">
     <h3>경로 변수</h3>
@@ -315,7 +315,13 @@
     <td><code>content</code></td>
     <td><span class="type-chip type-string">String</span></td>
     <td><span class="badge-required">required</span></td>
-    <td>댓글 본문</td>
+    <td>댓글 본문입니다. 비어 있을 수 없습니다.</td>
+</tr>
+<tr>
+    <td><code>parentCommentId</code></td>
+    <td><span class="type-chip type-number">Long</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>선택 항목입니다. 대댓글 대상 최상위 댓글 ID입니다. 대댓글의 대댓글은 허용하지 않습니다.</td>
 </tr>
 </tbody>
 </table>
@@ -424,6 +430,20 @@
     <td>댓글을 작성할 게시글이 없거나 삭제된 상태일 때</td>
 </tr>
 <tr>
+    <td><code>COMMENT_NOT_FOUND</code></td>
+    <td>404</td>
+    <td><code>/problems/comment/not-found</code></td>
+    <td>존재하지 않는 댓글입니다.</td>
+    <td>parentCommentId로 지정한 댓글이 없거나 삭제된 상태일 때</td>
+</tr>
+<tr>
+    <td><code>INVALID_PARENT_COMMENT</code></td>
+    <td>400</td>
+    <td><code>/problems/comment/invalid-parent</code></td>
+    <td>유효한 부모 댓글이 아닙니다.</td>
+    <td>다른 게시글의 댓글이거나 이미 대댓글인 댓글에 답글을 달려고 할 때</td>
+</tr>
+<tr>
     <td><code>MEMBER_NOT_FOUND</code></td>
     <td>404</td>
     <td><code>/problems/member/not-found</code></td>
@@ -437,6 +457,7 @@
 <section class="card">
     <h3>요청 예시</h3>
     <pre><code>{
+  &quot;parentCommentId&quot; : 201,
   &quot;content&quot; : &quot;entity graph도 같이 비교해보면 좋습니다.&quot;
 }</code></pre>
 </section>
@@ -464,7 +485,7 @@
 <article class="endpoint" id="deleteComment">
     <div class="eyebrow">DELETE</div>
     <h2>댓글 삭제</h2>
-    <p>내가 작성한 댓글을 삭제 상태로 변경합니다.</p>
+    <p>내가 작성한 댓글을 삭제 상태로 변경합니다. 최상위 댓글을 삭제하면 해당 대댓글도 함께 삭제됩니다.</p>
     <div class="path-box"><span class="method">DELETE</span>/comments/{commentId}</div>
     <div class="section-grid"><section class="card">
     <h3>경로 변수</h3>
@@ -616,7 +637,7 @@
 <article class="endpoint" id="getComments">
     <div class="eyebrow">GET</div>
     <h2>댓글 목록 조회</h2>
-    <p>게시글에 달린 댓글 목록을 조회합니다.</p>
+    <p>게시글에 달린 댓글 목록을 조회합니다. 도움이 됐어요 수 내림차순, 동일하면 댓글 ID 오름차순으로 정렬됩니다.</p>
     <div class="path-box"><span class="method">GET</span>/posts/{postId}/comments</div>
     <div class="section-grid"><section class="card">
     <h3>경로 변수</h3>
@@ -654,7 +675,7 @@
     <td><code>comments</code></td>
     <td><span class="type-chip type-collection">List&lt;CommentResponse&gt;</span></td>
     <td><span class="badge-optional">optional</span></td>
-    <td>댓글 목록입니다. 각 항목은 댓글 ID, 내용, 작성자, 도움이 됐어요 수, 내 반응 여부, 작성/수정 시각을 포함합니다.</td>
+    <td>최상위 댓글 목록입니다. 각 항목은 댓글 ID, 본문, 작성자 닉네임, 도움이 됐어요 수, 내 반응 여부, 내 작성 여부, 생성/수정 시각과 대댓글 목록을 포함합니다.</td>
 </tr>
 </tbody>
 </table>
@@ -772,7 +793,17 @@
       &quot;helpfulByMe&quot; : true,
       &quot;mine&quot; : false,
       &quot;createdAt&quot; : &quot;2026-03-24T11:00:00&quot;,
-      &quot;updatedAt&quot; : null
+      &quot;updatedAt&quot; : null,
+      &quot;replies&quot; : [ {
+        &quot;id&quot; : 202,
+        &quot;content&quot; : &quot;저도 같은 방식 추천합니다.&quot;,
+        &quot;authorNickname&quot; : &quot;backend-dev&quot;,
+        &quot;helpfulCount&quot; : 1,
+        &quot;helpfulByMe&quot; : false,
+        &quot;mine&quot; : true,
+        &quot;createdAt&quot; : &quot;2026-03-24T11:05:00&quot;,
+        &quot;updatedAt&quot; : null
+      } ]
     } ]
   }
 }</code></pre>
@@ -794,7 +825,7 @@
 <article class="endpoint" id="toggleHelpful">
     <div class="eyebrow">POST</div>
     <h2>댓글 도움 토글</h2>
-    <p>댓글의 도움이 됐어요 상태를 토글합니다.</p>
+    <p>댓글의 도움이 됐어요 상태를 토글합니다. 응답은 토글 후 내 반응 상태만 반환하며 helpfulCount는 목록 재조회 시 확인합니다.</p>
     <div class="path-box"><span class="method">POST</span>/comments/{commentId}/helpful</div>
     <div class="section-grid"><section class="card">
     <h3>경로 변수</h3>
@@ -1001,7 +1032,7 @@
     <td><code>content</code></td>
     <td><span class="type-chip type-string">String</span></td>
     <td><span class="badge-required">required</span></td>
-    <td>수정할 댓글 본문</td>
+    <td>수정할 댓글 본문입니다. 비어 있을 수 없습니다.</td>
 </tr>
 </tbody>
 </table>

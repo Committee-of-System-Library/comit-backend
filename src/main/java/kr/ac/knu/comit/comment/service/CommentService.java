@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.comment.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import kr.ac.knu.comit.comment.domain.Comment;
 import kr.ac.knu.comit.comment.domain.CommentHelpfulRepository;
@@ -9,6 +10,7 @@ import kr.ac.knu.comit.comment.dto.CommentListResponse;
 import kr.ac.knu.comit.comment.dto.CommentResponse;
 import kr.ac.knu.comit.comment.dto.CreateCommentRequest;
 import kr.ac.knu.comit.comment.dto.HelpfulToggleResponse;
+import kr.ac.knu.comit.comment.dto.ReplyResponse;
 import kr.ac.knu.comit.comment.dto.UpdateCommentRequest;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommentErrorCode;
@@ -33,22 +35,25 @@ public class CommentService {
 
     public CommentListResponse getComments(Long postId, Long memberId) {
         postService.getActivePostOrThrow(postId);
-        List<Comment> comments = commentRepository.findActiveByPostId(postId);
-        if (comments.isEmpty()) {
+        List<Comment> topLevelComments = commentRepository.findActiveTopLevelByPostId(postId);
+        List<Comment> replies = commentRepository.findActiveRepliesByPostId(postId);
+        if (topLevelComments.isEmpty() && replies.isEmpty()) {
             return new CommentListResponse(List.of());
         }
 
         Set<Long> helpfulIds = Set.copyOf(commentHelpfulRepository.findHelpfulCommentIds(
                 memberId,
-                comments.stream().map(Comment::getId).toList()
+                combineCommentIds(topLevelComments, replies)
         ));
+        Map<Long, List<ReplyResponse>> repliesByParentId = groupRepliesByParentId(replies, helpfulIds, memberId);
 
         return new CommentListResponse(
-                comments.stream()
+                topLevelComments.stream()
                         .map(comment -> CommentResponse.from(
                                 comment,
                                 helpfulIds.contains(comment.getId()),
-                                comment.isWrittenBy(memberId)
+                                comment.isWrittenBy(memberId),
+                                repliesByParentId.getOrDefault(comment.getId(), List.of())
                         ))
                         .toList()
         );
@@ -58,7 +63,9 @@ public class CommentService {
     public Long createComment(Long postId, Long memberId, CreateCommentRequest request) {
         Post post = postService.getActivePostOrThrow(postId);
         Member author = memberService.findMemberOrThrow(memberId);
-        Comment comment = Comment.create(post, author, request.content());
+        Comment comment = request.parentCommentId() == null
+                ? Comment.create(post, author, request.content())
+                : Comment.reply(post, findCommentOrThrow(request.parentCommentId()), author, request.content());
         return commentRepository.save(comment).getId();
     }
 
@@ -73,6 +80,10 @@ public class CommentService {
     public void deleteComment(Long commentId, Long memberId) {
         Comment comment = findCommentOrThrow(commentId);
         checkOwnership(comment, memberId);
+        if (!comment.isReply()) {
+            commentRepository.findActiveRepliesByParentCommentId(commentId)
+                    .forEach(Comment::delete);
+        }
         comment.delete();
     }
 
@@ -94,6 +105,27 @@ public class CommentService {
     private Comment findCommentOrThrow(Long commentId) {
         return commentRepository.findActiveById(commentId)
                 .orElseThrow(() -> new BusinessException(CommentErrorCode.COMMENT_NOT_FOUND));
+    }
+
+    private List<Long> combineCommentIds(List<Comment> comments, List<Comment> replies) {
+        return java.util.stream.Stream.concat(comments.stream(), replies.stream())
+                .map(Comment::getId)
+                .toList();
+    }
+
+    private Map<Long, List<ReplyResponse>> groupRepliesByParentId(List<Comment> replies, Set<Long> helpfulIds, Long memberId) {
+        return replies.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        Comment::getParentCommentId,
+                        java.util.stream.Collectors.mapping(
+                                reply -> ReplyResponse.from(
+                                        reply,
+                                        helpfulIds.contains(reply.getId()),
+                                        reply.isWrittenBy(memberId)
+                                ),
+                                java.util.stream.Collectors.toList()
+                        )
+                ));
     }
 
     private void checkOwnership(Comment comment, Long memberId) {

@@ -11,6 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import kr.ac.knu.comit.comment.controller.CommentController;
+import kr.ac.knu.comit.comment.dto.CommentListResponse;
+import kr.ac.knu.comit.comment.dto.CommentResponse;
+import kr.ac.knu.comit.comment.dto.ReplyResponse;
 import kr.ac.knu.comit.comment.service.CommentService;
 import kr.ac.knu.comit.global.auth.MemberArgumentResolver;
 import kr.ac.knu.comit.global.auth.MemberAuthenticationFilter;
@@ -157,6 +160,62 @@ class AuthenticatedApiWebTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").value(77L));
+    }
+
+    @Test
+    void mapsReplyCreateRequestUsingOptionalParentCommentId() throws Exception {
+        given(commentService.createComment(eq(10L), eq(1L), any())).willReturn(78L);
+
+        mockMvc.perform(post("/posts/10/comments")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "commenter")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "parentCommentId": 201,
+                                  "content": "대댓글입니다."
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data").value(78L));
+    }
+
+    @Test
+    void mapsNestedCommentListResponseUsingInterfaceAnnotations() throws Exception {
+        given(commentService.getComments(eq(10L), eq(1L))).willReturn(
+                new CommentListResponse(List.of(
+                        new CommentResponse(
+                                201L,
+                                "부모 댓글",
+                                "orm-master",
+                                4,
+                                true,
+                                false,
+                                LocalDateTime.parse("2026-03-24T11:00:00"),
+                                null,
+                                List.of(new ReplyResponse(
+                                        202L,
+                                        "대댓글입니다.",
+                                        "backend-dev",
+                                        1,
+                                        false,
+                                        true,
+                                        LocalDateTime.parse("2026-03-24T11:05:00"),
+                                        null
+                                ))
+                        )
+                ))
+        );
+
+        mockMvc.perform(get("/posts/10/comments")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "reader"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.comments[0].id").value(201L))
+                .andExpect(jsonPath("$.data.comments[0].replies[0].id").value(202L))
+                .andExpect(jsonPath("$.data.comments[0].replies[0].mine").value(true));
     }
 
     @Test
