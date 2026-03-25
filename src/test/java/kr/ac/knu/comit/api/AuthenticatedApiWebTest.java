@@ -3,6 +3,7 @@ package kr.ac.knu.comit.api;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -21,6 +22,7 @@ import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.service.MemberService;
 import kr.ac.knu.comit.post.controller.PostController;
 import kr.ac.knu.comit.post.domain.BoardType;
+import kr.ac.knu.comit.post.domain.PostConstraints;
 import kr.ac.knu.comit.post.dto.PostDetailResponse;
 import kr.ac.knu.comit.post.service.PostService;
 import org.junit.jupiter.api.BeforeEach;
@@ -172,6 +174,29 @@ class AuthenticatedApiWebTest {
                 .andExpect(jsonPath("$.type").value("/problems/common/invalid-request"))
                 .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
                 .andExpect(jsonPath("$.invalidFields[0].field").value("nickname"));
+    }
+
+    @Test
+    void validatesPostCreateLengthConstraintsDeclaredOnInterface() throws Exception {
+        String tooLongTitle = "가".repeat(PostConstraints.TITLE_MAX_LENGTH + 1);
+        String tooLongContent = "나".repeat(PostConstraints.CONTENT_MAX_LENGTH + 1);
+
+        mockMvc.perform(post("/posts")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "writer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "boardType": "FREE",
+                                  "title": "%s",
+                                  "content": "%s",
+                                  "tags": []
+                                }
+                                """.formatted(tooLongTitle, tooLongContent)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("/problems/common/invalid-request"))
+                .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.invalidFields[*].field", containsInAnyOrder("title", "content")));
     }
 
     private Member authenticatedMember() {
