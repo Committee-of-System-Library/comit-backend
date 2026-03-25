@@ -3,7 +3,9 @@
 `@ApiContract` 방식은 "문서 정의"와 "컨트롤러 로직"을 분리하기 위한 규칙이다.  
 개발자는 인터페이스에 라우팅과 문서만 작성하고, 구현체에는 비즈니스 로직만 남긴다.
 
-관련 배경은 [ADR-001](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/docs/adr/001-api-doc-automation.md)에 정리되어 있다.
+관련 배경은 [ADR-001 API 문서 자동화 방식 선택](../adr/001-api-doc-automation.md)에 정리되어 있다.
+
+현재 문서 관련 어노테이션은 `kr.ac.knu.comit.global.docs.annotation` 패키지에 있다.
 
 ## 언제 이 방식을 쓰나
 
@@ -29,6 +31,7 @@ src/main/java/.../payment/
   - `@ApiContract`
   - `@ApiDoc`
   - `@GetMapping`, `@PostMapping` 등 라우팅 정의
+  - 필요 시 `@AuthenticatedMember` 같은 인증 파라미터 선언
   - 메서드 시그니처 정의
 - `controller/*.java`
   - `@RestController`
@@ -48,7 +51,9 @@ src/main/java/.../payment/
 ### 직접 작성하는 항목
 
 - `summary`
+- `description`
 - `descriptions`
+- `errors`
 - `example.request`
 - `example.response`
 
@@ -60,6 +65,7 @@ src/main/java/.../payment/
 - query param: `@RequestParam`
 - request body 필드: `@RequestBody` DTO 리플렉션
 - response body 필드: `ResponseEntity<T>`, `ApiResponse<T>`의 제네릭 타입 리플렉션
+- 인증 에러: `@AuthenticatedMember`가 있으면 `UNAUTHORIZED` 자동 포함
 - required 여부
   - DTO 필드: `@NotNull`, `@NotBlank`, `@NotEmpty`
   - `@RequestParam`: `required = true` 또는 validation 제약
@@ -74,6 +80,7 @@ public interface PaymentControllerApi {
 
     @ApiDoc(
         summary = "결제 조회",
+        description = "주문 ID 기준으로 결제 상태를 조회합니다.",
         descriptions = {
             @FieldDesc(name = "orderId", value = "조회할 주문 ID"),
             @FieldDesc(name = "includeHistory", value = "거래 이력 포함 여부"),
@@ -96,6 +103,7 @@ public interface PaymentControllerApi {
 
     @ApiDoc(
         summary = "결제 승인",
+        description = "결제 승인 요청을 처리합니다.",
         descriptions = {
             @FieldDesc(name = "orderId", value = "주문 ID"),
             @FieldDesc(name = "amount", value = "결제 금액"),
@@ -110,6 +118,27 @@ public interface PaymentControllerApi {
     ResponseEntity<PaymentConfirmResponse> confirmPayment(@Valid @RequestBody PaymentConfirmRequest request);
 }
 ```
+
+## errors 작성 규칙
+
+- 비즈니스 에러 코드는 `errors`에 직접 적는다.
+- `when`에는 "어떤 상황에서 이 코드가 내려가는지"만 짧게 적는다.
+- `@AuthenticatedMember`가 있는 엔드포인트는 `UNAUTHORIZED`가 자동 포함되므로 보통 직접 적지 않아도 된다.
+- `@Valid`나 Bean Validation 제약이 걸린 입력이 있으면 `INVALID_REQUEST`가 자동 포함된다.
+
+예시
+
+```java
+@ApiDoc(
+    summary = "게시글 상세 조회",
+    description = "게시글 하나의 상세 정보를 조회합니다.",
+    errors = {
+        @ApiError(code = "POST_NOT_FOUND", when = "조회 대상 게시글이 없거나 삭제된 상태일 때")
+    }
+)
+```
+
+에러 응답은 런타임에서 `ProblemDetail` 형태로 내려간다. 문서의 `에러 코드` 표에 보이는 `errorCode` 값이 그대로 응답 본문 `errorCode`에 들어간다.
 
 ## descriptions 작성 규칙
 
@@ -145,6 +174,18 @@ public interface PaymentControllerApi {
 - `LocalDateTime` → `"2024-01-01T12:00:00"`
 - enum → 첫 번째 enum 상수
 
+## 시간 필드 표현
+
+- 공개 응답의 `LocalDateTime` 필드는 기본적으로 `yyyy-MM-dd'T'HH:mm:ss` 문자열로 직렬화된다.
+- 현재 계약에는 타임존 오프셋이 포함되지 않으므로, 프론트엔드는 이 값을 로컬 날짜시간 문자열로 해석해야 한다.
+- 시간 필드를 설명할 때는 `descriptions`에 포맷을 함께 적어준다.
+
+예시
+
+```java
+@FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다.")
+```
+
 ## 문서 생성 방법
 
 ```bash
@@ -179,6 +220,7 @@ PR에서는 다음 순서로 검증한다.
 - QueryDSL 결과는 서비스나 리포지토리에서 DTO로 변환한다
 - 응답 래퍼가 필요하면 `ApiResponse<T>`처럼 명시적 제네릭 래퍼만 사용한다
 - `Page<T>`를 직접 반환하기보다 `PageResponse<T>` 같은 DTO로 감싼다
+- 공개 응답 필드가 바뀌면 `example.response`와 `docs/api/` 산출물을 같이 갱신한다
 
 ## 비권장 패턴
 
@@ -223,5 +265,5 @@ PR에서는 다음 순서로 검증한다.
 
 ## 같이 읽으면 좋은 문서
 
-- [ADR-001 API 문서 자동화 방식 선택](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/docs/adr/001-api-doc-automation.md)
-- [API 문서 생성기 동작 가이드](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/docs/guides/api-doc-generator-flow.md)
+- [ADR-001 API 문서 자동화 방식 선택](../adr/001-api-doc-automation.md)
+- [API 문서 생성기 동작 가이드](./api-doc-generator-flow.md)

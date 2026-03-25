@@ -33,17 +33,17 @@ docs/api/ 전체 재생성
 ## 주요 코드 위치
 
 - 엔트리포인트
-  - [ApiDocGenerator.java](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/src/main/java/kr/ac/knu/comit/docs/ApiDocGenerator.java)
+  - [ApiDocGenerator.java](../../src/main/java/kr/ac/knu/comit/global/docs/ApiDocGenerator.java)
 - 메타데이터 추출
-  - [ApiDocIntrospector.java](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/src/main/java/kr/ac/knu/comit/docs/ApiDocIntrospector.java)
+  - [ApiDocIntrospector.java](../../src/main/java/kr/ac/knu/comit/global/docs/ApiDocIntrospector.java)
 - 렌더링
-  - [ApiDocHtmlRenderer.java](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/src/main/java/kr/ac/knu/comit/docs/ApiDocHtmlRenderer.java)
+  - [ApiDocHtmlRenderer.java](../../src/main/java/kr/ac/knu/comit/global/docs/ApiDocHtmlRenderer.java)
 - 중간 모델
-  - [ApiDocModels.java](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/src/main/java/kr/ac/knu/comit/docs/ApiDocModels.java)
+  - [ApiDocModels.java](../../src/main/java/kr/ac/knu/comit/global/docs/ApiDocModels.java)
 
 ## 1. Gradle task 진입
 
-`build.gradle`의 `generateApiDocs` task가 `JavaExec`로 생성기를 실행한다.
+`build.gradle`의 `generateApiDocs` task가 `JavaExec`로 `kr.ac.knu.comit.global.docs.ApiDocGenerator`를 실행한다.
 
 입력값
 
@@ -55,6 +55,12 @@ docs/api/ 전체 재생성
 - `docs/api/index.html`
 - `docs/api/index.js`
 - `docs/api/**/<ControllerApi>.html`
+
+배포값
+
+- `main` 브랜치 push 시 GitHub Pages workflow가 `docs/api`를 정적 사이트로 배포한다.
+- Pages가 활성화되어 있으면 기본 진입점은 `https://<org>.github.io/<repo>/` 이다.
+- artifact 루트가 `docs/api`라서 별도 `/docs/api/index.html`을 붙이지 않아도 된다.
 
 ## 2. 계약 인터페이스 스캔
 
@@ -79,7 +85,7 @@ docs/api/ 전체 재생성
 ### 3-1. 문서 어노테이션 확인
 
 - `@ApiDoc`가 없으면 실패
-- summary, descriptions, example을 읽는다
+- summary, descriptions, errors, example을 읽는다
 
 ### 3-2. HTTP method와 path 추출
 
@@ -131,6 +137,23 @@ docs/api/ 전체 재생성
 
 언랩 후의 최종 타입을 기준으로 response body field를 만든다.
 
+### 3-5. 에러 정보 추출
+
+현재 지원 범위
+
+- `@ApiDoc.errors`
+- `@AuthenticatedMember` 기반 `UNAUTHORIZED` 자동 포함
+- `@Valid` 또는 validation 제약 기반 `INVALID_REQUEST` 자동 포함
+
+에러 코드는 계약 인터페이스에 직접 적는다.
+
+이렇게 둔 이유
+
+- service 내부의 `throw new BusinessException(...)`를 정적으로 따라가면 쉽게 깨진다
+- 에러 목록은 구현 세부보다 API 계약에 가까운 정보다
+- 인증 실패처럼 공통 패턴만 자동화하고, 나머지는 계약에서 명시하는 편이 안정적이다
+- validation 실패는 입력 경계에서 공통적으로 발생하므로 자동 포함하는 편이 문서 품질이 높다
+
 ## 4. 필드 추출 규칙
 
 DTO 필드는 리플렉션으로 읽는다.
@@ -180,8 +203,11 @@ required 판단 규칙
 - 쿼리 파라미터
 - 요청 바디 필드
 - 응답 바디 필드
+- 에러 응답 필드
+- 에러 코드
 - 요청 예시
 - 응답 예시
+- 에러 예시
 
 빈 섹션은 출력하지 않는다.  
 즉 GET API에 body가 없으면 `요청 바디 필드` 섹션 자체가 나오지 않는다.
@@ -197,7 +223,28 @@ required 판단 규칙
 
 이 규칙 덕분에 같은 입력에서 같은 HTML/JS가 나와 `git diff`가 안정적으로 유지된다.
 
-## 8. 현재 지원 범위
+## 8. GitHub Pages 배포
+
+API 문서는 저장소 안에 커밋될 뿐 아니라 `main` 브랜치 기준으로 GitHub Pages에도 배포된다.
+
+배포 워크플로
+
+- [deploy-api-docs-pages.yml](../../.github/workflows/deploy-api-docs-pages.yml)
+
+동작 순서
+
+1. `main` 브랜치에 push
+2. workflow가 `./gradlew generateApiDocs` 실행
+3. `docs/api`를 Pages artifact로 업로드
+4. GitHub Pages가 정적 사이트로 배포
+
+주의할 점
+
+- 저장소 Settings > Pages 에서 source를 `GitHub Actions`로 한 번 설정해야 한다.
+- Pages는 workflow 안에서 다시 문서를 생성하므로, 로컬 커밋본과 CI 생성 결과가 달라지지 않게 `validate-api-docs.yml` 검증을 계속 통과해야 한다.
+- 공개 URL 루트는 `docs/api/index.html`이 아니라 Pages 사이트 루트다.
+
+## 9. 현재 지원 범위
 
 ### 자동 지원
 
@@ -206,16 +253,20 @@ required 판단 규칙
 - `@PathVariable`
 - `@RequestParam`
 - `@RequestBody`
+- `@ApiError`
 - `ResponseEntity<T>`
 - `ApiResponse<T>`
 - DTO 필드
 - Bean Validation required 추론
+- `@AuthenticatedMember` 기반 `UNAUTHORIZED` 자동 포함
 
 ### 제한적으로 지원
 
 - 중첩 DTO 예시 자동 생성
 - 컬렉션 타입 예시 자동 생성
 - `Map<K, V>` 예시 자동 생성
+- 비즈니스 에러 예시 자동 생성
+- ProblemDetail 에러 예시 자동 생성
 
 ### 비권장 또는 미지원
 
@@ -228,7 +279,7 @@ required 판단 규칙
 
 이 타입들은 "문서는 생성돼도 정확한 스키마를 보장하지 못할 수 있다".
 
-## 9. 지원 범위를 늘릴 때 어디를 고치나
+## 10. 지원 범위를 늘릴 때 어디를 고치나
 
 ### 새 요청 어노테이션 지원 예: `@RequestHeader`
 
@@ -252,6 +303,19 @@ required 판단 규칙
    - 언랩 대상에 `CommonResponse.class` 추가
 2. generator test
    - 언랩 결과가 필드 표에 반영되는지 검증
+
+### 에러 코드 문서화 규칙을 바꾸고 싶을 때
+
+수정 포인트
+
+1. `ApiDoc.java`
+   - 계약 인터페이스에서 어떤 형태로 에러를 받는지 정의
+2. `ApiDocIntrospector.java`
+   - 자동 포함할 공통 에러와 명시 선언 에러를 합치는 로직 수정
+3. `ApiDocHtmlRenderer.java`
+   - 에러 응답 필드, 에러 코드, 에러 예시 렌더링 수정
+4. generator test
+   - HTML에 에러 섹션이 기대대로 나오는지 검증
 
 ### `Page<T>` 지원을 넣고 싶을 때
 
@@ -295,5 +359,5 @@ required 판단 규칙
 
 ## 같이 보면 좋은 문서
 
-- [API Contract 사용 가이드](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/docs/guides/api-contract.md)
-- [ADR-001 API 문서 자동화 방식 선택](/Users/bohyeong/IdeaProjects/knu-cse-comit-server/docs/adr/001-api-doc-automation.md)
+- [API Contract 사용 가이드](./api-contract.md)
+- [ADR-001 API 문서 자동화 방식 선택](../adr/001-api-doc-automation.md)

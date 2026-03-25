@@ -26,3 +26,4 @@ Architecture Decision Records. 기술적으로 중요한 결정을 내렸을 때
 | 번호 | 제목 | 상태 |
 |---|---|---|
 | ADR-001 | API 문서 자동화 방식 선택 | 채택 |
+| ADR-002 | ProblemDetail 기반 에러 응답 표준 채택 | 채택 |

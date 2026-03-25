@@ -2,7 +2,7 @@
 
 ## 브랜치 전략
 
-```
+```text
 main          ← 배포 브랜치
 └── feat/#이슈번호     ← 기능 개발
 └── fix/#이슈번호      ← 버그 수정
@@ -20,7 +20,7 @@ main          ← 배포 브랜치
 
 Conventional Commits 형식 준수.
 
-```
+```text
 <type>: <subject>
 
 [optional body]
@@ -39,14 +39,14 @@ Conventional Commits 형식 준수.
 
 ### 예시
 
-```
+```text
 feat: 결제 승인 API 구현
 
 POST /v1/payments/confirm 엔드포인트 추가.
 PaymentController, PaymentService, PaymentRepository 포함.
 ```
 
-```
+```text
 docs: API 문서 재생성
 
 PaymentControllerApi 변경에 따른 docs/api 업데이트.
