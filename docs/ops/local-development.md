@@ -44,7 +44,8 @@ docker compose -f compose.local.yml down
 
 ## 인증 방식
 
-실제 KNU CSE SSO starter 연동 전까지는 [MemberAuthenticationFilter.java](../../src/main/java/kr/ac/knu/comit/global/auth/MemberAuthenticationFilter.java)가 `local` 프로필에서만 요청 헤더를 읽어 임시 인증 컨텍스트를 만든다.
+실제 KNU CSE SSO starter 연동 전까지는 [MemberAuthenticationFilter.java](../../src/main/java/kr/ac/knu/comit/global/auth/MemberAuthenticationFilter.java)가 `comit.auth.bridge.enabled=true` 일 때 요청 헤더를 읽어 임시 인증 컨텍스트를 만든다.
+로컬 실행에서는 `application-local.yml`이 이 값을 기본으로 활성화한다.
 
 현재 사용하는 헤더
 
@@ -83,6 +84,6 @@ curl -X PATCH 'http://localhost:53080/members/me' \
 
 ## 주의사항
 
-- 이 인증 방식은 로컬 개발용 임시 브리지다.
+- 이 인증 방식은 로컬 및 닫힌 staging 검증용 임시 브리지다.
 - 실제 인증 구조로 바뀌면 header 기반 설명은 제거하고 SSO starter 기준 문서로 교체해야 한다.
 - 로컬 DB 스키마는 Flyway migration으로 자동 반영된다.

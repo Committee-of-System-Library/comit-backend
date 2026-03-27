@@ -4,6 +4,9 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
+def enableSsoStarter = ((findProperty('enableSsoStarter') ?: System.getenv('ENABLE_SSO_STARTER') ?: 'false') as String)
+        .toBoolean()
+
 group = 'kr.ac.knu'
 version = '0.0.1-SNAPSHOT'
 description = 'comit'
@@ -20,6 +23,13 @@ tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/Committee-of-System-Library/knu-cse-sso-spring-boot-starter")
+        credentials {
+            username = findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+            password = findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
 }
 
 dependencies {
@@ -40,9 +50,10 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 
     // mysql
-    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
     implementation 'org.flywaydb:flyway-mysql'
     runtimeOnly 'com.mysql:mysql-connector-j'
+    implementation 'com.nimbusds:nimbus-jose-jwt:9.39.3'
 
     // Testcontainers
     testImplementation 'org.springframework.boot:spring-boot-testcontainers:4.0.4'
@@ -50,6 +61,11 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
     testImplementation 'org.testcontainers:mysql:1.20.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    if (enableSsoStarter) {
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'kr.ac.knu.cse:knu-cse-sso-spring-boot-starter:1.0.0'
+    }
 }
 
 tasks.named('test') {
