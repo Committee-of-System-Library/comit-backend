@@ -8,12 +8,12 @@ import java.io.IOException;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
-@Profile("local")
+@ConditionalOnProperty(prefix = "comit.auth.bridge", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class MemberAuthenticationFilter extends OncePerRequestFilter {
 
@@ -32,6 +32,11 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
+        if (request.getAttribute(MemberArgumentResolver.PRINCIPAL_ATTRIBUTE) instanceof MemberPrincipal) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String ssoSub = trimToNull(request.getHeader(SUB_HEADER));
         if (ssoSub == null) {
             filterChain.doFilter(request, response);

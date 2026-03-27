@@ -186,6 +186,13 @@ public interface PaymentControllerApi {
 @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다.")
 ```
 
+## 인증 redirect 계약
+
+- `@ApiContract` 인터페이스는 JSON 응답만 아니라 redirect 기반 엔드포인트도 기술할 수 있다.
+- 이번 `Comit` SSO 연동처럼 `login -> callback -> cookie 발급` 흐름은 `ResponseEntity<Void>` 와 `Location`, `Set-Cookie` 설명으로 문서화한다.
+- HttpOnly 인증 cookie를 발급하는 엔드포인트는 body 대신 `descriptions`에 redirect 목적과 cookie 의미를 적는다.
+- callback 검증 실패는 일반 에러 응답처럼 `ProblemDetail` 로 설명한다.
+
 ## 문서 생성 방법
 
 ```bash

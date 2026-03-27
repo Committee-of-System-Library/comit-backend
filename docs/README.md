@@ -10,6 +10,8 @@
 - [Java 주석 규칙](./guides/java-comment-convention.md)
 - [테스트 전략 가이드](./guides/testing-strategy.md)
 - [로컬 실행 가이드](./ops/local-development.md)
+- [Comit prod-like 백엔드 롤아웃 계획](./ops/comit-prod-like-backend-rollout.md)
+- [Comit SSO 연동 롤아웃 계획](./ops/comit-sso-integration-rollout.md)
 - [ADR-002 ProblemDetail 기반 에러 응답 표준 채택](./adr/002-problem-detail-error-response.md)
 
 ## 디렉토리 구조

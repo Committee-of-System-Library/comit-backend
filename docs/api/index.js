@@ -1,5 +1,12 @@
 window.API_DOCS = [
 {
+  title: "SsoAuthControllerApi",
+  summary: "auth-server가 전달한 custom JWT와 state를 검증한 뒤, SSO 토큰 쿠키를 심고 프론트 성공 URL로 리다이렉트합니다.",
+  href: "./auth/SsoAuthControllerApi.html",
+  endpointCount: 3,
+  sectionPath: "auth"
+},
+{
   title: "CommentControllerApi",
   summary: "게시글에 새 댓글 또는 대댓글을 작성합니다. parentCommentId가 없으면 일반 댓글, 있으면 해당 댓글의 대댓글로 생성됩니다.",
   href: "./comment/CommentControllerApi.html",
