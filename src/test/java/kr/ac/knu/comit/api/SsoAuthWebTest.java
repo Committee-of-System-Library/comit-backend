@@ -57,6 +57,7 @@ import org.springframework.test.web.servlet.MvcResult;
         "comit.auth.sso.issuer=https://chcse.knu.ac.kr/appfn/api",
         "comit.auth.sso.redirect-uri=https://chcse.knu.ac.kr/comit-staging/api/auth/sso/callback",
         "comit.auth.sso.frontend-success-url=https://chcse.knu.ac.kr/comit-staging",
+        "comit.auth.sso.frontend-error-url=https://chcse.knu.ac.kr/comit-staging/sso-error",
         "comit.auth.sso.token-cookie-name=COMIT_SSO_TOKEN",
         "comit.auth.sso.state-cookie-name=COMIT_SSO_STATE",
         "comit.auth.sso.state-ttl-seconds=300",
@@ -151,6 +152,38 @@ class SsoAuthWebTest {
     }
 
     @Test
+    @DisplayName("외부 SSO 사용자는 callback에서 에러 페이지로 리다이렉트한다")
+    void redirectsExternalUserToFrontendErrorUrl() throws Exception {
+        // given
+        // EXTERNAL 사용자로 판정되는 SSO identity를 준비한다.
+        given(externalAuthClient.verify(any())).willReturn(new ExternalIdentity(
+                "external-sub",
+                "external-user",
+                "external-user@knu.ac.kr",
+                "2023012780",
+                "EXTERNAL",
+                null
+        ));
+
+        // when
+        // callback 엔드포인트를 EXTERNAL 사용자로 호출한다.
+        MvcResult result = mockMvc.perform(get("/auth/sso/callback")
+                        .param("state", "state-123")
+                        .param("token", "token-123")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123")))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("https://chcse.knu.ac.kr/comit-staging/sso-error?reason=EXTERNAL_USER_NOT_ALLOWED"))
+                .andReturn();
+
+        // then
+        // state cookie만 제거되고 token cookie는 발급되지 않아야 한다.
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .noneSatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN="));
+    }
+
+    @Test
     @DisplayName("유효한 SSO token cookie가 있으면 기존 인증 API가 그대로 동작한다")
     void authenticatesMemberEndpointUsingSsoTokenCookie() throws Exception {
         // given
@@ -168,6 +201,26 @@ class SsoAuthWebTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.nickname").value("comit-user"))
                 .andExpect(jsonPath("$.data.studentNumber").value("2023012780"));
+    }
+
+    @Test
+    @DisplayName("잘못된 SSO token cookie는 제거하고 익명으로 처리한다")
+    void clearsBadSsoCookieAndKeepsRequestAnonymous() throws Exception {
+        // given
+        // 검증 단계에서 실패하는 토큰을 준비한다.
+        given(externalAuthClient.verify(any())).willThrow(new RuntimeException("invalid token"));
+
+        // when
+        // 인증이 필요한 기존 member endpoint를 잘못된 cookie와 함께 호출한다.
+        MvcResult result = mockMvc.perform(get("/members/me")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "bad-token")))
+                .andExpect(status().isUnauthorized())
+                .andReturn();
+
+        // then
+        // bad cookie는 제거되고 요청은 익명으로 계속 처리되어야 한다.
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
     }
 
     @Test

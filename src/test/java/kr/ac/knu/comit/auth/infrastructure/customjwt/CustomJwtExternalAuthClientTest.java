@@ -61,9 +61,11 @@ class CustomJwtExternalAuthClientTest {
 
     private ComitSsoProperties properties() {
         ComitSsoProperties properties = new ComitSsoProperties();
+        properties.setAuthServerBaseUrl("https://chcse.knu.ac.kr/appfn/api");
         properties.setClientId(CLIENT_ID);
         properties.setClientSecret(CLIENT_SECRET);
         properties.setIssuer(ISSUER);
+        properties.setRedirectUri("https://chcse.knu.ac.kr/comit/api/auth/sso/callback");
         return properties;
     }
 

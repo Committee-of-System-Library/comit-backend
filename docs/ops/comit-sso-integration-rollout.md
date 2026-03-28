@@ -142,9 +142,12 @@
 - `comit.auth.sso.issuer`
 - `comit.auth.sso.redirect-uri`
 - `comit.auth.sso.frontend-success-url`
-- `comit.auth.sso.cookie.secure`
-- `comit.auth.sso.cookie.same-site`
-- `comit.auth.sso.cookie.max-age-seconds`
+- `comit.auth.sso.frontend-error-url`
+- `comit.auth.sso.cookie-path`
+- `comit.auth.sso.cookie-secure`
+- `comit.auth.sso.cookie-same-site`
+- `comit.auth.sso.state-ttl-seconds`
+- `comit.auth.sso.token-max-age-seconds`
 
 ### 위험 포인트
 

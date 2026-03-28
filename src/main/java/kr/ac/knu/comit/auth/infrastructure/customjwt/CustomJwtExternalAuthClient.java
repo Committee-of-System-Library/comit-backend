@@ -11,6 +11,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import jakarta.annotation.PostConstruct;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
@@ -26,6 +27,13 @@ public class CustomJwtExternalAuthClient implements ExternalAuthClient {
 
     private final ComitSsoProperties ssoProperties;
 
+    @PostConstruct
+    void validateStartupConfiguration() {
+        if (ssoProperties.isEnabled()) {
+            validateRequiredProperties();
+        }
+    }
+
     @Override
     public String buildLoginRedirectUrl(String state) {
         validateRequiredProperties();
@@ -39,7 +47,13 @@ public class CustomJwtExternalAuthClient implements ExternalAuthClient {
 
     @Override
     public ExternalIdentity verify(String token) {
+        validateRequiredProperties();
+
         try {
+            if (isBlank(token)) {
+                throw new BusinessException(CommonErrorCode.UNAUTHORIZED);
+            }
+
             SignedJWT signedJwt = SignedJWT.parse(token);
             if (!JWSAlgorithm.HS256.equals(signedJwt.getHeader().getAlgorithm())) {
                 throw new BusinessException(CommonErrorCode.UNAUTHORIZED);
@@ -69,7 +83,8 @@ public class CustomJwtExternalAuthClient implements ExternalAuthClient {
     }
 
     private void validateRequiredProperties() {
-        if (isBlank(ssoProperties.getClientId())
+        if (isBlank(ssoProperties.getAuthServerBaseUrl())
+                || isBlank(ssoProperties.getClientId())
                 || isBlank(ssoProperties.getClientSecret())
                 || isBlank(ssoProperties.getRedirectUri())
                 || isBlank(ssoProperties.getIssuer())) {

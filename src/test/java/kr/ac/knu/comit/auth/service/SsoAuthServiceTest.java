@@ -44,6 +44,7 @@ class SsoAuthServiceTest {
                     MemberPrincipal.UserType.CSE_STUDENT, MemberPrincipal.MemberRole.STUDENT);
 
             given(ssoProperties.getFrontendSuccessUrl()).willReturn("https://comit.knu.ac.kr/home");
+            given(ssoProperties.getFrontendErrorUrl()).willReturn("https://comit.knu.ac.kr/error");
             given(externalAuthClient.verify("valid-token")).willReturn(identity);
             given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal);
             given(authCookieManager.createTokenCookie("valid-token")).willReturn("Set-Cookie: token=abc");
@@ -87,6 +88,7 @@ class SsoAuthServiceTest {
         void throwsWhenStateDoesNotMatch() {
             // given
             given(ssoProperties.getFrontendSuccessUrl()).willReturn("https://comit.knu.ac.kr/home");
+            given(ssoProperties.getFrontendErrorUrl()).willReturn("https://comit.knu.ac.kr/error");
 
             // when & then
             assertThatThrownBy(() -> ssoAuthService.handleCallback("state-1", "token", "wrong-state"))

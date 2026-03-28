@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.springframework.http.HttpHeaders;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.auth.service.AuthCookieManager;
@@ -46,14 +47,18 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        ExternalIdentity identity = externalAuthClient.verify(token);
-        MemberPrincipal provisionalPrincipal = externalIdentityMapper.toPrincipal(identity);
+        try {
+            ExternalIdentity identity = externalAuthClient.verify(token);
+            MemberPrincipal provisionalPrincipal = externalIdentityMapper.toPrincipal(identity);
 
-        Member member = memberService.findOrCreateBySso(provisionalPrincipal);
-        request.setAttribute(
-                MemberArgumentResolver.PRINCIPAL_ATTRIBUTE,
-                externalIdentityMapper.toPrincipal(member.getId(), identity)
-        );
+            Member member = memberService.findOrCreateBySso(provisionalPrincipal);
+            request.setAttribute(
+                    MemberArgumentResolver.PRINCIPAL_ATTRIBUTE,
+                    externalIdentityMapper.toPrincipal(member.getId(), identity)
+            );
+        } catch (Exception exception) {
+            response.addHeader(HttpHeaders.SET_COOKIE, authCookieManager.clearAuthenticationCookie());
+        }
 
         filterChain.doFilter(request, response);
     }

@@ -14,6 +14,7 @@ import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @Transactional(readOnly = true)
@@ -26,7 +27,7 @@ public class SsoAuthService {
     private final ExternalIdentityMapper externalIdentityMapper;
 
     public SsoLoginStart startLogin() {
-        validateFrontendSuccessUrl();
+        validateFrontendUrls();
 
         String state = UUID.randomUUID().toString();
         String loginUrl = externalAuthClient.buildLoginRedirectUrl(state);
@@ -35,7 +36,7 @@ public class SsoAuthService {
     }
 
     public SsoCallbackResult handleCallback(String state, String token, String storedState) {
-        validateFrontendSuccessUrl();
+        validateFrontendUrls();
         validateState(state, storedState);
 
         ExternalIdentity identity = externalAuthClient.verify(token);
@@ -43,7 +44,7 @@ public class SsoAuthService {
 
         if (principal.userType() == MemberPrincipal.UserType.EXTERNAL) {
             return new SsoCallbackRejected(
-                    ssoProperties.getFrontendErrorUrl() + "?reason=EXTERNAL_USER_NOT_ALLOWED",
+                    buildFrontendErrorRedirectUrl("EXTERNAL_USER_NOT_ALLOWED"),
                     authCookieManager.clearStateCookie()
             );
         }
@@ -67,6 +68,30 @@ public class SsoAuthService {
 
     private void validateFrontendSuccessUrl() {
         if (isBlank(ssoProperties.getFrontendSuccessUrl())) {
+            throw new BusinessException("SSO 설정이 올바르지 않습니다.", CommonErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void validateFrontendErrorUrl() {
+        if (isBlank(ssoProperties.getFrontendErrorUrl())) {
+            throw new BusinessException("SSO 설정이 올바르지 않습니다.", CommonErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void validateFrontendUrls() {
+        validateFrontendSuccessUrl();
+        validateFrontendErrorUrl();
+    }
+
+    private String buildFrontendErrorRedirectUrl(String reason) {
+        validateFrontendErrorUrl();
+
+        try {
+            return UriComponentsBuilder.fromUriString(ssoProperties.getFrontendErrorUrl())
+                    .queryParam("reason", reason)
+                    .build(true)
+                    .toUriString();
+        } catch (IllegalArgumentException exception) {
             throw new BusinessException("SSO 설정이 올바르지 않습니다.", CommonErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
