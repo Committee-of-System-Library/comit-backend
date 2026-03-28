@@ -1,9 +1,9 @@
 package kr.ac.knu.comit.auth.controller;
 
 import kr.ac.knu.comit.auth.controller.api.SsoAuthControllerApi;
-import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.dto.SsoCallbackSuccess;
 import kr.ac.knu.comit.auth.dto.SsoLoginStart;
+import kr.ac.knu.comit.auth.service.AuthCookieManager;
 import kr.ac.knu.comit.auth.service.SsoAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -19,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class SsoAuthController implements SsoAuthControllerApi {
 
     private final SsoAuthService ssoAuthService;
-    private final ComitSsoProperties ssoProperties;
+    private final AuthCookieManager authCookieManager;
 
     @Override
     public ResponseEntity<Void> startLogin() {
@@ -32,7 +31,7 @@ public class SsoAuthController implements SsoAuthControllerApi {
 
     @Override
     public ResponseEntity<Void> handleCallback(String state, String token, HttpServletRequest request) {
-        SsoCallbackSuccess callbackSuccess = ssoAuthService.handleCallback(state, token, stateCookieValue(request));
+        SsoCallbackSuccess callbackSuccess = ssoAuthService.handleCallback(state, token, authCookieManager.resolveStateCookie(request));
         return ResponseEntity.status(HttpStatus.FOUND)
                 .header(HttpHeaders.SET_COOKIE, callbackSuccess.tokenCookieHeader())
                 .header(HttpHeaders.SET_COOKIE, callbackSuccess.clearStateCookieHeader())
@@ -45,18 +44,5 @@ public class SsoAuthController implements SsoAuthControllerApi {
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, ssoAuthService.clearAuthenticationCookie())
                 .build();
-    }
-
-    private String stateCookieValue(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            return null;
-        }
-        for (Cookie cookie : cookies) {
-            if (ssoProperties.getStateCookieName().equals(cookie.getName())) {
-                return cookie.getValue();
-            }
-        }
-        return null;
     }
 }

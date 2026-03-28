@@ -2,13 +2,13 @@ package kr.ac.knu.comit.global.auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import kr.ac.knu.comit.auth.config.ComitSsoProperties;
-import kr.ac.knu.comit.auth.dto.SsoClaims;
-import kr.ac.knu.comit.auth.service.SsoTokenVerifier;
+import kr.ac.knu.comit.auth.port.ExternalAuthClient;
+import kr.ac.knu.comit.auth.port.ExternalIdentity;
+import kr.ac.knu.comit.auth.service.AuthCookieManager;
+import kr.ac.knu.comit.auth.service.ExternalIdentityMapper;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
-    private final ComitSsoProperties ssoProperties;
-    private final SsoTokenVerifier ssoTokenVerifier;
+    private final AuthCookieManager authCookieManager;
+    private final ExternalAuthClient externalAuthClient;
+    private final ExternalIdentityMapper externalIdentityMapper;
     private final MemberService memberService;
 
     @Override
@@ -39,35 +40,19 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = readTokenCookie(request);
+        String token = authCookieManager.resolveTokenCookie(request);
         if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        SsoClaims claims = ssoTokenVerifier.verify(token);
-        MemberPrincipal provisionalPrincipal = new MemberPrincipal(
-                null,
-                claims.subject(),
-                claims.name(),
-                claims.email(),
-                claims.studentNumber(),
-                claims.userType(),
-                claims.role()
-        );
+        ExternalIdentity identity = externalAuthClient.verify(token);
+        MemberPrincipal provisionalPrincipal = externalIdentityMapper.toPrincipal(identity);
 
         Member member = memberService.findOrCreateBySso(provisionalPrincipal);
         request.setAttribute(
                 MemberArgumentResolver.PRINCIPAL_ATTRIBUTE,
-                new MemberPrincipal(
-                        member.getId(),
-                        member.getSsoSub(),
-                        provisionalPrincipal.name(),
-                        provisionalPrincipal.email(),
-                        provisionalPrincipal.studentNumber(),
-                        provisionalPrincipal.userType(),
-                        provisionalPrincipal.role()
-                )
+                externalIdentityMapper.toPrincipal(member.getId(), identity)
         );
 
         filterChain.doFilter(request, response);
@@ -76,18 +61,5 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         return request.getRequestURI().startsWith("/auth/sso");
-    }
-
-    private String readTokenCookie(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            return null;
-        }
-        for (Cookie cookie : cookies) {
-            if (ssoProperties.getTokenCookieName().equals(cookie.getName())) {
-                return cookie.getValue();
-            }
-        }
-        return null;
     }
 }

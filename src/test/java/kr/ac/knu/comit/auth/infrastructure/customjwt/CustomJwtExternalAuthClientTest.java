@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.auth.service;
+package kr.ac.knu.comit.auth.infrastructure.customjwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -12,23 +12,22 @@ import com.nimbusds.jwt.SignedJWT;
 import java.time.Instant;
 import java.util.Date;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
-import kr.ac.knu.comit.auth.dto.SsoClaims;
-import kr.ac.knu.comit.global.auth.MemberPrincipal;
+import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("SsoTokenVerifier")
-class SsoTokenVerifierTest {
+@DisplayName("CustomJwtExternalAuthClient")
+class CustomJwtExternalAuthClientTest {
 
     private static final String CLIENT_ID = "cse-a1b2c3d4";
     private static final String CLIENT_SECRET = "01234567890123456789012345678901";
     private static final String ISSUER = "https://chcse.knu.ac.kr/appfn/api";
 
-    private final SsoTokenVerifier ssoTokenVerifier = new SsoTokenVerifier(properties());
+    private final CustomJwtExternalAuthClient externalAuthClient = new CustomJwtExternalAuthClient(properties());
 
     @Test
-    @DisplayName("유효한 custom JWT면 Comit이 사용할 SSO claim으로 변환한다")
+    @DisplayName("유효한 custom JWT면 Comit이 사용할 외부 사용자 모델로 변환한다")
     void returnsClaimsWhenTokenIsValid() throws Exception {
         // given
         // auth-server가 발급한 형식의 유효한 custom JWT를 준비한다.
@@ -36,14 +35,14 @@ class SsoTokenVerifierTest {
 
         // when
         // JWT를 검증하고 Comit 내부 claim 형태로 변환한다.
-        SsoClaims claims = ssoTokenVerifier.verify(token);
+        ExternalIdentity identity = externalAuthClient.verify(token);
 
         // then
-        // sub, userType, role이 MemberPrincipal 규칙에 맞게 매핑되어야 한다.
-        assertThat(claims.subject()).isEqualTo("7");
-        assertThat(claims.email()).isEqualTo("hong@knu.ac.kr");
-        assertThat(claims.userType()).isEqualTo(MemberPrincipal.UserType.CSE_STUDENT);
-        assertThat(claims.role()).isEqualTo(MemberPrincipal.MemberRole.ADMIN);
+        // ssoSub, userType, role이 외부 사용자 모델 규칙에 맞게 매핑되어야 한다.
+        assertThat(identity.ssoSub()).isEqualTo("7");
+        assertThat(identity.email()).isEqualTo("hong@knu.ac.kr");
+        assertThat(identity.userType()).isEqualTo("CSE_STUDENT");
+        assertThat(identity.role()).isEqualTo("ADMIN");
     }
 
     @Test
@@ -55,7 +54,7 @@ class SsoTokenVerifierTest {
 
         // when & then
         // Comit에 발급된 토큰이 아니면 인증에 실패해야 한다.
-        assertThatThrownBy(() -> ssoTokenVerifier.verify(token))
+        assertThatThrownBy(() -> externalAuthClient.verify(token))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("인증이 필요합니다.");
     }

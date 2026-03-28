@@ -10,18 +10,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-import java.time.Instant;
-import java.util.Date;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.controller.SsoAuthController;
+import kr.ac.knu.comit.auth.service.AuthCookieManager;
+import kr.ac.knu.comit.auth.port.ExternalAuthClient;
+import kr.ac.knu.comit.auth.port.ExternalIdentity;
+import kr.ac.knu.comit.auth.service.ExternalIdentityMapper;
 import kr.ac.knu.comit.auth.service.SsoAuthService;
-import kr.ac.knu.comit.auth.service.SsoTokenVerifier;
 import kr.ac.knu.comit.global.auth.MemberArgumentResolver;
 import kr.ac.knu.comit.global.auth.SsoAuthenticationFilter;
 import kr.ac.knu.comit.global.config.WebMvcConfig;
@@ -48,8 +43,9 @@ import org.springframework.test.web.servlet.MvcResult;
         MemberArgumentResolver.class,
         GlobalExceptionHandler.class,
         ComitSsoProperties.class,
+        AuthCookieManager.class,
+        ExternalIdentityMapper.class,
         SsoAuthService.class,
-        SsoTokenVerifier.class,
         SsoAuthenticationFilter.class
 })
 @TestPropertySource(properties = {
@@ -72,16 +68,19 @@ import org.springframework.test.web.servlet.MvcResult;
 @DisplayName("SsoAuthWeb")
 class SsoAuthWebTest {
 
-    private static final String CLIENT_SECRET = "01234567890123456789012345678901";
-
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private ExternalAuthClient externalAuthClient;
 
     @MockitoBean
     private MemberService memberService;
 
     @BeforeEach
     void setUp() {
+        given(externalAuthClient.buildLoginRedirectUrl(any())).willReturn("https://chcse.knu.ac.kr/appfn/api/login?state=state-123");
+        given(externalAuthClient.verify(any())).willReturn(externalIdentity());
         given(memberService.findOrCreateBySso(any())).willReturn(authenticatedMember());
         given(memberService.getMyProfile(1L))
                 .willReturn(new MemberProfileResponse(1L, "comit-user", "2023012780", true));
@@ -111,7 +110,7 @@ class SsoAuthWebTest {
     void setsTokenCookieAndRedirectsWhenCallbackIsValid() throws Exception {
         // given
         // auth-server가 전달한 valid state와 custom JWT를 준비한다.
-        String token = signedToken();
+        String token = "token-123";
 
         // when
         // callback 엔드포인트가 state와 token을 처리한다.
@@ -136,7 +135,7 @@ class SsoAuthWebTest {
     void rejectsCallbackWhenStateDoesNotMatch() throws Exception {
         // given
         // state cookie와 callback state가 다른 요청을 준비한다.
-        String token = signedToken();
+        String token = "token-123";
 
         // when
         // callback 엔드포인트를 잘못된 state로 호출한다.
@@ -156,7 +155,7 @@ class SsoAuthWebTest {
     void authenticatesMemberEndpointUsingSsoTokenCookie() throws Exception {
         // given
         // auth-server custom JWT가 cookie에 저장된 상태를 준비한다.
-        String token = signedToken();
+        String token = "token-123";
 
         // when
         // 인증이 필요한 기존 member endpoint를 호출한다.
@@ -195,23 +194,14 @@ class SsoAuthWebTest {
         return member;
     }
 
-    private String signedToken() throws JOSEException {
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("sso-sub-1")
-                .issuer("https://chcse.knu.ac.kr/appfn/api")
-                .audience("cse-a1b2c3d4")
-                .claim("student_number", "2023012780")
-                .claim("name", "comit-user")
-                .claim("email", "comit-user@knu.ac.kr")
-                .claim("major", "심화컴퓨팅 전공")
-                .claim("user_type", "CSE_STUDENT")
-                .claim("role", "STUDENT")
-                .issueTime(new Date())
-                .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-                .build();
-
-        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
-        signedJWT.sign(new MACSigner(CLIENT_SECRET));
-        return signedJWT.serialize();
+    private ExternalIdentity externalIdentity() {
+        return new ExternalIdentity(
+                "sso-sub-1",
+                "comit-user",
+                "comit-user@knu.ac.kr",
+                "2023012780",
+                "CSE_STUDENT",
+                "STUDENT"
+        );
     }
 }

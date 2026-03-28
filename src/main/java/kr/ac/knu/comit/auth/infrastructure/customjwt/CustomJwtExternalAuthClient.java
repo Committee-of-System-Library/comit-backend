@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.auth.service;
+package kr.ac.knu.comit.auth.infrastructure.customjwt;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -12,20 +12,33 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
-import kr.ac.knu.comit.auth.dto.SsoClaims;
-import kr.ac.knu.comit.global.auth.MemberPrincipal;
+import kr.ac.knu.comit.auth.port.ExternalAuthClient;
+import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
-public class SsoTokenVerifier {
+public class CustomJwtExternalAuthClient implements ExternalAuthClient {
 
     private final ComitSsoProperties ssoProperties;
 
-    public SsoClaims verify(String token) {
+    @Override
+    public String buildLoginRedirectUrl(String state) {
+        validateRequiredProperties();
+        return UriComponentsBuilder.fromUriString(normalizeBaseUrl(ssoProperties.getAuthServerBaseUrl()) + "/login")
+                .queryParam("client_id", ssoProperties.getClientId())
+                .queryParam("redirect_uri", ssoProperties.getRedirectUri())
+                .queryParam("state", state)
+                .build(true)
+                .toUriString();
+    }
+
+    @Override
+    public ExternalIdentity verify(String token) {
         try {
             SignedJWT signedJwt = SignedJWT.parse(token);
             if (!JWSAlgorithm.HS256.equals(signedJwt.getHeader().getAlgorithm())) {
@@ -42,16 +55,25 @@ public class SsoTokenVerifier {
             validateAudience(claimsSet.getAudience());
             validateExpiration(claimsSet.getExpirationTime());
 
-            return new SsoClaims(
+            return new ExternalIdentity(
                     requiredString(claimsSet.getSubject()),
                     requiredString(claimsSet.getStringClaim("name")),
                     requiredString(claimsSet.getStringClaim("email")),
                     claimsSet.getStringClaim("student_number"),
-                    parseUserType(claimsSet.getStringClaim("user_type")),
-                    parseRole(claimsSet.getStringClaim("role"))
+                    requiredString(claimsSet.getStringClaim("user_type")),
+                    claimsSet.getStringClaim("role")
             );
         } catch (ParseException | JOSEException exception) {
             throw new BusinessException(CommonErrorCode.UNAUTHORIZED);
+        }
+    }
+
+    private void validateRequiredProperties() {
+        if (isBlank(ssoProperties.getClientId())
+                || isBlank(ssoProperties.getClientSecret())
+                || isBlank(ssoProperties.getRedirectUri())
+                || isBlank(ssoProperties.getIssuer())) {
+            throw new BusinessException("SSO 설정이 올바르지 않습니다.", CommonErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -80,20 +102,14 @@ public class SsoTokenVerifier {
         return value;
     }
 
-    private MemberPrincipal.UserType parseUserType(String rawValue) {
-        try {
-            return MemberPrincipal.UserType.valueOf(requiredString(rawValue).toUpperCase());
-        } catch (IllegalArgumentException exception) {
-            throw new BusinessException(CommonErrorCode.UNAUTHORIZED);
+    private String normalizeBaseUrl(String baseUrl) {
+        if (isBlank(baseUrl)) {
+            throw new BusinessException("SSO 인증 서버 주소가 비어 있습니다.", CommonErrorCode.INTERNAL_SERVER_ERROR);
         }
+        return baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
     }
 
-    private MemberPrincipal.MemberRole parseRole(String rawValue) {
-        if (rawValue == null || rawValue.isBlank()) {
-            return MemberPrincipal.MemberRole.STUDENT;
-        }
-        return "ADMIN".equalsIgnoreCase(rawValue)
-                ? MemberPrincipal.MemberRole.ADMIN
-                : MemberPrincipal.MemberRole.STUDENT;
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }
