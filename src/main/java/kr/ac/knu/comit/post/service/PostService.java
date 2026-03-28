@@ -106,12 +106,15 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long memberId, boolean admin, Long postId) {
+    public void deletePost(Long memberId, Long postId) {
         Post post = findPostOrThrow(postId);
+        checkOwnership(post, memberId);
+        post.delete();
+    }
 
-        if (!post.isWrittenBy(memberId) && !admin) {
-            throw new BusinessException(CommonErrorCode.FORBIDDEN);
-        }
+    @Transactional
+    public void forceDeletePost(Long postId) {
+        Post post = findPostOrThrow(postId);
         post.delete();
     }
 

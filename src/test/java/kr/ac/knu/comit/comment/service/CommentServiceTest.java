@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import kr.ac.knu.comit.comment.dto.UpdateCommentRequest;
+import kr.ac.knu.comit.global.exception.CommonErrorCode;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -208,6 +211,46 @@ class CommentServiceTest {
     }
 
     @Nested
+    @DisplayName("updateComment")
+    class UpdateComment {
+
+        @Test
+        @DisplayName("작성자이면 댓글 내용을 수정한다")
+        void updatesCommentWhenCallerIsOwner() {
+            // given
+            // 작성자(1L)가 자신의 댓글을 수정하는 상황을 준비한다.
+            Post post = PostFixture.post(10L);
+            Comment comment = CommentFixture.topLevelComment(201L, post, MemberFixture.member(1L, "writer"), "기존 내용", 0);
+            given(commentRepository.findActiveById(201L)).willReturn(Optional.of(comment));
+
+            // when
+            // 댓글 수정을 실행한다.
+            commentService.updateComment(201L, 1L, new UpdateCommentRequest("수정된 내용"));
+
+            // then
+            // 댓글 내용이 새 값으로 바뀌어야 한다.
+            assertThat(comment.getContent()).isEqualTo("수정된 내용");
+        }
+
+        @Test
+        @DisplayName("작성자가 아니면 FORBIDDEN 예외를 던진다")
+        void throwsWhenCallerIsNotOwner() {
+            // given
+            // 타인(2L)이 작성자(1L)의 댓글을 수정하려는 상황을 준비한다.
+            Post post = PostFixture.post(10L);
+            Comment comment = CommentFixture.topLevelComment(201L, post, MemberFixture.member(1L, "writer"), "기존 내용", 0);
+            given(commentRepository.findActiveById(201L)).willReturn(Optional.of(comment));
+
+            // when & then
+            // 소유권 검사에서 FORBIDDEN 예외가 발생해야 한다.
+            assertThatThrownBy(() -> commentService.updateComment(201L, 2L, new UpdateCommentRequest("수정된 내용")))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(CommonErrorCode.FORBIDDEN);
+        }
+    }
+
+    @Nested
     @DisplayName("deleteComment")
     class DeleteComment {
 
@@ -233,6 +276,46 @@ class CommentServiceTest {
                     org.mockito.ArgumentMatchers.any(LocalDateTime.class)
             );
             assertThat(ReflectionTestUtils.getField(parent, "deletedAt")).isInstanceOf(LocalDateTime.class);
+        }
+
+        @Test
+        @DisplayName("대댓글을 삭제하면 softDeleteReplies를 호출하지 않는다")
+        void doesNotDeleteRepliesWhenDeletingReplyComment() {
+            // given
+            // 대댓글(reply)인 댓글을 준비한다.
+            Post post = PostFixture.post(10L);
+            Comment parent = CommentFixture.topLevelComment(201L, post, MemberFixture.member(2L, "parent"), "부모 댓글", 0);
+            Comment reply = CommentFixture.replyComment(202L, post, parent, MemberFixture.member(1L, "writer"), "대댓글", 0);
+            given(commentRepository.findActiveById(202L)).willReturn(Optional.of(reply));
+
+            // when
+            // 대댓글 삭제를 실행한다.
+            commentService.deleteComment(202L, 1L);
+
+            // then
+            // 대댓글은 자신만 삭제되고 softDeleteReplies는 호출되지 않아야 한다.
+            then(commentRepository).should(never()).softDeleteRepliesByParentCommentId(
+                    org.mockito.ArgumentMatchers.anyLong(),
+                    org.mockito.ArgumentMatchers.any(LocalDateTime.class)
+            );
+            assertThat(ReflectionTestUtils.getField(reply, "deletedAt")).isInstanceOf(LocalDateTime.class);
+        }
+
+        @Test
+        @DisplayName("작성자가 아니면 FORBIDDEN 예외를 던진다")
+        void throwsWhenCallerIsNotOwner() {
+            // given
+            // 타인(2L)이 작성자(1L)의 댓글을 삭제하려는 상황을 준비한다.
+            Post post = PostFixture.post(10L);
+            Comment comment = CommentFixture.topLevelComment(201L, post, MemberFixture.member(1L, "writer"), "댓글", 0);
+            given(commentRepository.findActiveById(201L)).willReturn(Optional.of(comment));
+
+            // when & then
+            // 소유권 검사에서 FORBIDDEN 예외가 발생해야 한다.
+            assertThatThrownBy(() -> commentService.deleteComment(201L, 2L))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(CommonErrorCode.FORBIDDEN);
         }
     }
 
