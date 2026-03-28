@@ -170,6 +170,8 @@ kr.ac.knu.comit/
 | `docs/ops/` | 배포·환경변수·운영 체크리스트·장애 대응 |
 | `docs/api/` | `generateApiDocs` 자동 생성 HTML 산출물 |
 
+새 기능 설계를 시작할 때는 `docs/features/feature-spec-template.md`를 우선 복사해 기능 명세를 작성한다.
+
 ---
 
 ## ADR 목록

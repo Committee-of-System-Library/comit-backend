@@ -21,26 +21,11 @@
   Comit의 타겟 사용자, 해결하려는 문제, MVP 범위와 우선순위 판단 기준
 - [comment-reply.md](./comment-reply.md)
   댓글·대댓글 2단계 스레드 구조, 도움이요 토글, 설계 결정 및 트레이드오프
+- [feature-spec-template.md](./feature-spec-template.md)
+  새 기능 설계를 시작할 때 복사해서 사용하는 기능 명세 템플릿
 
 ProblemDetail 에러 응답 설계는 기능 문서가 아니라 [ADR-002](../adr/002-problem-detail-error-response.md)로 관리한다.
 
 ## 템플릿
 
-```markdown
-# {기능명}
-
-## 개요
-한 줄 설명
-
-## 흐름
-1. ...
-2. ...
-
-## 예외 케이스
-| 상황 | 처리 방식 |
-|---|---|
-| ... | ... |
-
-## 관련 ADR
-- ADR-00X: ...
-```
+새 기능은 [feature-spec-template.md](./feature-spec-template.md)를 복사해 작성한다.
