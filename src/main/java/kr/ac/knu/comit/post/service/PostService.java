@@ -109,13 +109,16 @@ public class PostService {
     public void deletePost(Long memberId, Long postId) {
         Post post = findPostOrThrow(postId);
         checkOwnership(post, memberId);
-        post.delete();
+        deletePost(post);
     }
 
     @Transactional
-    public void forceDeletePost(Long postId) {
+    public void deletePost(Long memberId, Long postId, boolean admin) {
         Post post = findPostOrThrow(postId);
-        post.delete();
+        if (!admin) {
+            checkOwnership(post, memberId);
+        }
+        deletePost(post);
     }
 
     /**
@@ -157,5 +160,9 @@ public class PostService {
         if (!post.isWrittenBy(memberId)) {
             throw new BusinessException(CommonErrorCode.FORBIDDEN);
         }
+    }
+
+    private void deletePost(Post post) {
+        post.delete();
     }
 }

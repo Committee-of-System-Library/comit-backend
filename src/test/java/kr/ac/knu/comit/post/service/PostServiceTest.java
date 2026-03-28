@@ -276,26 +276,21 @@ class PostServiceTest {
                     .isEqualTo(CommonErrorCode.FORBIDDEN);
             assertThat(post.isDeleted()).isFalse();
         }
-    }
-
-    @Nested
-    @DisplayName("forceDeletePost")
-    class ForceDeletePost {
 
         @Test
         @DisplayName("관리자는 작성자와 무관하게 게시글을 삭제 상태로 변경한다")
-        void deletesPostRegardlessOfOwnership() {
+        void deletesPostWhenCallerIsAdmin() {
             // given
-            // 관리자가 타인(99L)의 게시글을 강제 삭제하는 상황을 준비한다.
+            // 관리자가 타인(99L)의 게시글을 삭제하는 상황을 준비한다.
             Post post = PostFixture.post(10L);
             given(postRepository.findActiveById(10L)).willReturn(Optional.of(post));
 
             // when
-            // 강제 삭제를 실행한다.
-            postService.forceDeletePost(10L);
+            // 관리자 경로로 게시글 삭제를 실행한다.
+            postService.deletePost(1L, 10L, true);
 
             // then
-            // 소유권 검사 없이 게시글이 삭제 상태여야 한다.
+            // 소유권 검증 없이 게시글이 삭제 상태여야 한다.
             assertThat(post.isDeleted()).isTrue();
         }
     }

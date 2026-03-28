@@ -58,11 +58,7 @@ public class PostController implements PostControllerApi {
     @Override
     public ResponseEntity<ApiResponse<Void>> deletePost(
             Long postId, MemberPrincipal principal) {
-        if (principal.isAdmin()) {
-            postService.forceDeletePost(postId);
-        } else {
-            postService.deletePost(principal.memberId(), postId);
-        }
+        postService.deletePost(principal.memberId(), postId, principal.isAdmin());
         return ResponseEntity.ok(ApiResponse.success());
     }
 

@@ -6,6 +6,7 @@ import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,15 +16,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberRegistrationService {
 
     private static final int MAX_NICKNAME_LENGTH = 15;
+    private static final int MAX_REGISTER_RETRY_ATTEMPTS = 3;
     private static final String FALLBACK_NICKNAME = "comit-user";
 
     private final MemberRepository memberRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Member register(MemberPrincipal principal) {
-        return memberRepository.saveAndFlush(
-                Member.create(principal.ssoSub(), resolveAvailableNickname(principal), principal.studentNumber())
-        );
+        for (int attempt = 0; attempt < MAX_REGISTER_RETRY_ATTEMPTS; attempt++) {
+            String nickname = resolveAvailableNickname(principal);
+            try {
+                return memberRepository.saveAndFlush(
+                        Member.create(principal.ssoSub(), nickname, principal.studentNumber())
+                );
+            } catch (DataIntegrityViolationException exception) {
+                if (!isNicknameCollision(exception)) {
+                    throw exception;
+                }
+            }
+        }
+
+        throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
     }
 
     private String resolveAvailableNickname(MemberPrincipal principal) {
@@ -100,5 +113,15 @@ public class MemberRegistrationService {
             return value;
         }
         return value.substring(0, maxLength);
+    }
+
+    private boolean isNicknameCollision(DataIntegrityViolationException exception) {
+        String message = exception.getMostSpecificCause() == null
+                ? exception.getMessage()
+                : exception.getMostSpecificCause().getMessage();
+
+        return message != null
+                && (message.contains("uk_member_nickname")
+                || message.contains("nickname"));
     }
 }
