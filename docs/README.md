@@ -5,6 +5,7 @@
 ## 먼저 볼 문서
 
 - [Comit CPS (왜 만드는지 / 누구를 위한 것인지)](./features/comit-cps.md)
+- [게시글·댓글 신고 기능 명세](./features/post-comment-report.md)
 - [API 계약 가이드](./guides/api-contract.md)
 - [API 문서 생성기 동작 가이드](./guides/api-doc-generator-flow.md)
 - [Feature Toggle 설계 가이드](./guides/feature-toggle.md)

@@ -6,6 +6,9 @@ import kr.ac.knu.comit.post.controller.api.PostControllerApi;
 import kr.ac.knu.comit.post.domain.BoardType;
 import kr.ac.knu.comit.post.dto.*;
 import kr.ac.knu.comit.post.service.PostService;
+import kr.ac.knu.comit.report.dto.CreateReportRequest;
+import kr.ac.knu.comit.report.dto.CreateReportResponse;
+import kr.ac.knu.comit.report.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController implements PostControllerApi {
 
     private final PostService postService;
+    private final ReportService reportService;
 
     @Override
     public ResponseEntity<ApiResponse<PostCursorPageResponse>> getPosts(
@@ -60,6 +64,13 @@ public class PostController implements PostControllerApi {
             postService.deletePost(principal.memberId(), postId);
         }
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<CreateReportResponse>> reportPost(
+            Long postId, CreateReportRequest request, MemberPrincipal principal) {
+        Long reportId = reportService.reportPost(postId, principal.memberId(), request.message());
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(CreateReportResponse.from(reportId)));
     }
 
     @Override

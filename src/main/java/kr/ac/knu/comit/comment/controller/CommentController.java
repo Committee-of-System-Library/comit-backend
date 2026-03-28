@@ -8,6 +8,9 @@ import kr.ac.knu.comit.comment.dto.UpdateCommentRequest;
 import kr.ac.knu.comit.comment.service.CommentService;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.ApiResponse;
+import kr.ac.knu.comit.report.dto.CreateReportRequest;
+import kr.ac.knu.comit.report.dto.CreateReportResponse;
+import kr.ac.knu.comit.report.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommentController implements CommentControllerApi {
 
     private final CommentService commentService;
+    private final ReportService reportService;
 
     @Override
     public ResponseEntity<ApiResponse<CommentListResponse>> getComments(Long postId, MemberPrincipal principal) {
@@ -48,6 +52,16 @@ public class CommentController implements CommentControllerApi {
     public ResponseEntity<ApiResponse<Void>> deleteComment(Long commentId, MemberPrincipal principal) {
         commentService.deleteComment(commentId, principal.memberId());
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<CreateReportResponse>> reportComment(
+            Long commentId,
+            CreateReportRequest request,
+            MemberPrincipal principal
+    ) {
+        Long reportId = reportService.reportComment(commentId, principal.memberId(), request.message());
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(CreateReportResponse.from(reportId)));
     }
 
     @Override

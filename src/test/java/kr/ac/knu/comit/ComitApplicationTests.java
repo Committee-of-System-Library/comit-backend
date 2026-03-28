@@ -5,6 +5,7 @@ import kr.ac.knu.comit.comment.service.CommentService;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import kr.ac.knu.comit.post.service.PostService;
+import kr.ac.knu.comit.report.service.ReportService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -37,6 +38,9 @@ class ComitApplicationTests {
 
     @MockitoBean
     CommentQueryService commentQueryService;
+
+    @MockitoBean
+    ReportService reportService;
 
     @Test
     void contextLoads() {

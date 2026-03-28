@@ -30,6 +30,7 @@ import kr.ac.knu.comit.post.dto.HotPostListResponse;
 import kr.ac.knu.comit.post.dto.HotPostResponse;
 import kr.ac.knu.comit.post.dto.PostDetailResponse;
 import kr.ac.knu.comit.post.service.PostService;
+import kr.ac.knu.comit.report.service.ReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,9 @@ class AuthenticatedApiWebTest {
 
     @MockitoBean
     private CommentService commentService;
+
+    @MockitoBean
+    private ReportService reportService;
 
     @BeforeEach
     void setUp() {
@@ -214,6 +218,50 @@ class AuthenticatedApiWebTest {
     }
 
     @Test
+    void mapsPostReportRequestUsingInterfaceAnnotationsAndAuthInjection() throws Exception {
+        // given
+        // 게시글 신고 서비스 응답을 준비한다.
+        given(reportService.reportPost(10L, 1L, "광고성 도배입니다")).willReturn(301L);
+
+        // when & then
+        // 신고 요청이 201 응답과 reportId로 직렬화되는지 확인한다.
+        mockMvc.perform(post("/posts/10/reports")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "reporter")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "message": "광고성 도배입니다"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.reportId").value(301L));
+    }
+
+    @Test
+    void mapsCommentReportRequestUsingInterfaceAnnotationsAndAuthInjection() throws Exception {
+        // given
+        // 댓글 신고 서비스 응답을 준비한다.
+        given(reportService.reportComment(20L, 1L, "욕설이 포함되어 있습니다")).willReturn(302L);
+
+        // when & then
+        // 댓글 신고 요청이 201 응답과 reportId로 직렬화되는지 확인한다.
+        mockMvc.perform(post("/comments/20/reports")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "reporter")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "message": "욕설이 포함되어 있습니다"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.reportId").value(302L));
+    }
+
+    @Test
     void mapsReplyCreateRequestUsingOptionalParentCommentId() throws Exception {
         // given
         // parentCommentId가 포함된 대댓글 생성 응답을 준비한다.
@@ -321,6 +369,25 @@ class AuthenticatedApiWebTest {
                 .andExpect(jsonPath("$.type").value("/problems/common/invalid-request"))
                 .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
                 .andExpect(jsonPath("$.invalidFields[*].field", containsInAnyOrder("title", "content")));
+    }
+
+    @Test
+    void validatesReportMessageDeclaredOnInterface() throws Exception {
+        // when & then
+        // 신고 메시지가 공백이면 Bean Validation에 의해 INVALID_REQUEST가 반환되어야 한다.
+        mockMvc.perform(post("/posts/10/reports")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "reporter")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "message": "   "
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("/problems/common/invalid-request"))
+                .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.invalidFields[0].field").value("message"));
     }
 
     private Member authenticatedMember() {
