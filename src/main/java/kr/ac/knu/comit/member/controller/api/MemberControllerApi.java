@@ -57,7 +57,7 @@ public interface MemberControllerApi {
             summary = "닉네임 수정",
             description = "현재 로그인한 회원의 닉네임을 수정합니다.",
             descriptions = {
-                    @FieldDesc(name = "nickname", value = "1자 이상 50자 이하의 새 닉네임")
+                    @FieldDesc(name = "nickname", value = "1자 이상 15자 이하의 새 닉네임")
             },
             errors = {
                     @ApiError(code = "MEMBER_NOT_FOUND", when = "인증된 사용자의 로컬 회원 정보가 존재하지 않을 때"),

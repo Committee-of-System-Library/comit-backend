@@ -13,6 +13,8 @@ import kr.ac.knu.comit.global.docs.annotation.FieldDesc;
 import kr.ac.knu.comit.global.auth.AuthenticatedMember;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.ApiResponse;
+import kr.ac.knu.comit.report.dto.CreateReportRequest;
+import kr.ac.knu.comit.report.dto.CreateReportResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -171,6 +173,43 @@ public interface CommentControllerApi {
     @DeleteMapping("/comments/{commentId}")
     ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable Long commentId,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "댓글 신고",
+            description = "활성 댓글을 신고합니다. 신고 사유는 자유 입력 메시지이며 최대 500자까지 허용합니다.",
+            descriptions = {
+                    @FieldDesc(name = "commentId", value = "신고할 댓글 ID입니다."),
+                    @FieldDesc(name = "message", value = "신고 사유 메시지입니다. 공백만 입력할 수 없고 최대 500자까지 허용합니다."),
+                    @FieldDesc(name = "reportId", value = "생성된 신고 ID입니다.")
+            },
+            errors = {
+                    @ApiError(code = "UNAUTHORIZED", when = "인증되지 않은 사용자가 신고하려고 할 때"),
+                    @ApiError(code = "COMMENT_NOT_FOUND", when = "신고 대상 댓글이 없거나 삭제된 상태일 때"),
+                    @ApiError(code = "INVALID_REQUEST", when = "신고 메시지가 비어 있거나 500자를 초과할 때"),
+                    @ApiError(code = "REPORT_ALREADY_EXISTS", when = "같은 사용자가 같은 댓글을 이미 신고했을 때")
+            },
+            example = @Example(
+                    request = """
+                            {
+                              "message": "욕설이 포함되어 있습니다"
+                            }
+                            """,
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": {
+                                "reportId": 302
+                              }
+                            }
+                            """
+            )
+    )
+    @PostMapping("/comments/{commentId}/reports")
+    ResponseEntity<ApiResponse<CreateReportResponse>> reportComment(
+            @PathVariable Long commentId,
+            @RequestBody @Valid CreateReportRequest request,
             @AuthenticatedMember MemberPrincipal principal
     );
 

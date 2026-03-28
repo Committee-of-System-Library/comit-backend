@@ -5,11 +5,16 @@
 ## 먼저 볼 문서
 
 - [Comit CPS (왜 만드는지 / 누구를 위한 것인지)](./features/comit-cps.md)
+- [게시글·댓글 신고 기능 명세](./features/post-comment-report.md)
 - [API 계약 가이드](./guides/api-contract.md)
 - [API 문서 생성기 동작 가이드](./guides/api-doc-generator-flow.md)
+- [Feature Toggle 설계 가이드](./guides/feature-toggle.md)
 - [Java 주석 규칙](./guides/java-comment-convention.md)
+- [SSO 인증 흐름 가이드](./guides/sso-auth-flow.md)
 - [테스트 전략 가이드](./guides/testing-strategy.md)
 - [로컬 실행 가이드](./ops/local-development.md)
+- [Comit prod-like 백엔드 롤아웃 계획](./ops/comit-prod-like-backend-rollout.md)
+- [Comit SSO 연동 롤아웃 계획](./ops/comit-sso-integration-rollout.md)
 - [ADR-002 ProblemDetail 기반 에러 응답 표준 채택](./adr/002-problem-detail-error-response.md)
 
 ## 디렉토리 구조

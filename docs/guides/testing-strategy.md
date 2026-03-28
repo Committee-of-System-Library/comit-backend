@@ -99,6 +99,8 @@ class UpdateNickname {
 
 - 한 테스트는 한 시나리오만 다룬다.
 - `given / when / then` 흐름이 읽히게 작성한다.
+- 가능하면 `// given`, `// when`, `// then` 주석을 본문에 명시한다.
+- 각 섹션 바로 아래에는 "무엇을 준비하는지 / 무엇을 실행하는지 / 무엇을 검증하는지"를 설명하는 한 줄짜리 한글 주석을 둔다.
 - mock은 직접 협력 객체까지만 둔다.
 - 구현 세부사항보다 결과와 부작용을 검증한다.
 
@@ -108,14 +110,36 @@ class UpdateNickname {
 @Test
 @DisplayName("사용 가능한 닉네임이면 회원 닉네임을 수정한다")
 void updatesNicknameWhenNicknameIsAvailable() {
+    // given
+    // 닉네임 변경이 가능한 회원 상태를 준비한다.
     Member member = Member.create("sso-1", "old-name", "20230001");
     given(memberRepository.existsByNickname("new-name")).willReturn(false);
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
 
+    // when
+    // 닉네임 변경을 실행한다.
     memberService.updateNickname(1L, new UpdateNicknameRequest("new-name"));
 
+    // then
+    // 회원 닉네임이 새 값으로 바뀌어야 한다.
     assertThat(member.getNickname()).isEqualTo("new-name");
 }
+```
+
+## Fixture 사용 기준
+
+- 테스트 데이터의 본질이 아닌 생성 보일러플레이트를 줄이기 위해 fixture helper를 우선 사용한다.
+- fixture는 `src/test/java/.../fixture/` 아래에 두고, 기본값이 많은 도메인 객체 생성에만 사용한다.
+- fixture는 "읽기 쉬운 기본 상태"를 제공하고, 개별 시나리오 차이는 테스트 본문에서 드러나게 한다.
+- Reflection 기반 필드 주입이 필요한 값은 fixture 안으로 숨겨 테스트 본문에서 반복하지 않는다.
+- 단, 시나리오의 핵심 의미가 fixture 안에 가려지면 테스트 본문에서 직접 생성한다.
+
+예시
+
+```java
+Post post = PostFixture.post(10L);
+Member author = MemberFixture.member(1L, "writer");
+Comment parent = CommentFixture.topLevelComment(201L, post, author, "부모 댓글", 0);
 ```
 
 ## 언제 무엇을 추가하나
@@ -137,6 +161,54 @@ void updatesNicknameWhenNicknameIsAvailable() {
 3. `CommentServiceTest`
 4. QueryDSL/리포지토리 테스트
 
+## 현재 커버리지 갭 (2026-03-28 기준)
+
+아래 시나리오는 구현은 있으나 서비스 테스트가 없는 상태다.
+새 기능 작업 전에 이 갭부터 채우는 것을 권장한다.
+
+### PostService
+
+| 메서드 | 추가해야 할 시나리오 |
+|---|---|
+| `createPost` | 정상 생성 후 postId 반환 |
+| `updatePost` | 정상 수정, 작성자 아니면 FORBIDDEN |
+| `deletePost` | 정상 삭제, 작성자 아니면 FORBIDDEN |
+| `forceDeletePost` | 관리자가 타인 게시글 강제 삭제 |
+| `toggleLike` | 첫 좋아요 → liked / 이미 좋아요 → unliked / POST_NOT_FOUND |
+| `getPosts` | `size <= 0` → INVALID_REQUEST, `size > 20` → 20으로 cap |
+
+### CommentService
+
+| 메서드 | 추가해야 할 시나리오 |
+|---|---|
+| `updateComment` | 정상 수정, 작성자 아니면 FORBIDDEN |
+| `deleteComment` | 대댓글 삭제 시 `softDeleteReplies` 미호출, 작성자 아니면 FORBIDDEN |
+
+## 서비스 설계 원칙 — 권한 플래그 안티패턴
+
+서비스 메서드에 `boolean admin` 같은 권한 플래그를 파라미터로 넘기지 않는다.
+
+**나쁜 예**
+```java
+// boolean이 늘어날수록 시그니처가 깨지고 테스트가 어색해진다
+public void deletePost(Long memberId, boolean admin, Long postId)
+```
+
+**좋은 예 — 유스케이스 단위로 메서드를 분리한다**
+```java
+// 작성자 삭제: 소유권 검사 포함
+public void deletePost(Long memberId, Long postId)
+
+// 관리자 강제 삭제: 소유권 검사 없음
+public void forceDeletePost(Long postId)
+```
+
+컨트롤러가 `principal.isAdmin()`을 보고 어느 메서드를 호출할지 결정한다.
+서비스는 "무엇을 하는가"만 책임지고, "누가 할 수 있는가"는 컨트롤러 레이어에서 분기한다.
+
+이 원칙을 지키면 테스트가 자연스럽게 단순해진다.
+`deletePost` 테스트는 소유권 규칙만, `forceDeletePost` 테스트는 존재 여부만 검증하면 된다.
+
 ## 체크리스트
 
 - 테스트 이름만 읽고 의도가 보이는가
@@ -144,3 +216,11 @@ void updatesNicknameWhenNicknameIsAvailable() {
 - 서비스 테스트가 웹 테스트보다 먼저 존재하는가
 - mock이 너무 많아서 구현 따라 쓰기가 되지 않았는가
 - 상태 코드보다 에러 코드와 도메인 규칙을 먼저 검증하고 있는가
+- fixture가 반복 보일러플레이트를 줄이고 있는가
+- `// given`, `// when`, `// then`과 한 줄 한글 설명이 본문 흐름을 명확하게 만드는가
+
+## AI / 계획 문서와의 관계
+
+- AI가 리팩토링 계획이나 테스트 계획을 제안할 때, 저장소 전용 테스트 규칙은 이 문서를 기준으로 잡는다.
+- 특히 테스트 층 선택, fixture 사용 여부, `given / when / then` 본문 스타일은 이 문서를 우선 참조한다.
+- 외부 skill이나 개인 프롬프트는 이 문서를 대체하지 않고, 이 문서를 참조하는 연결 레이어로만 사용한다.

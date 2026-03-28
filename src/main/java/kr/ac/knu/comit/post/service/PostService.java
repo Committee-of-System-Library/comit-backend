@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -23,6 +24,7 @@ import java.util.List;
 public class PostService {
 
     private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final int HOT_POST_WINDOW_DAYS = 7;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final PostRepository postRepository;
@@ -56,6 +58,28 @@ public class PostService {
         );
     }
 
+    public HotPostListResponse getHotPosts() {
+        LocalDate startDate = LocalDate.now(KST).minusDays(HOT_POST_WINDOW_DAYS - 1L);
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+
+        List<Long> orderedPostIds = postRepository.findHotPostScores(startDateTime, startDate).stream()
+                .map(PostRepository.HotPostScoreView::getPostId)
+                .toList();
+
+        if (orderedPostIds.isEmpty()) {
+            return HotPostListResponse.empty();
+        }
+
+        List<Post> posts = postRepository.findActiveWithMemberAndTagsByIds(orderedPostIds);
+        List<Long> visiblePostIds = posts.stream().map(Post::getId).toList();
+
+        return HotPostListResponse.of(
+                posts,
+                orderedPostIds,
+                commentQueryService.countActiveCommentsByPostIds(visiblePostIds)
+        );
+    }
+
     @Transactional
     public PostDetailResponse getPost(Long postId, Long memberId) {
         findPostOrThrow(postId);
@@ -82,13 +106,19 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long memberId, boolean admin, Long postId) {
+    public void deletePost(Long memberId, Long postId) {
         Post post = findPostOrThrow(postId);
+        checkOwnership(post, memberId);
+        deletePost(post);
+    }
 
-        if (!post.isWrittenBy(memberId) && !admin) {
-            throw new BusinessException(CommonErrorCode.FORBIDDEN);
+    @Transactional
+    public void deletePost(Long memberId, Long postId, boolean admin) {
+        Post post = findPostOrThrow(postId);
+        if (!admin) {
+            checkOwnership(post, memberId);
         }
-        post.delete();
+        deletePost(post);
     }
 
     /**
@@ -130,5 +160,9 @@ public class PostService {
         if (!post.isWrittenBy(memberId)) {
             throw new BusinessException(CommonErrorCode.FORBIDDEN);
         }
+    }
+
+    private void deletePost(Post post) {
+        post.delete();
     }
 }

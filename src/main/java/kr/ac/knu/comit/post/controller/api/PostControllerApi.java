@@ -8,6 +8,8 @@ import kr.ac.knu.comit.global.docs.annotation.FieldDesc;
 import kr.ac.knu.comit.global.auth.AuthenticatedMember;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.ApiResponse;
+import kr.ac.knu.comit.report.dto.CreateReportRequest;
+import kr.ac.knu.comit.report.dto.CreateReportResponse;
 import kr.ac.knu.comit.post.domain.BoardType;
 import kr.ac.knu.comit.post.dto.*;
 import jakarta.validation.Valid;
@@ -71,6 +73,52 @@ public interface PostControllerApi {
             @RequestParam BoardType boardType,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "인기글 상위 5개 조회",
+            description = "최근 7일 기준 좋아요, 댓글, unique 방문자 반응을 가중치로 계산한 인기글 상위 5개를 조회합니다. 점수는 외부에 노출하지 않고 rank만 반환합니다.",
+            descriptions = {
+                    @FieldDesc(name = "posts", value = "인기글 목록입니다. 점수 0 초과인 게시글만 포함되며 최대 5개까지 반환합니다."),
+                    @FieldDesc(name = "rank", value = "인기글 순위입니다. 1부터 시작합니다."),
+                    @FieldDesc(name = "id", value = "게시글 ID입니다."),
+                    @FieldDesc(name = "boardType", value = "게시글이 속한 게시판 유형입니다."),
+                    @FieldDesc(name = "title", value = "게시글 제목입니다."),
+                    @FieldDesc(name = "authorNickname", value = "게시글 작성자의 닉네임입니다."),
+                    @FieldDesc(name = "likeCount", value = "현재 게시글의 좋아요 수입니다."),
+                    @FieldDesc(name = "commentCount", value = "삭제되지 않은 댓글 수입니다."),
+                    @FieldDesc(name = "tags", value = "게시글에 연결된 태그 목록입니다."),
+                    @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다.")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": {
+                                "posts": [
+                                  {
+                                    "rank": 1,
+                                    "id": 101,
+                                    "boardType": "QNA",
+                                    "title": "JPA fetch join 질문",
+                                    "authorNickname": "backend-dev",
+                                    "likeCount": 3,
+                                    "commentCount": 4,
+                                    "tags": [
+                                      "spring",
+                                      "jpa"
+                                    ],
+                                    "createdAt": "2026-03-24T10:00:00"
+                                  }
+                                ]
+                              }
+                            }
+                            """
+            )
+    )
+    @GetMapping("/hot")
+    ResponseEntity<ApiResponse<HotPostListResponse>> getHotPosts(
             @AuthenticatedMember MemberPrincipal principal
     );
 
@@ -223,6 +271,43 @@ public interface PostControllerApi {
     @DeleteMapping("/{postId}")
     ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "게시글 신고",
+            description = "활성 게시글을 신고합니다. 신고 사유는 자유 입력 메시지이며 최대 500자까지 허용합니다.",
+            descriptions = {
+                    @FieldDesc(name = "postId", value = "신고할 게시글 ID입니다."),
+                    @FieldDesc(name = "message", value = "신고 사유 메시지입니다. 공백만 입력할 수 없고 최대 500자까지 허용합니다."),
+                    @FieldDesc(name = "reportId", value = "생성된 신고 ID입니다.")
+            },
+            errors = {
+                    @ApiError(code = "UNAUTHORIZED", when = "인증되지 않은 사용자가 신고하려고 할 때"),
+                    @ApiError(code = "POST_NOT_FOUND", when = "신고 대상 게시글이 없거나 삭제된 상태일 때"),
+                    @ApiError(code = "INVALID_REQUEST", when = "신고 메시지가 비어 있거나 500자를 초과할 때"),
+                    @ApiError(code = "REPORT_ALREADY_EXISTS", when = "같은 사용자가 같은 게시글을 이미 신고했을 때")
+            },
+            example = @Example(
+                    request = """
+                            {
+                              "message": "광고성 도배입니다"
+                            }
+                            """,
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": {
+                                "reportId": 301
+                              }
+                            }
+                            """
+            )
+    )
+    @PostMapping("/{postId}/reports")
+    ResponseEntity<ApiResponse<CreateReportResponse>> reportPost(
+            @PathVariable Long postId,
+            @RequestBody @Valid CreateReportRequest request,
             @AuthenticatedMember MemberPrincipal principal
     );
 

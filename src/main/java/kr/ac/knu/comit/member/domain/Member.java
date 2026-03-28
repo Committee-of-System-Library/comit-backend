@@ -92,7 +92,7 @@ public class Member {
     }
 
     private static void validateNickname(String nickname) {
-        if (nickname == null || nickname.isBlank() || nickname.length() > 50) {
+        if (nickname == null || nickname.isBlank() || nickname.length() > 15) {
             throw new BusinessException(MemberErrorCode.INVALID_NICKNAME);
         }
     }

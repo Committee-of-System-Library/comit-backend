@@ -21,26 +21,23 @@ class ApiDocGeneratorTest {
 
         ApiDocGenerator.generate("kr.ac.knu.comit", tempDir);
 
-        Path htmlFile = tempDir.resolve("payment/PaymentControllerApi.html");
+        Path htmlFile = tempDir.resolve("member/MemberControllerApi.html");
         assertThat(Files.exists(htmlFile)).isTrue();
+        assertThat(Files.exists(tempDir.resolve("auth/SsoAuthControllerApi.html"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("comment/CommentControllerApi.html"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("post/PostControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("index.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("index.js"))).isTrue();
         assertThat(Files.exists(staleFile)).isFalse();
 
         String html = Files.readString(htmlFile);
-        assertThat(html).contains("결제 승인");
-        assertThat(html).contains("결제 조회");
-        assertThat(html).contains("주문 ID 기준으로 결제 상태를 조회합니다.");
-        assertThat(html).contains("결제 승인 요청을 처리하고 승인 결과를 반환합니다.");
-        assertThat(html).contains("경로 변수");
-        assertThat(html).contains("쿼리 파라미터");
-        assertThat(html).contains("includeHistory");
-        assertThat(html).contains("/v1/payments/confirm");
-        assertThat(html).contains("/v1/payments/{orderId}");
-        assertThat(html).contains("paymentKey");
+        assertThat(html).contains("내 프로필 조회");
+        assertThat(html).contains("닉네임 수정");
+        assertThat(html).contains("학번 공개 여부 수정");
+        assertThat(html).contains("/members/me");
+        assertThat(html).contains("/members/me/student-number-visibility");
         assertThat(html).contains("type-chip type-string");
-        assertThat(html).contains("type-chip type-number");
-        assertThat(html).contains("type-chip type-datetime");
+        assertThat(html).contains("type-chip type-boolean");
 
         String postHtml = Files.readString(tempDir.resolve("post/PostControllerApi.html"));
         assertThat(postHtml).contains("에러 응답 필드");
@@ -52,5 +49,10 @@ class ApiDocGeneratorTest {
         assertThat(postHtml).contains("/problems/common/unauthorized");
         assertThat(postHtml).contains("/problems/post/not-found");
         assertThat(postHtml).contains("errorCode");
+
+        String authHtml = Files.readString(tempDir.resolve("auth/SsoAuthControllerApi.html"));
+        assertThat(authHtml).contains("SSO 로그인 시작");
+        assertThat(authHtml).contains("/auth/sso/login");
+        assertThat(authHtml).contains("/auth/sso/callback");
     }
 }

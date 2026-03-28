@@ -17,3 +17,13 @@ spring:
 logging:
   file:
     name: ./logs/app-local.log
+
+comit:
+  auth:
+    bridge:
+      enabled: true
+    sso:
+      enabled: false
+      frontend-success-url: http://localhost:5173
+      frontend-error-url: http://localhost:5173/error
+      cookie-secure: false

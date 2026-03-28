@@ -1,5 +1,5 @@
 server:
-  port: ${SPRING_PORT}
+  port: ${SPRING_PORT:8080}
   servlet:
     session:
       timeout: 1800
@@ -28,8 +28,8 @@ spring:
       keepalive-time: ${HIKARI_KEEPALIVE_TIME:60000}
   servlet:
     multipart:
-      max-file-size: ${MAX_FILE_SIZE}
-      max-request-size: ${MAX_REQUEST_SIZE}
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
   jpa:
     open-in-view: false
     show-sql: false
@@ -57,3 +57,24 @@ spring:
 logging:
   file:
     name: ${LOG_FILE_PATH:./logs/app.log}
+
+comit:
+  auth:
+    bridge:
+      enabled: ${COMIT_AUTH_BRIDGE_ENABLED:false}
+    sso:
+      enabled: ${COMIT_AUTH_SSO_ENABLED:false}
+      auth-server-base-url: ${COMIT_AUTH_SSO_AUTH_SERVER_BASE_URL:https://chcse.knu.ac.kr/appfn/api}
+      client-id: ${COMIT_AUTH_SSO_CLIENT_ID:}
+      client-secret: ${COMIT_AUTH_SSO_CLIENT_SECRET:}
+      issuer: ${COMIT_AUTH_SSO_ISSUER:https://chcse.knu.ac.kr/appfn/api}
+      redirect-uri: ${COMIT_AUTH_SSO_REDIRECT_URI:}
+      frontend-success-url: ${COMIT_AUTH_SSO_FRONTEND_SUCCESS_URL:http://localhost:5173}
+      frontend-error-url: ${COMIT_AUTH_SSO_FRONTEND_ERROR_URL:http://localhost:5173/error}
+      token-cookie-name: ${COMIT_AUTH_SSO_TOKEN_COOKIE_NAME:COMIT_SSO_TOKEN}
+      state-cookie-name: ${COMIT_AUTH_SSO_STATE_COOKIE_NAME:COMIT_SSO_STATE}
+      state-ttl-seconds: ${COMIT_AUTH_SSO_STATE_TTL_SECONDS:300}
+      token-max-age-seconds: ${COMIT_AUTH_SSO_TOKEN_MAX_AGE_SECONDS:3600}
+      cookie-path: ${COMIT_AUTH_SSO_COOKIE_PATH:/}
+      cookie-secure: ${COMIT_AUTH_SSO_COOKIE_SECURE:true}
+      cookie-same-site: ${COMIT_AUTH_SSO_COOKIE_SAME_SITE:Lax}
