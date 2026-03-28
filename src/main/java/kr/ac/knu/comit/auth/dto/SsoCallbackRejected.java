@@ -1,8 +1,7 @@
 package kr.ac.knu.comit.auth.dto;
 
-public record SsoCallbackSuccess(
+public record SsoCallbackRejected(
         String redirectUrl,
-        String tokenCookieHeader,
         String clearStateCookieHeader
 ) implements SsoCallbackResult {
 }

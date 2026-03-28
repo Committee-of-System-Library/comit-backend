@@ -152,29 +152,38 @@ GET /auth/sso/callback?state={uuid}&token={jwt}
 
    하나라도 실패하면 `UNAUTHORIZED` 에러를 반환합니다.
 
-3. **쿠키 처리** — 검증 성공 시:
+3. **EXTERNAL 사용자 거부** — JWT 검증 통과 후, `userType == EXTERNAL`인 사용자는 가입을 거부합니다.
+   이 경우 쿠키를 발급하지 않고 `frontendErrorUrl`로 302 리다이렉트합니다.
+   (`SsoCallbackRejected` 결과 반환)
+
+4. **쿠키 처리** — 정상 사용자(`CSE_STUDENT` / `KNU_OTHER_DEPT`) 검증 성공 시:
    - `COMIT_SSO_TOKEN` 쿠키 발급 (HttpOnly, 1시간 유효)
    - `COMIT_SSO_STATE` 쿠키 삭제 (maxAge=0)
 
-4. **302 리다이렉트** — `frontendSuccessUrl`로 이동합니다. (기본값: `http://localhost:5173`)
+5. **302 리다이렉트** — `frontendSuccessUrl`로 이동합니다. (기본값: `http://localhost:5173`)
 
 ```
 GET /auth/sso/callback?state=X&token=Y
   └─▶ SsoAuthController.handleCallback()
        ├─ AuthCookieManager.resolveStateCookie(request)        ← 쿠키에서 state 읽기
-       └─▶ SsoAuthService.handleCallback(state, token, storedState)
+       └─▶ SsoAuthService.handleCallback(state, token, storedState) → SsoCallbackResult
             ├─ validateState(state, storedState)               ← CSRF 방어
-            └─ ExternalAuthClient.verify(token)                ← JWT 검증
-                 └─▶ CustomJwtExternalAuthClient
-                      ├─ HS256 알고리즘 확인
-                      ├─ 서명 검증 (clientSecret)
-                      ├─ issuer 검증
-                      ├─ audience 검증 (clientId)
-                      └─ 만료 시간 검증
-  └─▶ 302 응답
+            ├─ ExternalAuthClient.verify(token)                ← JWT 검증
+            │    └─▶ CustomJwtExternalAuthClient
+            │         ├─ HS256 알고리즘 확인
+            │         ├─ 서명 검증 (clientSecret)
+            │         ├─ issuer 검증
+            │         ├─ audience 검증 (clientId)
+            │         └─ 만료 시간 검증
+            └─ userType == EXTERNAL?
+                 ├─ YES → SsoCallbackRejected(frontendErrorUrl)
+                 └─ NO  → SsoCallbackSuccess(successUrl, cookies)
+  └─▶ SsoCallbackSuccess  → 302 응답
        ├─ Set-Cookie: COMIT_SSO_TOKEN=...  (1시간)
        ├─ Set-Cookie: COMIT_SSO_STATE=     (삭제)
        └─ Location: {frontendSuccessUrl}
+  └─▶ SsoCallbackRejected → 302 응답
+       └─ Location: {frontendErrorUrl}
 ```
 
 ---
@@ -455,6 +464,7 @@ async function handleLogout() {
 | `COMIT_AUTH_SSO_ISSUER` | `https://chcse.knu.ac.kr/appfn/api` | JWT `iss` 클레임 검증값 |
 | `COMIT_AUTH_SSO_REDIRECT_URI` | (필수) | 콜백 URL (`/auth/sso/callback` 전체 경로) |
 | `COMIT_AUTH_SSO_FRONTEND_SUCCESS_URL` | `http://localhost:5173` | 로그인 성공 후 리다이렉트 URL |
+| `COMIT_AUTH_SSO_FRONTEND_ERROR_URL` | `http://localhost:5173/error` | 가입 거부(EXTERNAL 사용자) 시 리다이렉트 URL |
 | `COMIT_AUTH_SSO_TOKEN_COOKIE_NAME` | `COMIT_SSO_TOKEN` | 인증 토큰 쿠키 이름 |
 | `COMIT_AUTH_SSO_STATE_COOKIE_NAME` | `COMIT_SSO_STATE` | state 쿠키 이름 |
 | `COMIT_AUTH_SSO_STATE_TTL_SECONDS` | `300` | state 쿠키 유효 시간 (초) |

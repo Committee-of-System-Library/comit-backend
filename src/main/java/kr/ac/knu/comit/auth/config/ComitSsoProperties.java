@@ -18,6 +18,7 @@ public class ComitSsoProperties {
     private String issuer;
     private String redirectUri;
     private String frontendSuccessUrl;
+    private String frontendErrorUrl;
     private String tokenCookieName;
     private String stateCookieName;
     private long stateTtlSeconds;

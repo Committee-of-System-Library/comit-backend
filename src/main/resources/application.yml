@@ -70,6 +70,7 @@ comit:
       issuer: ${COMIT_AUTH_SSO_ISSUER:https://chcse.knu.ac.kr/appfn/api}
       redirect-uri: ${COMIT_AUTH_SSO_REDIRECT_URI:}
       frontend-success-url: ${COMIT_AUTH_SSO_FRONTEND_SUCCESS_URL:http://localhost:5173}
+      frontend-error-url: ${COMIT_AUTH_SSO_FRONTEND_ERROR_URL:http://localhost:5173/error}
       token-cookie-name: ${COMIT_AUTH_SSO_TOKEN_COOKIE_NAME:COMIT_SSO_TOKEN}
       state-cookie-name: ${COMIT_AUTH_SSO_STATE_COOKIE_NAME:COMIT_SSO_STATE}
       state-ttl-seconds: ${COMIT_AUTH_SSO_STATE_TTL_SECONDS:300}

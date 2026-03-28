@@ -17,4 +17,5 @@ comit:
     sso:
       enabled: ${COMIT_AUTH_SSO_ENABLED:false}
       frontend-success-url: ${COMIT_AUTH_SSO_FRONTEND_SUCCESS_URL:https://chcse.knu.ac.kr/comit-staging}
+      frontend-error-url: ${COMIT_AUTH_SSO_FRONTEND_ERROR_URL:https://chcse.knu.ac.kr/comit-staging/error}
       cookie-path: ${COMIT_AUTH_SSO_COOKIE_PATH:/}

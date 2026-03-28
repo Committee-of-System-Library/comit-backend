@@ -1,6 +1,8 @@
 package kr.ac.knu.comit.auth.controller;
 
 import kr.ac.knu.comit.auth.controller.api.SsoAuthControllerApi;
+import kr.ac.knu.comit.auth.dto.SsoCallbackRejected;
+import kr.ac.knu.comit.auth.dto.SsoCallbackResult;
 import kr.ac.knu.comit.auth.dto.SsoCallbackSuccess;
 import kr.ac.knu.comit.auth.dto.SsoLoginStart;
 import kr.ac.knu.comit.auth.service.AuthCookieManager;
@@ -31,12 +33,18 @@ public class SsoAuthController implements SsoAuthControllerApi {
 
     @Override
     public ResponseEntity<Void> handleCallback(String state, String token, HttpServletRequest request) {
-        SsoCallbackSuccess callbackSuccess = ssoAuthService.handleCallback(state, token, authCookieManager.resolveStateCookie(request));
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .header(HttpHeaders.SET_COOKIE, callbackSuccess.tokenCookieHeader())
-                .header(HttpHeaders.SET_COOKIE, callbackSuccess.clearStateCookieHeader())
-                .header(HttpHeaders.LOCATION, callbackSuccess.redirectUrl())
-                .build();
+        SsoCallbackResult result = ssoAuthService.handleCallback(state, token, authCookieManager.resolveStateCookie(request));
+        return switch (result) {
+            case SsoCallbackSuccess success -> ResponseEntity.status(HttpStatus.FOUND)
+                    .header(HttpHeaders.SET_COOKIE, success.tokenCookieHeader())
+                    .header(HttpHeaders.SET_COOKIE, success.clearStateCookieHeader())
+                    .header(HttpHeaders.LOCATION, success.redirectUrl())
+                    .build();
+            case SsoCallbackRejected rejected -> ResponseEntity.status(HttpStatus.FOUND)
+                    .header(HttpHeaders.SET_COOKIE, rejected.clearStateCookieHeader())
+                    .header(HttpHeaders.LOCATION, rejected.redirectUrl())
+                    .build();
+        };
     }
 
     @Override

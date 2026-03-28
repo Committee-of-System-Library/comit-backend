@@ -2,9 +2,13 @@ package kr.ac.knu.comit.auth.service;
 
 import java.util.UUID;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
+import kr.ac.knu.comit.auth.dto.SsoCallbackRejected;
+import kr.ac.knu.comit.auth.dto.SsoCallbackResult;
 import kr.ac.knu.comit.auth.dto.SsoCallbackSuccess;
 import kr.ac.knu.comit.auth.dto.SsoLoginStart;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
+import kr.ac.knu.comit.auth.port.ExternalIdentity;
+import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,7 @@ public class SsoAuthService {
     private final ComitSsoProperties ssoProperties;
     private final ExternalAuthClient externalAuthClient;
     private final AuthCookieManager authCookieManager;
+    private final ExternalIdentityMapper externalIdentityMapper;
 
     public SsoLoginStart startLogin() {
         validateFrontendSuccessUrl();
@@ -29,10 +34,19 @@ public class SsoAuthService {
         return new SsoLoginStart(loginUrl, authCookieManager.createStateCookie(state));
     }
 
-    public SsoCallbackSuccess handleCallback(String state, String token, String storedState) {
+    public SsoCallbackResult handleCallback(String state, String token, String storedState) {
         validateFrontendSuccessUrl();
         validateState(state, storedState);
-        externalAuthClient.verify(token);
+
+        ExternalIdentity identity = externalAuthClient.verify(token);
+        MemberPrincipal principal = externalIdentityMapper.toPrincipal(identity);
+
+        if (principal.userType() == MemberPrincipal.UserType.EXTERNAL) {
+            return new SsoCallbackRejected(
+                    ssoProperties.getFrontendErrorUrl() + "?reason=EXTERNAL_USER_NOT_ALLOWED",
+                    authCookieManager.clearStateCookie()
+            );
+        }
 
         return new SsoCallbackSuccess(
                 ssoProperties.getFrontendSuccessUrl(),
