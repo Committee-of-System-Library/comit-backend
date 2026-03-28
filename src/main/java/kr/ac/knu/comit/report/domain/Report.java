@@ -47,6 +47,9 @@ public class Report {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     private LocalDateTime reviewedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -62,6 +65,8 @@ public class Report {
             Long targetId,
             String message
     ) {
+        validateReporter(reporter);
+        validateTarget(targetType, targetId);
         Report report = new Report();
         report.reporter = reporter;
         report.targetType = targetType;
@@ -72,8 +77,16 @@ public class Report {
         return report;
     }
 
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
     public Long getId() {
         return id;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 
     private static String normalizeMessage(String message) {
@@ -86,5 +99,17 @@ public class Report {
             throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
         }
         return normalized;
+    }
+
+    private static void validateReporter(Member reporter) {
+        if (reporter == null) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private static void validateTarget(ReportTargetType targetType, Long targetId) {
+        if (targetType == null || targetId == null || targetId <= 0) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
     }
 }

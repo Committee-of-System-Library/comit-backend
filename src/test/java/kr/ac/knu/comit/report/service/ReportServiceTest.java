@@ -29,8 +29,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.sql.SQLException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReportService")
@@ -171,7 +174,7 @@ class ReportServiceTest {
         given(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.POST, 10L))
                 .willReturn(false);
         given(memberService.findMemberOrThrow(1L)).willReturn(MemberFixture.member(1L, "reporter"));
-        given(reportRepository.save(any(Report.class))).willThrow(new DataIntegrityViolationException("duplicate"));
+        given(reportRepository.save(any(Report.class))).willThrow(duplicateKeyViolation());
 
         // when & then
         // 저장 충돌도 REPORT_ALREADY_EXISTS로 노출되어야 한다.
@@ -179,5 +182,52 @@ class ReportServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS);
+    }
+
+    @Test
+    @DisplayName("유니크 키가 아닌 무결성 오류는 그대로 전파한다")
+    void propagatesNonDuplicateIntegrityViolations() {
+        // given
+        // 중복 신고가 아닌 다른 DB 무결성 오류 상황을 준비한다.
+        given(postService.getActivePostOrThrow(10L)).willReturn(PostFixture.post(10L));
+        given(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.POST, 10L))
+                .willReturn(false);
+        given(memberService.findMemberOrThrow(1L)).willReturn(MemberFixture.member(1L, "reporter"));
+        given(reportRepository.save(any(Report.class))).willThrow(nonDuplicateIntegrityViolation());
+
+        // when & then
+        // 다른 무결성 오류는 REPORT_ALREADY_EXISTS로 숨기지 않아야 한다.
+        assertThatThrownBy(() -> reportService.reportPost(10L, 1L, "광고성 도배"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private DataIntegrityViolationException duplicateKeyViolation() {
+        SQLException sqlException = new SQLException(
+                "Duplicate entry '1-POST-10' for key 'uk_report_reporter_target'",
+                "23000",
+                1062
+        );
+        ConstraintViolationException constraintViolationException = new ConstraintViolationException(
+                "duplicate key",
+                sqlException,
+                "insert into report ...",
+                "uk_report_reporter_target"
+        );
+        return new DataIntegrityViolationException("duplicate", constraintViolationException);
+    }
+
+    private DataIntegrityViolationException nonDuplicateIntegrityViolation() {
+        SQLException sqlException = new SQLException(
+                "Cannot add or update a child row: a foreign key constraint fails",
+                "23000",
+                1452
+        );
+        ConstraintViolationException constraintViolationException = new ConstraintViolationException(
+                "fk violation",
+                sqlException,
+                "insert into report ...",
+                "fk_report_reporter"
+        );
+        return new DataIntegrityViolationException("fk", constraintViolationException);
     }
 }

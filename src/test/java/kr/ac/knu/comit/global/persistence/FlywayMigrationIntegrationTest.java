@@ -67,11 +67,16 @@ class FlywayMigrationIntegrationTest {
                         "WHERE table_schema = DATABASE() ORDER BY table_name",
                 String.class
         );
+        List<String> reportColumns = jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'report' ORDER BY ordinal_position",
+                String.class
+        );
 
         // then
         // Flyway 이력 테이블과 핵심 도메인 테이블이 모두 생성되어야 한다.
         assertThat(historyTableCount).isEqualTo(1);
-        assertThat(appliedMigrationCount).isEqualTo(7);
+        assertThat(appliedMigrationCount).isEqualTo(8);
         assertThat(tables).contains(
                 "flyway_schema_history",
                 "member",
@@ -80,7 +85,9 @@ class FlywayMigrationIntegrationTest {
                 "comment",
                 "post_like",
                 "comment_helpful",
-                "post_daily_visitor"
+                "post_daily_visitor",
+                "report"
         );
+        assertThat(reportColumns).contains("deleted_at");
     }
 }

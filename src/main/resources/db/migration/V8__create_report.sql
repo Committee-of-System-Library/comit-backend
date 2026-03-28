@@ -7,6 +7,7 @@ CREATE TABLE report
     message     TEXT        NOT NULL,
     status      VARCHAR(20) NOT NULL,
     created_at  DATETIME(6) NOT NULL,
+    deleted_at  DATETIME(6),
     reviewed_at DATETIME(6),
     reviewed_by BIGINT,
 
