@@ -9,7 +9,9 @@
 | `git-convention.md` | 브랜치·커밋·PR 규칙 |
 | `api-contract.md` | API 계약 인터페이스 사용법과 작성 규칙 |
 | `api-doc-generator-flow.md` | 문서 생성기 내부 동작 과정과 확장 포인트 |
+| `feature-toggle.md` | Feature Toggle 유형, 수명, 설계 원칙, 테스트 전략 |
 | `java-comment-convention.md` | `@apiNote`, `@implNote` 기반 Java 주석 규칙 |
+| `sso-auth-flow.md` | Comit SSO 로그인, callback, 쿠키 인증, 프론트 연동 흐름 |
 | `testing-strategy.md` | 테스트 층, 네이밍, fixture, `given/when/then` 작성 기준 |
 
 ## 작성 원칙
