@@ -467,10 +467,10 @@ final class ApiDocIntrospector {
         example.put("instance", endpointPath);
         example.put("errorCode", primary.errorCode());
         if (CommonErrorCode.INVALID_REQUEST.getCode().equals(primary.errorCode())) {
-            example.put("invalidFields", List.of(Map.of(
-                    "field", "fieldName",
-                    "message", "유효하지 않은 입력값입니다."
-            )));
+            LinkedHashMap<String, Object> invalidField = new LinkedHashMap<>();
+            invalidField.put("field", "fieldName");
+            invalidField.put("message", "유효하지 않은 입력값입니다.");
+            example.put("invalidFields", List.of(invalidField));
         }
         example.put("timestamp", "2026-03-24T03:10:00Z");
         return writeJson(example);
