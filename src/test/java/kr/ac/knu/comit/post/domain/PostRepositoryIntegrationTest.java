@@ -179,11 +179,22 @@ class PostRepositoryIntegrationTest {
     }
 
     private Member saveMember(String suffix) {
+        String nickname = buildValidNickname(suffix);
+        String studentNumber = buildStudentNumber(suffix);
         return memberRepository.save(Member.create(
                 "sso-" + suffix,
-                "nickname-" + suffix,
-                "202300" + Math.abs(suffix.hashCode() % 100)
+                nickname,
+                studentNumber
         ));
+    }
+
+    private String buildValidNickname(String suffix) {
+        String candidate = "n" + Integer.toUnsignedString(suffix.hashCode(), 36);
+        return candidate.length() > 15 ? candidate.substring(0, 15) : candidate;
+    }
+
+    private String buildStudentNumber(String suffix) {
+        return String.format("2023%06d", Math.floorMod(suffix.hashCode(), 1_000_000));
     }
 
     private Post savePost(Member author, String title, BoardType boardType, LocalDateTime createdAt) {
