@@ -72,11 +72,26 @@ class FlywayMigrationIntegrationTest {
                         "WHERE table_schema = DATABASE() AND table_name = 'report' ORDER BY ordinal_position",
                 String.class
         );
+        List<String> memberColumns = jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'member' ORDER BY ordinal_position",
+                String.class
+        );
+        List<String> postColumns = jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'post' ORDER BY ordinal_position",
+                String.class
+        );
+        List<String> commentColumns = jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'comment' ORDER BY ordinal_position",
+                String.class
+        );
 
         // then
         // Flyway 이력 테이블과 핵심 도메인 테이블이 모두 생성되어야 한다.
         assertThat(historyTableCount).isEqualTo(1);
-        assertThat(appliedMigrationCount).isEqualTo(8);
+        assertThat(appliedMigrationCount).isEqualTo(9);
         assertThat(tables).contains(
                 "flyway_schema_history",
                 "member",
@@ -89,5 +104,8 @@ class FlywayMigrationIntegrationTest {
                 "report"
         );
         assertThat(reportColumns).contains("deleted_at");
+        assertThat(memberColumns).contains("status", "suspended_until");
+        assertThat(postColumns).contains("hidden_by_admin");
+        assertThat(commentColumns).contains("hidden_by_admin");
     }
 }
