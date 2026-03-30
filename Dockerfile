@@ -2,6 +2,7 @@ FROM amazoncorretto:21
 WORKDIR /app
 ARG JAR_FILE=build/libs/*.jar
 COPY ${JAR_FILE} app.jar
+COPY docs/api /app/api-docs
 
 RUN mkdir -p /app/logs && chmod -R 755 /app/logs
 VOLUME ["/app/logs"]

@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import kr.ac.knu.comit.global.exception.BusinessException;
+import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +56,12 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
         );
 
         Member member = memberService.findOrCreateBySso(provisionalPrincipal);
+        if (member.isBanned()) {
+            throw new BusinessException(MemberErrorCode.MEMBER_BANNED);
+        }
+        if (member.isSuspended()) {
+            throw new BusinessException(MemberErrorCode.MEMBER_SUSPENDED);
+        }
         MemberPrincipal authenticatedPrincipal = new MemberPrincipal(
                 member.getId(),
                 member.getSsoSub(),

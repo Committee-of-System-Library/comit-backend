@@ -59,6 +59,9 @@ logging:
     name: ${LOG_FILE_PATH:./logs/app.log}
 
 comit:
+  web:
+    cors:
+      allowed-origins: ${COMIT_WEB_CORS_ALLOWED_ORIGINS:http://localhost:5173,https://knu-cse-comit-client.vercel.app,https://chcse.knu.ac.kr}
   auth:
     bridge:
       enabled: ${COMIT_AUTH_BRIDGE_ENABLED:false}

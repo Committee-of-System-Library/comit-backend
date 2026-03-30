@@ -7,11 +7,25 @@ window.API_DOCS = [
   sectionPath: "auth"
 },
 {
+  title: "AdminCommentControllerApi",
+  summary: "관리자가 댓글을 소프트 삭제합니다.",
+  href: "./comment/AdminCommentControllerApi.html",
+  endpointCount: 3,
+  sectionPath: "comment"
+},
+{
   title: "CommentControllerApi",
   summary: "게시글에 새 댓글 또는 대댓글을 작성합니다. parentCommentId가 없으면 일반 댓글, 있으면 해당 댓글의 대댓글로 생성됩니다.",
   href: "./comment/CommentControllerApi.html",
   endpointCount: 6,
   sectionPath: "comment"
+},
+{
+  title: "AdminMemberControllerApi",
+  summary: "관리자가 회원 목록을 조회합니다. status로 필터링할 수 있습니다.",
+  href: "./member/AdminMemberControllerApi.html",
+  endpointCount: 2,
+  sectionPath: "member"
 },
 {
   title: "MemberControllerApi",
@@ -21,10 +35,24 @@ window.API_DOCS = [
   sectionPath: "member"
 },
 {
+  title: "AdminPostControllerApi",
+  summary: "관리자가 게시글을 소프트 삭제합니다.",
+  href: "./post/AdminPostControllerApi.html",
+  endpointCount: 3,
+  sectionPath: "post"
+},
+{
   title: "PostControllerApi",
   summary: "새 게시글을 작성합니다. 제목은 최대 30자, 본문은 최대 500자까지 허용합니다.",
   href: "./post/PostControllerApi.html",
   endpointCount: 8,
   sectionPath: "post"
+},
+{
+  title: "AdminReportControllerApi",
+  summary: "관리자가 신고 상세 정보를 조회합니다.",
+  href: "./report/AdminReportControllerApi.html",
+  endpointCount: 3,
+  sectionPath: "report"
 }
 ];

@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
+import kr.ac.knu.comit.global.exception.ReportErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
 
 @Entity
@@ -77,12 +78,54 @@ public class Report {
         return report;
     }
 
+    public void review(Member reviewer, ReportStatus newStatus) {
+        validateReviewRequest(reviewer, newStatus);
+        if (this.status != ReportStatus.RECEIVED) {
+            throw new BusinessException(ReportErrorCode.REPORT_ALREADY_REVIEWED);
+        }
+        this.status = newStatus;
+        this.reviewedBy = reviewer;
+        this.reviewedAt = LocalDateTime.now();
+    }
+
     public void delete() {
         this.deletedAt = LocalDateTime.now();
     }
 
     public Long getId() {
         return id;
+    }
+
+    public Member getReporter() {
+        return reporter;
+    }
+
+    public ReportTargetType getTargetType() {
+        return targetType;
+    }
+
+    public Long getTargetId() {
+        return targetId;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public ReportStatus getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public Member getReviewedBy() {
+        return reviewedBy;
     }
 
     public boolean isDeleted() {
@@ -109,6 +152,12 @@ public class Report {
 
     private static void validateTarget(ReportTargetType targetType, Long targetId) {
         if (targetType == null || targetId == null || targetId <= 0) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private static void validateReviewRequest(Member reviewer, ReportStatus newStatus) {
+        if (reviewer == null || newStatus == null || newStatus == ReportStatus.RECEIVED) {
             throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
         }
     }

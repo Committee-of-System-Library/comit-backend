@@ -10,20 +10,23 @@
 ### 1.2 In Scope
 - 게시글 신고 API
 - 댓글 신고 API
+- 관리자 신고 목록 조회 API
+- 관리자 신고 상세 조회 API
+- 관리자 신고 상태 변경 API
 - 신고 사유 메시지 입력
 - 신고 데이터 저장
 - 동일 사용자의 동일 대상 중복 신고 방지
 - 기본 validation, 에러 처리, 테스트
 
 ### 1.3 Out of Scope
-- 관리자 신고 목록 조회 UI/API
-- 신고 처리 상태 변경 UI/API
+- 관리자 신고 처리 UI
 - 자동 차단, 자동 숨김
 - 신고 카테고리 분류
 - 신고 대상자 알림
 
 ### 1.4 Success Signal
 - 로그인 사용자가 게시글과 댓글을 신고할 수 있다.
+- 관리자가 접수된 신고를 조회하고 처리할 수 있다.
 - 신고 사유는 `1~500자`로 검증된다.
 - 같은 사용자가 같은 게시글 또는 댓글을 반복 신고할 수 없다.
 - 삭제된 대상이나 존재하지 않는 대상은 신고할 수 없다.
@@ -48,6 +51,7 @@
 - 신고 대상은 활성 게시글 또는 활성 댓글만 허용한다.
 - v1에서는 운영 검토용 저장만 하고, 처리 상태는 일반 사용자에게 노출하지 않는다.
 - 신고 사유는 자유 입력 메시지 하나만 받으며, 카테고리 선택은 후속 작업으로 미룬다.
+- 관리자 API는 `ADMIN` 권한 사용자만 호출할 수 있다.
 
 ---
 
@@ -94,6 +98,31 @@ Then:
 - 메시지가 유효하지 않으면 `400 INVALID_REQUEST`가 반환된다.
 - 새로운 신고 레코드는 저장되지 않는다.
 
+### Scenario D. 관리자가 신고 목록과 상세를 조회한다
+Given:
+- 관리자 사용자가 존재한다.
+- 삭제되지 않은 신고가 저장돼 있다.
+
+When:
+- 관리자가 신고 목록 또는 상세 조회를 요청한다.
+
+Then:
+- soft delete 되지 않은 신고만 반환된다.
+- status, targetType 필터가 있으면 해당 조건만 반영된다.
+
+### Scenario E. 관리자가 접수된 신고를 처리한다
+Given:
+- 관리자 사용자가 존재한다.
+- 대상 신고가 `RECEIVED` 상태다.
+
+When:
+- 관리자가 `REVIEWED`, `DISMISSED`, `ACTIONED` 중 하나로 상태 변경을 요청한다.
+
+Then:
+- 신고 상태가 요청한 값으로 변경된다.
+- `reviewedAt`, `reviewedBy`가 기록된다.
+- `RECEIVED`를 다시 요청하면 `400 INVALID_REQUEST`가 반환된다.
+
 ---
 
 ## 4. Functional Requirements
@@ -103,7 +132,9 @@ Then:
 - FR-4: `message`는 공백만 입력할 수 없고 최대 500자까지 허용한다.
 - FR-5: 같은 사용자는 같은 대상(`targetType + targetId`)을 한 번만 신고할 수 있다.
 - FR-6: 성공 시 생성된 신고 ID를 반환한다.
-- FR-7: v1 신고는 접수 상태로만 생성되고, 상태 변경 기능은 포함하지 않는다.
+- FR-7: 관리자는 신고 목록을 상태/대상 유형 필터로 조회할 수 있어야 한다.
+- FR-8: 관리자는 신고 상세를 조회할 수 있어야 한다.
+- FR-9: 관리자는 `RECEIVED` 상태의 신고를 `REVIEWED`, `DISMISSED`, `ACTIONED`로 변경할 수 있어야 한다.
 
 ---
 
@@ -120,12 +151,14 @@ Then:
 - `createdAt` 기록
 - 초기 상태는 `RECEIVED`
 - 동일 사용자/동일 대상 중복 신고는 이후 차단
+- 관리자 처리 시 `reviewedAt`, `reviewedBy`가 기록된다.
 
 ### 5.3 Invariants
 - soft delete 된 게시글/댓글은 신고 대상이 될 수 없다.
 - 신고 사유 원문은 trim 후 검증한다.
 - 신고 대상 타입은 `POST` 또는 `COMMENT`만 허용한다.
 - 동일 사용자와 동일 대상 조합은 DB 레벨에서도 유일해야 한다.
+- soft delete 된 신고는 관리자 목록/상세/처리 대상에서 제외된다.
 
 ### 5.4 Forbidden Rules
 - 비로그인 사용자의 신고
@@ -133,6 +166,7 @@ Then:
 - 500자 초과 메시지 신고
 - 같은 사용자의 동일 대상 중복 신고
 - 다른 도메인 대상에 대한 임의 신고 타입 확장
+- `RECEIVED`에서 `RECEIVED`로의 자기 전이
 
 ---
 
@@ -145,11 +179,11 @@ Then:
 - `ACTIONED`: 실제 조치 완료
 
 ### 6.2 Transition Rules
-- v1 구현 범위는 `RECEIVED` 생성까지만 포함한다.
-- 후속 운영 기능이 추가되면 `RECEIVED -> REVIEWED | DISMISSED | ACTIONED`를 허용한다.
+- v1 구현 범위는 `RECEIVED` 생성과 관리자 처리까지 포함한다.
+- `RECEIVED -> REVIEWED | DISMISSED | ACTIONED`를 허용한다.
 
 ### 6.3 Invalid Transitions
-- v1에서는 생성 후 상태 변경이 없다.
+- `RECEIVED -> RECEIVED`는 허용하지 않는다.
 - 존재하지 않는 신고 상태로 직접 전이할 수 없다.
 
 필요 시 후속 단계에서 운영 상태 전이 다이어그램을 추가한다.
@@ -194,6 +228,56 @@ Error cases:
 - `404 COMMENT_NOT_FOUND`
 - `409 REPORT_ALREADY_EXISTS`
 
+- Endpoint: `GET /admin/reports`
+  - Response:
+    ```json
+    {
+      "reports": [
+        {
+          "id": 1,
+          "targetType": "POST",
+          "targetId": 10,
+          "message": "광고성 도배입니다",
+          "reporterNickname": "reporter-1",
+          "status": "RECEIVED",
+          "createdAt": "2026-03-28T10:00:00"
+        }
+      ],
+      "page": 0,
+      "size": 20,
+      "totalElements": 1,
+      "totalPages": 1
+    }
+    ```
+
+- Endpoint: `GET /admin/reports/{reportId}`
+  - Response:
+    ```json
+    {
+      "id": 1,
+      "targetType": "POST",
+      "targetId": 10,
+      "message": "광고성 도배입니다",
+      "reporterNickname": "reporter-1",
+      "status": "REVIEWED",
+      "createdAt": "2026-03-28T10:00:00",
+      "reviewedAt": "2026-03-28T11:00:00",
+      "reviewedByNickname": "admin-1"
+    }
+    ```
+
+- Endpoint: `PATCH /admin/reports/{reportId}/status`
+  - Request:
+    ```json
+    {
+      "status": "REVIEWED"
+    }
+    ```
+  - Response:
+    ```json
+    {}
+    ```
+
 ### 7.2 Integration Contract
 - 외부 연동 없음
 
@@ -207,6 +291,7 @@ Error cases:
   - `message`
   - `status`
   - `created_at`
+  - `deleted_at` nullable
   - `reviewed_at` nullable
   - `reviewed_by` nullable
 - 유니크 제약:
@@ -224,7 +309,7 @@ Error cases:
 ### 8.2 Security Constraints
 - 신고는 로그인 사용자만 가능하다.
 - 신고 사유는 사용자 입력이므로 신뢰하지 않는다.
-- 관리자 기능 추가 전까지 신고 목록 공개 API를 만들지 않는다.
+- 관리자 신고 API는 일반 사용자에게 공개하지 않는다.
 
 ### 8.3 Performance Constraints
 - 신고 생성은 대상 존재 확인 + insert 수준으로 끝나야 한다.
@@ -241,6 +326,9 @@ Error cases:
 ### 9.1 Happy Path
 - 게시글 신고 성공
 - 댓글 신고 성공
+- 관리자 신고 목록 조회 성공
+- 관리자 신고 상세 조회 성공
+- 관리자 신고 상태 변경 성공
 
 ### 9.2 Failure Cases
 - 비로그인 사용자 신고 실패
@@ -249,11 +337,14 @@ Error cases:
 - 공백 메시지 신고 실패
 - 500자 초과 메시지 신고 실패
 - 중복 신고 실패
+- 관리자 아닌 사용자의 관리자 신고 API 접근 실패
+- `RECEIVED` 상태로 상태 변경 요청 시 실패
 
 ### 9.3 Edge Cases
 - trim 후 빈 문자열
 - 정확히 500자 메시지
 - soft delete 된 게시글/댓글 신고
+- soft delete 된 신고의 관리자 조회/처리 배제
 - 대댓글 신고
 
 ### 9.4 Regression Risks
@@ -264,7 +355,6 @@ Error cases:
 
 ## 10. Open Questions
 - 신고 접수 즉시 숨김 처리까지 할지
-- 관리자 검토 API를 Phase 1에 넣을지
 - 신고 카테고리를 v1부터 넣을지, 자유 입력만 유지할지
 
 ---

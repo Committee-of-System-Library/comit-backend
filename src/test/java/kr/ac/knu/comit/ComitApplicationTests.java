@@ -1,10 +1,14 @@
 package kr.ac.knu.comit;
 
+import kr.ac.knu.comit.comment.service.AdminCommentService;
 import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.comment.service.CommentService;
+import kr.ac.knu.comit.member.service.AdminMemberService;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
+import kr.ac.knu.comit.post.service.AdminPostService;
 import kr.ac.knu.comit.post.service.PostService;
+import kr.ac.knu.comit.report.service.AdminReportService;
 import kr.ac.knu.comit.report.service.ReportService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -41,6 +45,18 @@ class ComitApplicationTests {
 
     @MockitoBean
     ReportService reportService;
+
+    @MockitoBean
+    AdminReportService adminReportService;
+
+    @MockitoBean
+    AdminPostService adminPostService;
+
+    @MockitoBean
+    AdminCommentService adminCommentService;
+
+    @MockitoBean
+    AdminMemberService adminMemberService;
 
     @Test
     void contextLoads() {

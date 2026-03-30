@@ -41,6 +41,9 @@ public class Comment {
     @Column(nullable = false)
     private int helpfulCount;
 
+    @Column(nullable = false)
+    private boolean hiddenByAdmin = false;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -120,6 +123,18 @@ public class Comment {
 
     public boolean isReply() {
         return parentComment != null;
+    }
+
+    public void hideByAdmin() {
+        this.hiddenByAdmin = true;
+    }
+
+    public void restoreByAdmin() {
+        this.hiddenByAdmin = false;
+    }
+
+    public boolean isHiddenByAdmin() {
+        return hiddenByAdmin;
     }
 
     private static void validateContent(String content) {

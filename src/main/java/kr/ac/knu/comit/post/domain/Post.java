@@ -43,6 +43,9 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostTag> tags = new ArrayList<>();
 
+    @Column(nullable = false)
+    private boolean hiddenByAdmin = false;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -144,6 +147,18 @@ public class Post {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public void hideByAdmin() {
+        this.hiddenByAdmin = true;
+    }
+
+    public void restoreByAdmin() {
+        this.hiddenByAdmin = false;
+    }
+
+    public boolean isHiddenByAdmin() {
+        return hiddenByAdmin;
     }
 
     private static void validateTitle(String title) {

@@ -2,6 +2,7 @@ package kr.ac.knu.comit.member.domain;
 
 import jakarta.persistence.*;
 import kr.ac.knu.comit.global.exception.BusinessException;
+import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,12 @@ public class Member {
 
     @Column(nullable = false)
     private boolean studentNumberVisible = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private MemberStatus status = MemberStatus.ACTIVE;
+
+    private LocalDateTime suspendedUntil;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -91,6 +98,44 @@ public class Member {
         return studentNumberVisible;
     }
 
+    public void suspend(LocalDateTime until) {
+        validateSuspendedUntil(until);
+        this.status = MemberStatus.SUSPENDED;
+        this.suspendedUntil = until;
+    }
+
+    public void ban() {
+        this.status = MemberStatus.BANNED;
+        this.suspendedUntil = null;
+    }
+
+    public void activate() {
+        this.status = MemberStatus.ACTIVE;
+        this.suspendedUntil = null;
+    }
+
+    public boolean isSuspended() {
+        if (status != MemberStatus.SUSPENDED) return false;
+        if (suspendedUntil == null) return true;
+        return LocalDateTime.now().isBefore(suspendedUntil);
+    }
+
+    public boolean isBanned() {
+        return status == MemberStatus.BANNED;
+    }
+
+    public MemberStatus getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getSuspendedUntil() {
+        return suspendedUntil;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     private static void validateNickname(String nickname) {
         if (nickname == null || nickname.isBlank() || nickname.length() > 15) {
             throw new BusinessException(MemberErrorCode.INVALID_NICKNAME);
@@ -103,5 +148,11 @@ public class Member {
         }
         String normalized = studentNumber.trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static void validateSuspendedUntil(LocalDateTime suspendedUntil) {
+        if (suspendedUntil != null && !suspendedUntil.isAfter(LocalDateTime.now())) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
     }
 }

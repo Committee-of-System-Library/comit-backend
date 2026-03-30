@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.http.HttpHeaders;
+import kr.ac.knu.comit.global.exception.BusinessException;
+import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.auth.service.AuthCookieManager;
@@ -52,10 +54,18 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
             MemberPrincipal provisionalPrincipal = externalIdentityMapper.toPrincipal(identity);
 
             Member member = memberService.findOrCreateBySso(provisionalPrincipal);
+            if (member.isBanned()) {
+                throw new BusinessException(MemberErrorCode.MEMBER_BANNED);
+            }
+            if (member.isSuspended()) {
+                throw new BusinessException(MemberErrorCode.MEMBER_SUSPENDED);
+            }
             request.setAttribute(
                     MemberArgumentResolver.PRINCIPAL_ATTRIBUTE,
                     externalIdentityMapper.toPrincipal(member.getId(), identity)
             );
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception exception) {
             response.addHeader(HttpHeaders.SET_COOKIE, authCookieManager.clearAuthenticationCookie());
         }

@@ -24,8 +24,12 @@ class ApiDocGeneratorTest {
         Path htmlFile = tempDir.resolve("member/MemberControllerApi.html");
         assertThat(Files.exists(htmlFile)).isTrue();
         assertThat(Files.exists(tempDir.resolve("auth/SsoAuthControllerApi.html"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("comment/AdminCommentControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("comment/CommentControllerApi.html"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("member/AdminMemberControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("post/PostControllerApi.html"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("post/AdminPostControllerApi.html"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("report/AdminReportControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("index.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("index.js"))).isTrue();
         assertThat(Files.exists(staleFile)).isFalse();
