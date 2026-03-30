@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         classes = ComitApplication.class,
         properties = {
                 "SPRING_PORT=0",
+                "DDL_AUTO=none",
                 "MAX_FILE_SIZE=10MB",
                 "MAX_REQUEST_SIZE=10MB",
                 "COMIT_AUTH_BRIDGE_ENABLED=false"
@@ -91,7 +92,7 @@ class FlywayMigrationIntegrationTest {
         // then
         // Flyway 이력 테이블과 핵심 도메인 테이블이 모두 생성되어야 한다.
         assertThat(historyTableCount).isEqualTo(1);
-        assertThat(appliedMigrationCount).isEqualTo(9);
+        assertThat(appliedMigrationCount).isEqualTo(10);
         assertThat(tables).contains(
                 "flyway_schema_history",
                 "member",

@@ -1,6 +1,7 @@
 ALTER TABLE member
     ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' AFTER student_number_visible,
-    ADD COLUMN suspended_until DATETIME(6) NULL AFTER status;
+    ADD COLUMN suspended_until DATETIME(6) NULL AFTER status,
+    ADD INDEX idx_member_status_id (status, id DESC);
 
 ALTER TABLE post
     ADD COLUMN hidden_by_admin TINYINT(1) NOT NULL DEFAULT 0 AFTER view_count;

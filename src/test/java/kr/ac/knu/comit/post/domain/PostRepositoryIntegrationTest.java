@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         classes = ComitApplication.class,
         properties = {
                 "SPRING_PORT=0",
+                "DDL_AUTO=none",
                 "MAX_FILE_SIZE=10MB",
                 "MAX_REQUEST_SIZE=10MB"
         }
