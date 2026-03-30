@@ -42,11 +42,17 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addRedirectViewController("/api/docs", "/api/docs/index.html");
+        registry.addRedirectViewController("/docs", "/docs/index.html");
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/api/docs/**")
+                .addResourceLocations(
+                        "file:./docs/api/",
+                        "file:/app/api-docs/"
+                );
+        registry.addResourceHandler("/docs/**")
                 .addResourceLocations(
                         "file:./docs/api/",
                         "file:/app/api-docs/"

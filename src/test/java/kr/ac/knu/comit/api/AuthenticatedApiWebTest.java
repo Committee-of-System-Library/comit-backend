@@ -592,10 +592,28 @@ class AuthenticatedApiWebTest {
     }
 
     @Test
+    void redirectsStrippedDocsRootToIndexHtml() throws Exception {
+        // when & then
+        // 프록시가 /api prefix를 제거한 경로도 같은 문서 루트로 처리되어야 한다.
+        mockMvc.perform(get("/docs"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", "/docs/index.html"));
+    }
+
+    @Test
     void servesGeneratedApiDocsIndexScript() throws Exception {
         // when & then
         // 생성된 API 문서 정적 산출물이 앱 경로로 서빙되어야 한다.
         mockMvc.perform(get("/api/docs/index.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("window.API_DOCS")));
+    }
+
+    @Test
+    void servesGeneratedApiDocsIndexScriptOnStrippedDocsPath() throws Exception {
+        // when & then
+        // 프록시가 /api prefix를 제거한 경로에서도 정적 문서가 그대로 서빙되어야 한다.
+        mockMvc.perform(get("/docs/index.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("window.API_DOCS")));
     }
