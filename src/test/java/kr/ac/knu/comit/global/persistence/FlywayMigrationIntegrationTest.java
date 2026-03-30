@@ -92,7 +92,7 @@ class FlywayMigrationIntegrationTest {
         // then
         // Flyway 이력 테이블과 핵심 도메인 테이블이 모두 생성되어야 한다.
         assertThat(historyTableCount).isEqualTo(1);
-        assertThat(appliedMigrationCount).isEqualTo(10);
+        assertThat(appliedMigrationCount).isEqualTo(9);
         assertThat(tables).contains(
                 "flyway_schema_history",
                 "member",
