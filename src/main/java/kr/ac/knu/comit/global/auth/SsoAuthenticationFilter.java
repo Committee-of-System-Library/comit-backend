@@ -5,20 +5,22 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import org.springframework.http.HttpHeaders;
-import kr.ac.knu.comit.global.exception.BusinessException;
-import kr.ac.knu.comit.global.exception.MemberErrorCode;
+import java.util.Optional;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.auth.service.AuthCookieManager;
 import kr.ac.knu.comit.auth.service.ExternalIdentityMapper;
+import kr.ac.knu.comit.global.exception.BusinessException;
+import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
@@ -31,6 +33,7 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
     private final ExternalAuthClient externalAuthClient;
     private final ExternalIdentityMapper externalIdentityMapper;
     private final MemberService memberService;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
     protected void doFilterInternal(
@@ -53,7 +56,12 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
             ExternalIdentity identity = externalAuthClient.verify(token);
             MemberPrincipal provisionalPrincipal = externalIdentityMapper.toPrincipal(identity);
 
-            Member member = memberService.findOrCreateBySso(provisionalPrincipal);
+            Optional<Member> memberOptional = memberService.findBySso(provisionalPrincipal);
+            if (memberOptional.isEmpty()) {
+                throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
+            }
+
+            Member member = memberOptional.get();
             if (member.isBanned()) {
                 throw new BusinessException(MemberErrorCode.MEMBER_BANNED);
             }
@@ -65,7 +73,8 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
                     externalIdentityMapper.toPrincipal(member.getId(), identity)
             );
         } catch (BusinessException e) {
-            throw e;
+            handlerExceptionResolver.resolveException(request, response, null, e);
+            return;
         } catch (Exception exception) {
             response.addHeader(HttpHeaders.SET_COOKIE, authCookieManager.clearAuthenticationCookie());
         }
@@ -75,6 +84,7 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/auth/sso");
+        String requestUri = request.getRequestURI();
+        return requestUri.startsWith("/auth/sso") || requestUri.startsWith("/auth/register");
     }
 }

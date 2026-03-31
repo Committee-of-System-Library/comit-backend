@@ -1,7 +1,14 @@
 window.API_DOCS = [
 {
+  title: "RegisterControllerApi",
+  summary: "SSO 토큰 쿠키를 검증하고 회원가입 폼에 미리 채울 값을 반환합니다.",
+  href: "./auth/RegisterControllerApi.html",
+  endpointCount: 2,
+  sectionPath: "auth"
+},
+{
   title: "SsoAuthControllerApi",
-  summary: "auth-server가 전달한 custom JWT와 state를 검증한 뒤, SSO 토큰 쿠키를 심고 프론트 성공 URL로 리다이렉트합니다.",
+  summary: "auth-server가 전달한 custom JWT와 state를 검증한 뒤, 가입 상태에 따라 프론트 성공 URL 또는 회원가입 URL로 리다이렉트합니다.",
   href: "./auth/SsoAuthControllerApi.html",
   endpointCount: 3,
   sectionPath: "auth"

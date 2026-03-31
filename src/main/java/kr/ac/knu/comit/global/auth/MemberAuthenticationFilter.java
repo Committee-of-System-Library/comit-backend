@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Component
 @ConditionalOnProperty(prefix = "comit.auth.bridge", name = "enabled", havingValue = "true")
@@ -27,6 +29,7 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
     private static final String ROLE_HEADER = "X-Member-Role";
 
     private final MemberService memberService;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
     protected void doFilterInternal(
@@ -55,25 +58,40 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
                 parseRole(request.getHeader(ROLE_HEADER))
         );
 
-        Member member = memberService.findOrCreateBySso(provisionalPrincipal);
-        if (member.isBanned()) {
-            throw new BusinessException(MemberErrorCode.MEMBER_BANNED);
-        }
-        if (member.isSuspended()) {
-            throw new BusinessException(MemberErrorCode.MEMBER_SUSPENDED);
-        }
-        MemberPrincipal authenticatedPrincipal = new MemberPrincipal(
-                member.getId(),
-                member.getSsoSub(),
-                provisionalPrincipal.name(),
-                provisionalPrincipal.email(),
-                provisionalPrincipal.studentNumber(),
-                provisionalPrincipal.userType(),
-                provisionalPrincipal.role()
-        );
+        try {
+            Optional<Member> memberOptional = memberService.findBySso(provisionalPrincipal);
+            if (memberOptional.isEmpty()) {
+                throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
+            }
 
-        request.setAttribute(MemberArgumentResolver.PRINCIPAL_ATTRIBUTE, authenticatedPrincipal);
-        filterChain.doFilter(request, response);
+            Member member = memberOptional.get();
+            if (member.isBanned()) {
+                throw new BusinessException(MemberErrorCode.MEMBER_BANNED);
+            }
+            if (member.isSuspended()) {
+                throw new BusinessException(MemberErrorCode.MEMBER_SUSPENDED);
+            }
+            MemberPrincipal authenticatedPrincipal = new MemberPrincipal(
+                    member.getId(),
+                    member.getSsoSub(),
+                    provisionalPrincipal.name(),
+                    provisionalPrincipal.email(),
+                    provisionalPrincipal.studentNumber(),
+                    provisionalPrincipal.userType(),
+                    provisionalPrincipal.role()
+            );
+
+            request.setAttribute(MemberArgumentResolver.PRINCIPAL_ATTRIBUTE, authenticatedPrincipal);
+            filterChain.doFilter(request, response);
+        } catch (BusinessException exception) {
+            handlerExceptionResolver.resolveException(request, response, null, exception);
+        }
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        return requestUri.startsWith("/auth/sso") || requestUri.startsWith("/auth/register");
     }
 
     private String defaultName(HttpServletRequest request) {

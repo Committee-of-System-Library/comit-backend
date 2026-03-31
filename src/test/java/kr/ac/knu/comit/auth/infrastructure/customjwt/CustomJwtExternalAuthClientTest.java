@@ -41,6 +41,7 @@ class CustomJwtExternalAuthClientTest {
         // ssoSub, userType, role이 외부 사용자 모델 규칙에 맞게 매핑되어야 한다.
         assertThat(identity.ssoSub()).isEqualTo("7");
         assertThat(identity.email()).isEqualTo("hong@knu.ac.kr");
+        assertThat(identity.major()).isEqualTo("심화컴퓨팅 전공");
         assertThat(identity.userType()).isEqualTo("CSE_STUDENT");
         assertThat(identity.role()).isEqualTo("ADMIN");
     }

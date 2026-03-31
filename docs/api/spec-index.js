@@ -13,5 +13,10 @@ window.SPEC_DOCS = [
   title: "게시글·댓글 신고 기능",
   summary: "- 게시글과 댓글에 대해 사용자가 신고를 남길 수 있어야 한다.",
   href: "./spec/post-comment-report.html"
+},
+{
+  title: "SSO 미가입 회원 2단계 회원가입 플로우",
+  summary: "- SSO 로그인 성공 후 Comit 미가입 사용자가 명시적으로 정보를 입력하고 회원가입을 완료할 수 있어야 한다.",
+  href: "./spec/sso-registration-flow.html"
 }
 ];

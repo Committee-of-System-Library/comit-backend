@@ -115,7 +115,7 @@ class AuthenticatedApiWebTest {
 
     @BeforeEach
     void setUp() {
-        given(memberService.findOrCreateBySso(any())).willReturn(authenticatedMember());
+        given(memberService.findBySso(any())).willReturn(Optional.of(authenticatedMember()));
     }
 
     @Test
@@ -619,7 +619,15 @@ class AuthenticatedApiWebTest {
     }
 
     private Member authenticatedMember() {
-        Member member = Member.create("member-1", "comit-user", "2020111111");
+        Member member = Member.create(
+                "member-1",
+                "테스트유저",
+                "010-0000-0000",
+                "comit-user",
+                "2020111111",
+                null,
+                LocalDateTime.now()
+        );
         ReflectionTestUtils.setField(member, "id", 1L);
         return member;
     }

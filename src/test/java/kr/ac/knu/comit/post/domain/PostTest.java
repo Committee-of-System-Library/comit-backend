@@ -1,15 +1,16 @@
 package kr.ac.knu.comit.post.domain;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.List;
+import java.time.LocalDateTime;
+
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.PostErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Post")
 class PostTest {
@@ -21,7 +22,7 @@ class PostTest {
         @Test
         @DisplayName("제목이 30자를 초과하면 INVALID_TITLE 예외를 던진다")
         void throwsWhenTitleExceedsMaxLength() {
-            Member author = Member.create("sso-1", "writer", "20230001");
+            Member author = author();
 
             assertThatThrownBy(() -> Post.create(
                     author,
@@ -43,7 +44,7 @@ class PostTest {
         @Test
         @DisplayName("내용이 500자를 초과하면 INVALID_CONTENT 예외를 던진다")
         void throwsWhenContentExceedsMaxLength() {
-            Member author = Member.create("sso-1", "writer", "20230001");
+            Member author = author();
             Post post = Post.create(author, BoardType.QNA, "제목", "본문", List.of());
 
             assertThatThrownBy(() -> post.update(
@@ -55,5 +56,17 @@ class PostTest {
                     .extracting("errorCode")
                     .isEqualTo(PostErrorCode.INVALID_CONTENT);
         }
+    }
+
+    private Member author() {
+        return Member.create(
+                "sso-1",
+                "테스트유저",
+                "010-0000-0000",
+                "writer",
+                "20230001",
+                null,
+                LocalDateTime.now()
+        );
     }
 }

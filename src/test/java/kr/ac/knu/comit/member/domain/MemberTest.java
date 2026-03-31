@@ -17,7 +17,7 @@ class MemberTest {
     void suspendsUntilFutureTime() {
         // given
         // 미래 시각까지의 정지 요청을 준비한다.
-        Member member = Member.create("sso-1", "comit-user", "20230001");
+        Member member = member();
         LocalDateTime suspendedUntil = LocalDateTime.now().plusDays(1);
 
         // when
@@ -36,7 +36,7 @@ class MemberTest {
     void throwsWhenSuspendedUntilIsInThePast() {
         // given
         // 이미 지난 시각까지의 정지 요청을 준비한다.
-        Member member = Member.create("sso-1", "comit-user", "20230001");
+        Member member = member();
         LocalDateTime suspendedUntil = LocalDateTime.now().minusDays(1);
 
         // when & then
@@ -45,5 +45,17 @@ class MemberTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(CommonErrorCode.INVALID_REQUEST);
+    }
+
+    private Member member() {
+        return Member.create(
+                "sso-1",
+                "테스트유저",
+                "010-0000-0000",
+                "comit-user",
+                "20230001",
+                null,
+                LocalDateTime.now()
+        );
     }
 }

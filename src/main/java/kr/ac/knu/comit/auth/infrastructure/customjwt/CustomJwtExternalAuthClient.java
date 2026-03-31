@@ -74,6 +74,7 @@ public class CustomJwtExternalAuthClient implements ExternalAuthClient {
                     requiredString(claimsSet.getStringClaim("name")),
                     requiredString(claimsSet.getStringClaim("email")),
                     claimsSet.getStringClaim("student_number"),
+                    claimsSet.getStringClaim("major"),
                     requiredString(claimsSet.getStringClaim("user_type")),
                     claimsSet.getStringClaim("role")
             );

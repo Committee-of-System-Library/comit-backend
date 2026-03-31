@@ -112,7 +112,15 @@ class UpdateNickname {
 void updatesNicknameWhenNicknameIsAvailable() {
     // given
     // 닉네임 변경이 가능한 회원 상태를 준비한다.
-    Member member = Member.create("sso-1", "old-name", "20230001");
+    Member member = Member.create(
+        "sso-1",
+        "테스트유저",
+        "010-0000-0000",
+        "old-name",
+        "20230001",
+        null,
+        LocalDateTime.now()
+    );
     given(memberRepository.existsByNickname("new-name")).willReturn(false);
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
 

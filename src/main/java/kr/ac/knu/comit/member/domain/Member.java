@@ -1,11 +1,10 @@
 package kr.ac.knu.comit.member.domain;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "member")
@@ -21,8 +20,16 @@ public class Member {
     @Column(nullable = false, unique = true, length = 50)
     private String nickname;
 
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String phone;
+
     @Column(length = 20)
     private String studentNumber;
+
+    private String majorTrack;
 
     @Column(nullable = false)
     private boolean studentNumberVisible = true;
@@ -36,30 +43,38 @@ public class Member {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private LocalDateTime agreedAt;
+
     private LocalDateTime deletedAt;
 
     protected Member() {
     }
 
-    /**
-     * SSO 최초 인증 성공 시 회원을 생성한다.
-     *
-     * @apiNote 초기 닉네임은 SSO 표시 이름을 사용하며, 이후 사용자가 변경할 수 있다.
-     */
-    public static Member create(String ssoSub, String initialNickname, String studentNumber) {
-        validateNickname(initialNickname);
+    public static Member create(
+            String ssoSub,
+            String name,
+            String phone,
+            String nickname,
+            String studentNumber,
+            String majorTrack,
+            LocalDateTime agreedAt
+    ) {
         Member member = new Member();
-        member.ssoSub = ssoSub;
-        member.nickname = initialNickname;
+        member.ssoSub = requireText(ssoSub);
+        member.name = requireText(name);
+        member.phone = requireText(phone);
+        member.nickname = normalizeNickname(nickname);
         member.studentNumber = normalizeStudentNumber(studentNumber);
+        member.majorTrack = normalizeOptionalText(majorTrack);
         member.studentNumberVisible = true;
         member.createdAt = LocalDateTime.now();
+        member.agreedAt = requireAgreedAt(agreedAt);
         return member;
     }
 
     public void updateNickname(String nickname) {
-        validateNickname(nickname);
-        this.nickname = nickname;
+        this.nickname = normalizeNickname(nickname);
     }
 
     public void updateStudentNumberVisibility(boolean visible) {
@@ -90,8 +105,20 @@ public class Member {
         return nickname;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
     public String getStudentNumber() {
         return studentNumber;
+    }
+
+    public String getMajorTrack() {
+        return majorTrack;
     }
 
     public boolean isStudentNumberVisible() {
@@ -136,18 +163,43 @@ public class Member {
         return createdAt;
     }
 
-    private static void validateNickname(String nickname) {
-        if (nickname == null || nickname.isBlank() || nickname.length() > 15) {
+    public LocalDateTime getAgreedAt() {
+        return agreedAt;
+    }
+
+    private static String normalizeNickname(String nickname) {
+        String normalized = normalizeOptionalText(nickname);
+        if (normalized == null || normalized.length() > 15) {
             throw new BusinessException(MemberErrorCode.INVALID_NICKNAME);
         }
+        return normalized;
+    }
+
+    private static String requireText(String value) {
+        String normalized = normalizeOptionalText(value);
+        if (normalized == null) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+        return normalized;
     }
 
     private static String normalizeStudentNumber(String studentNumber) {
-        if (studentNumber == null) {
+        return normalizeOptionalText(studentNumber);
+    }
+
+    private static String normalizeOptionalText(String value) {
+        if (value == null) {
             return null;
         }
-        String normalized = studentNumber.trim();
+        String normalized = value.trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static LocalDateTime requireAgreedAt(LocalDateTime agreedAt) {
+        if (agreedAt == null) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+        return agreedAt;
     }
 
     private static void validateSuspendedUntil(LocalDateTime suspendedUntil) {

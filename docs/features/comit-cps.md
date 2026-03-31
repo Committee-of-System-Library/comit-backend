@@ -24,7 +24,7 @@
 - BE: Spring Boot 4.0.4 + Java 21, Light DDD 패키지 구조
 - 인증: KNU CSE SSO (chcse.knu.ac.kr) Google Workspace OAuth → JWT Resource Server
 - SSO JWT Claims: `sub`, `student_number`, `name`, `email`, `major`, `user_type`, `role`
-- 우리 DB 저장: `sso_sub`(연결키), `nickname`, `student_number_visible` — SSO에 없는 Comit 전용 설정만
+- 우리 DB 저장: `sso_sub`, `name`, `phone`, `nickname`, `student_number`, `major_track`, `agreed_at`, `student_number_visible`
 
 ---
 

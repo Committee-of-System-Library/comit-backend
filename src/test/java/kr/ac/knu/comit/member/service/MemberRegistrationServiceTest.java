@@ -5,10 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.times;
 
-import java.util.List;
-import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
@@ -16,7 +13,6 @@ import kr.ac.knu.comit.member.domain.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,105 +29,103 @@ class MemberRegistrationServiceTest {
     private MemberRegistrationService memberRegistrationService;
 
     @Test
-    @DisplayName("사용 가능한 표시 이름이면 그대로 초기 닉네임으로 저장한다")
-    void registersWithPrincipalNameWhenNicknameIsAvailable() {
+    @DisplayName("명시적으로 입력한 회원 정보로 가입시킨다")
+    void registersMemberWithExplicitInput() {
         // given
-        // SSO 표시 이름이 비어 있지 않고 아직 사용 중이지 않은 상황을 준비한다.
-        MemberPrincipal principal = principal("sso-1", "보형 장", "2023012780");
-        given(memberRepository.existsByNickname("보형 장")).willReturn(false);
+        // 닉네임이 아직 사용 중이지 않은 회원가입 요청을 준비한다.
+        given(memberRepository.existsByNickname("길동이")).willReturn(false);
         given(memberRepository.saveAndFlush(any(Member.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
 
         // when
-        // 최초 가입 요청을 처리한다.
-        Member member = memberRegistrationService.register(principal);
+        // 회원가입을 처리한다.
+        Member member = memberRegistrationService.register(
+                "sso-1",
+                "홍길동",
+                "010-1234-5678",
+                "길동이",
+                "2023012780",
+                "심화"
+        );
 
         // then
-        // 표시 이름이 그대로 초기 닉네임으로 저장된다.
-        assertThat(member.getNickname()).isEqualTo("보형 장");
+        // 회원 정보와 동의 시각이 함께 저장되어야 한다.
+        assertThat(member.getName()).isEqualTo("홍길동");
+        assertThat(member.getPhone()).isEqualTo("010-1234-5678");
+        assertThat(member.getNickname()).isEqualTo("길동이");
         assertThat(member.getStudentNumber()).isEqualTo("2023012780");
-        then(memberRepository).should().existsByNickname("보형 장");
+        assertThat(member.getMajorTrack()).isEqualTo("심화");
+        assertThat(member.getAgreedAt()).isNotNull();
+        then(memberRepository).should().existsByNickname("길동이");
     }
 
     @Test
-    @DisplayName("같은 표시 이름이 이미 있으면 학번 suffix를 붙여 저장한다")
-    void registersWithStudentNumberSuffixWhenNicknameAlreadyExists() {
+    @DisplayName("이미 사용 중인 닉네임이면 DUPLICATE_NICKNAME 예외를 던진다")
+    void throwsWhenNicknameAlreadyExists() {
         // given
-        // 표시 이름 충돌이 있지만 학번 suffix를 붙이면 비어 있는 상황을 준비한다.
-        MemberPrincipal principal = principal("sso-1", "보형 장", "2023012780");
-        given(memberRepository.existsByNickname("보형 장")).willReturn(true);
-        given(memberRepository.existsByNickname("보형 장-2780")).willReturn(false);
-        given(memberRepository.saveAndFlush(any(Member.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
-
-        // when
-        // 최초 가입 요청을 처리한다.
-        Member member = memberRegistrationService.register(principal);
-
-        // then
-        // 닉네임 충돌을 피해 suffix가 붙은 초기 닉네임으로 저장된다.
-        assertThat(member.getNickname()).isEqualTo("보형 장-2780");
-        then(memberRepository).should().existsByNickname("보형 장");
-        then(memberRepository).should().existsByNickname("보형 장-2780");
-    }
-
-    @Test
-    @DisplayName("저장 충돌이 나면 새 후보 닉네임으로 재시도한다")
-    void retriesWithNewNicknameWhenSaveCollides() {
-        // given
-        // 첫 저장은 닉네임 충돌로 실패하고, 재시도에서는 suffix 닉네임이 비어 있는 상황을 준비한다.
-        MemberPrincipal principal = principal("sso-1", "보형 장", "2023012780");
-        given(memberRepository.existsByNickname("보형 장")).willReturn(false).willReturn(true);
-        given(memberRepository.existsByNickname("보형 장-2780")).willReturn(false);
-        given(memberRepository.saveAndFlush(any(Member.class)))
-                .willThrow(new DataIntegrityViolationException("duplicate key for uk_member_nickname"))
-                .willAnswer(invocation -> invocation.getArgument(0));
-
-        // when
-        // 최초 가입을 실행한다.
-        Member member = memberRegistrationService.register(principal);
-
-        // then
-        // 첫 시도 후 suffix 닉네임으로 재시도되어야 한다.
-        assertThat(member.getNickname()).isEqualTo("보형 장-2780");
-
-        ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
-        then(memberRepository).should(times(2)).existsByNickname("보형 장");
-        then(memberRepository).should().existsByNickname("보형 장-2780");
-        then(memberRepository).should(times(2)).saveAndFlush(memberCaptor.capture());
-        List<Member> savedMembers = memberCaptor.getAllValues();
-        assertThat(savedMembers).hasSize(2);
-        assertThat(savedMembers.get(0).getNickname()).isEqualTo("보형 장");
-        assertThat(savedMembers.get(1).getNickname()).isEqualTo("보형 장-2780");
-    }
-
-    @Test
-    @DisplayName("닉네임 충돌이 계속되면 DUPLICATE_NICKNAME 예외를 반환한다")
-    void throwsWhenNicknameCollisionPersists() {
-        // given
-        // 모든 재시도에서도 저장 충돌이 계속되는 상황을 준비한다.
-        MemberPrincipal principal = principal("sso-1", "보형 장", "2023012780");
-        given(memberRepository.existsByNickname("보형 장")).willReturn(false);
-        given(memberRepository.saveAndFlush(any(Member.class)))
-                .willThrow(new DataIntegrityViolationException("duplicate key for uk_member_nickname"));
+        // 같은 닉네임이 이미 선점된 상황을 준비한다.
+        given(memberRepository.existsByNickname("길동이")).willReturn(true);
 
         // when & then
-        // bounded retry가 끝나면 도메인 예외로 종료되어야 한다.
-        assertThatThrownBy(() -> memberRegistrationService.register(principal))
+        // 저장 전에 중복 닉네임 예외가 반환되어야 한다.
+        assertThatThrownBy(() -> memberRegistrationService.register(
+                "sso-1",
+                "홍길동",
+                "010-1234-5678",
+                "길동이",
+                "2023012780",
+                "심화"
+        ))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(MemberErrorCode.DUPLICATE_NICKNAME);
     }
 
-    private MemberPrincipal principal(String ssoSub, String name, String studentNumber) {
-        return new MemberPrincipal(
-                null,
-                ssoSub,
-                name,
-                "member@knu.ac.kr",
-                studentNumber,
-                MemberPrincipal.UserType.CSE_STUDENT,
-                MemberPrincipal.MemberRole.STUDENT
-        );
+    @Test
+    @DisplayName("저장 시 닉네임 unique 충돌이 나면 DUPLICATE_NICKNAME으로 변환한다")
+    void throwsDuplicateNicknameWhenSaveCollidesOnNickname() {
+        // given
+        // 사전 조회는 통과했지만 DB 저장 시 닉네임 unique 충돌이 나는 상황을 준비한다.
+        given(memberRepository.existsByNickname("길동이")).willReturn(false);
+        given(memberRepository.saveAndFlush(any(Member.class)))
+                .willThrow(new DataIntegrityViolationException("duplicate key for uk_member_nickname"));
+
+        // when & then
+        // 저장 충돌도 도메인 예외로 정규화되어야 한다.
+        assertThatThrownBy(() -> memberRegistrationService.register(
+                "sso-1",
+                "홍길동",
+                "010-1234-5678",
+                "길동이",
+                "2023012780",
+                "심화"
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(MemberErrorCode.DUPLICATE_NICKNAME);
+    }
+
+    @Test
+    @DisplayName("저장 시 ssoSub unique 충돌이 나면 MEMBER_ALREADY_EXISTS로 변환한다")
+    void throwsMemberAlreadyExistsWhenSaveCollidesOnSsoSub() {
+        // given
+        // 사전 조회 이후 다른 요청이 먼저 가입을 완료한 상황을 준비한다.
+        given(memberRepository.existsByNickname("길동이")).willReturn(false);
+        given(memberRepository.saveAndFlush(any(Member.class)))
+                .willThrow(new DataIntegrityViolationException("duplicate key for uk_member_sso_sub"));
+
+        // when & then
+        // ssoSub 충돌은 이미 가입된 회원으로 해석되어야 한다.
+        assertThatThrownBy(() -> memberRegistrationService.register(
+                "sso-1",
+                "홍길동",
+                "010-1234-5678",
+                "길동이",
+                "2023012780",
+                "심화"
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(MemberErrorCode.MEMBER_ALREADY_EXISTS);
     }
 }
