@@ -96,12 +96,21 @@
 - `sidowi`로 분할 업로드
 - 현재 `knu-cse-comit-server` 컨테이너 안 `/app/app.jar` 교체
 - 컨테이너 재시작
-- SSO override 환경변수가 빠지지 않도록 compose override를 함께 다시 적용
+- 당시에는 SSO 운영값이 `comit.compose.override.yml`에 있었기 때문에 compose override를 함께 다시 적용
 
 주의:
 - 로컬에서 빌드한 Docker 이미지를 그대로 서버에 올리면 `arm64` / `amd64` 아키텍처 불일치가 날 수 있다.
 - 실제로 한 번 `exec format error`가 발생했고, 즉시 이전 `amd64` 이미지로 롤백했다.
 - 따라서 이 환경에서는 "이미지 통째 업로드"보다 "jar 교체 후 현재 서버 아키텍처 기반 컨테이너 유지"가 더 안전했다.
+
+### 3. 운영값 source of truth 정리
+
+- 이후 staging 상시 SSO 운영값은 `/opt/docker/env/comit.env`로 이동했다.
+- 현재 기준:
+  - `/opt/docker/env/comit.env` = staging 상시 운영값 source of truth
+  - `/home/yujihun20251/comit.compose.override.yml` = 개인 Vercel 테스트, 임시 CORS 확장, 긴급 우회용
+- 그래서 `knu-cse-comit-server`는 이제 base compose만으로 재기동해도 같은 SSO/CORS 설정으로 올라온다.
+- `frontend-error-url`도 `https://chcse.knu.ac.kr/comit-staging/error`로 통일했다.
 
 ## live 검증 결과
 
@@ -149,6 +158,7 @@ Comit은 별도 signup form이 아니라,
 - `comit-staging` API docs는 live에서 접근 가능하다.
 - `https://knu-cse-comit-client.vercel.app` origin에 대한 CORS는 live에서 허용된다.
 - 첫 SSO 로그인 후 local member 생성 플로우도 staging에서 실제로 검증됐다.
+- staging 상시 운영값은 override가 아니라 `comit.env`에서 관리된다.
 
 ## 남은 운영 이슈
 
@@ -179,5 +189,6 @@ Comit은 별도 signup form이 아니라,
 3. `https://chcse.knu.ac.kr/comit-staging/api/docs` 가 `302 -> 200`인지 확인
 4. `OPTIONS /members/me` 로 CORS 헤더 확인
 5. `docker inspect knu-cse-comit-server` 로 `COMIT_AUTH_SSO_*` env가 실제 컨테이너에 들어갔는지 확인
-6. `/auth/sso/login` 이 `302`로 auth-server login URL을 반환하는지 확인
-7. 필요 시 synthetic callback으로 `member` 생성 여부 확인
+6. `/opt/docker/env/comit.env`가 SSO/CORS 상시값 source of truth인지 확인하고, override에 중복 키가 남아 있지 않은지 본다
+7. `/auth/sso/login` 이 `302`로 auth-server login URL을 반환하는지 확인
+8. 필요 시 synthetic callback으로 `member` 생성 여부 확인
