@@ -188,7 +188,9 @@ Then:
   "major": "심화"
 }
 ```
-- Error: `401 UNAUTHORIZED` (쿠키 없음 또는 만료)
+- Errors:
+  - `401 UNAUTHORIZED`: 쿠키 없음 또는 만료
+  - `409 MEMBER_ALREADY_EXISTS`: 이미 가입된 ssoSub
 
 **POST /auth/register**
 - Auth: SSO 토큰 쿠키 필요

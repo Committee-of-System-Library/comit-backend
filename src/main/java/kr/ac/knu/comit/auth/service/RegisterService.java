@@ -8,8 +8,8 @@ import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
-import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
+import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +21,7 @@ public class RegisterService {
 
     private final ExternalAuthClient externalAuthClient;
     private final ExternalIdentityMapper externalIdentityMapper;
-    private final MemberRepository memberRepository;
+    private final MemberService memberService;
     private final MemberRegistrationService memberRegistrationService;
 
     public RegisterPrefillResponse getPrefill(String token) {
@@ -63,7 +63,7 @@ public class RegisterService {
     }
 
     private void validateMemberDoesNotExist(String ssoSub) {
-        if (memberRepository.findBySsoSubAndDeletedAtIsNull(ssoSub).isPresent()) {
+        if (memberService.hasAnyMember(ssoSub)) {
             throw new BusinessException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
     }

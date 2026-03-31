@@ -277,8 +277,10 @@
   &quot;major&quot;: &quot;심화&quot;
 }</code></pre>
 <ul>
-<li>Error: <code>401 UNAUTHORIZED</code> (쿠키 없음 또는 만료)</li>
+<li>Errors:</li>
 </ul>
+<p>- <code>401 UNAUTHORIZED</code>: 쿠키 없음 또는 만료</p>
+<p>- <code>409 MEMBER_ALREADY_EXISTS</code>: 이미 가입된 ssoSub</p>
 <p><strong>POST /auth/register</strong></p>
 <ul>
 <li>Auth: SSO 토큰 쿠키 필요</li>

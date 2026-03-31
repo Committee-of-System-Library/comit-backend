@@ -64,6 +64,31 @@ class MemberServiceTest {
     }
 
     @Nested
+    @DisplayName("member existence")
+    class MemberExistence {
+
+        @Test
+        @DisplayName("활성 회원 존재 여부를 조회한다")
+        void returnsWhetherActiveMemberExists() {
+            given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-1")).willReturn(Optional.of(member("sso-1", "comit-user", "20230001")));
+
+            boolean result = memberService.hasActiveMember("sso-1");
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("삭제된 회원 포함 전체 존재 여부를 조회한다")
+        void returnsWhetherAnyMemberExists() {
+            given(memberRepository.existsBySsoSub("sso-1")).willReturn(true);
+
+            boolean result = memberService.hasAnyMember("sso-1");
+
+            assertThat(result).isTrue();
+        }
+    }
+
+    @Nested
     @DisplayName("updateNickname")
     class UpdateNickname {
 

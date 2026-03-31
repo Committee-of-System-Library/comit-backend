@@ -17,7 +17,7 @@ import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
-import kr.ac.knu.comit.member.domain.MemberRepository;
+import kr.ac.knu.comit.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class SsoAuthServiceTest {
     @Mock private ExternalAuthClient externalAuthClient;
     @Mock private AuthCookieManager authCookieManager;
     @Mock private ExternalIdentityMapper externalIdentityMapper;
-    @Mock private MemberRepository memberRepository;
+    @Mock private MemberService memberService;
     @InjectMocks private SsoAuthService ssoAuthService;
 
     @Nested
@@ -67,7 +67,7 @@ class SsoAuthServiceTest {
             givenRedirectUrls();
             given(externalAuthClient.verify("valid-token")).willReturn(identity);
             given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal);
-            given(memberRepository.findBySsoSubAndDeletedAtIsNull("sub-1")).willReturn(Optional.of(existingMember()));
+            given(memberService.hasActiveMember("sub-1")).willReturn(true);
             given(authCookieManager.createTokenCookie("valid-token")).willReturn("Set-Cookie: token=abc");
             given(authCookieManager.clearStateCookie()).willReturn("Set-Cookie: state=; Max-Age=0");
 
@@ -107,7 +107,7 @@ class SsoAuthServiceTest {
             givenRedirectUrls();
             given(externalAuthClient.verify("valid-token")).willReturn(identity);
             given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal);
-            given(memberRepository.findBySsoSubAndDeletedAtIsNull("sub-1")).willReturn(Optional.empty());
+            given(memberService.hasActiveMember("sub-1")).willReturn(false);
             given(authCookieManager.createTokenCookie("valid-token")).willReturn("Set-Cookie: token=abc");
             given(authCookieManager.clearStateCookie()).willReturn("Set-Cookie: state=; Max-Age=0");
 

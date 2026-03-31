@@ -30,6 +30,14 @@ public class MemberService {
                 .map(member -> syncStudentNumber(member, principal.studentNumber()));
     }
 
+    public boolean hasActiveMember(String ssoSub) {
+        return memberRepository.findBySsoSubAndDeletedAtIsNull(ssoSub).isPresent();
+    }
+
+    public boolean hasAnyMember(String ssoSub) {
+        return memberRepository.existsBySsoSub(ssoSub);
+    }
+
     @Transactional
     public void updateNickname(Long memberId, UpdateNicknameRequest request) {
         Member member = findMemberOrThrow(memberId);

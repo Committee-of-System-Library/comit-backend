@@ -14,8 +14,8 @@ import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
-import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
+import kr.ac.knu.comit.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +34,7 @@ class RegisterServiceTest {
     private ExternalIdentityMapper externalIdentityMapper;
 
     @Mock
-    private MemberRepository memberRepository;
+    private MemberService memberService;
 
     @Mock
     private MemberRegistrationService memberRegistrationService;
@@ -48,7 +48,7 @@ class RegisterServiceTest {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1")).willReturn(Optional.empty());
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
 
         RegisterPrefillResponse response = registerService.getPrefill("token-123");
 
@@ -63,7 +63,7 @@ class RegisterServiceTest {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1")).willReturn(Optional.of(kr.ac.knu.comit.fixture.MemberFixture.member(1L)));
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(true);
 
         assertThatThrownBy(() -> registerService.getPrefill("token-123"))
                 .isInstanceOf(BusinessException.class)
@@ -77,7 +77,7 @@ class RegisterServiceTest {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1")).willReturn(Optional.empty());
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
 
         registerService.register("token-123", new RegisterRequest("길동이", "010-1234-5678", true));
 
@@ -109,7 +109,7 @@ class RegisterServiceTest {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1")).willReturn(Optional.of(kr.ac.knu.comit.fixture.MemberFixture.member(1L)));
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(true);
 
         assertThatThrownBy(() -> registerService.register(
                 "token-123",

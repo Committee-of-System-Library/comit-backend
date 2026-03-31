@@ -12,7 +12,7 @@ import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
-import kr.ac.knu.comit.member.domain.MemberRepository;
+import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ public class SsoAuthService {
     private final ExternalAuthClient externalAuthClient;
     private final AuthCookieManager authCookieManager;
     private final ExternalIdentityMapper externalIdentityMapper;
-    private final MemberRepository memberRepository;
+    private final MemberService memberService;
 
     public SsoLoginStart startLogin() {
         validateFrontendUrls();
@@ -52,7 +52,7 @@ public class SsoAuthService {
             );
         }
 
-        if (memberRepository.findBySsoSubAndDeletedAtIsNull(principal.ssoSub()).isEmpty()) {
+        if (!memberService.hasActiveMember(principal.ssoSub())) {
             return new SsoCallbackPendingRegistration(
                     ssoProperties.getFrontendRegisterUrl(),
                     authCookieManager.createTokenCookie(token),

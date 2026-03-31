@@ -29,7 +29,6 @@ import kr.ac.knu.comit.global.config.WebMvcConfig;
 import kr.ac.knu.comit.global.exception.GlobalExceptionHandler;
 import kr.ac.knu.comit.member.controller.MemberController;
 import kr.ac.knu.comit.member.domain.Member;
-import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
@@ -89,9 +88,6 @@ class SsoAuthWebTest {
     private MemberService memberService;
 
     @MockitoBean
-    private MemberRepository memberRepository;
-
-    @MockitoBean
     private MemberRegistrationService memberRegistrationService;
 
     @BeforeEach
@@ -100,6 +96,7 @@ class SsoAuthWebTest {
                 .willReturn("https://chcse.knu.ac.kr/appfn/api/login?state=state-123");
         given(externalAuthClient.verify(any())).willReturn(externalIdentity());
         given(memberService.findBySso(any())).willReturn(Optional.of(authenticatedMember()));
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(true);
         given(memberService.getMyProfile(1L))
                 .willReturn(new MemberProfileResponse(1L, "comit-user", "2023012780", true));
     }
@@ -122,8 +119,7 @@ class SsoAuthWebTest {
     @DisplayName("유효한 callback이고 이미 가입된 회원이면 success URL로 리다이렉트한다")
     void setsTokenCookieAndRedirectsWhenCallbackIsValid() throws Exception {
         // given
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1"))
-                .willReturn(Optional.of(authenticatedMember()));
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(true);
 
         // when
         MvcResult result = mockMvc.perform(get("/auth/sso/callback")
@@ -145,7 +141,7 @@ class SsoAuthWebTest {
     @DisplayName("유효한 callback이지만 미가입 회원이면 register URL로 리다이렉트한다")
     void redirectsToRegisterWhenMemberDoesNotExist() throws Exception {
         // given
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1")).willReturn(Optional.empty());
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
 
         // when
         MvcResult result = mockMvc.perform(get("/auth/sso/callback")
@@ -232,7 +228,7 @@ class SsoAuthWebTest {
     @DisplayName("prefill API는 JWT에서 name, studentNumber, major를 반환한다")
     void returnsRegisterPrefillFromVerifiedToken() throws Exception {
         // given
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1")).willReturn(Optional.empty());
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
 
         // when & then
         mockMvc.perform(get("/auth/register/prefill")
@@ -248,7 +244,7 @@ class SsoAuthWebTest {
     @DisplayName("register API는 JWT claim과 요청 본문으로 회원가입을 완료한다")
     void registersMemberUsingTokenClaimsAndRequestBody() throws Exception {
         // given
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1")).willReturn(Optional.empty());
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
 
         // when & then
         mockMvc.perform(post("/auth/register")
@@ -278,7 +274,7 @@ class SsoAuthWebTest {
     @DisplayName("register API는 agreedToTerms가 false면 INVALID_REQUEST를 반환한다")
     void rejectsRegistrationWhenTermsAreNotAgreed() throws Exception {
         // given
-        given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-sub-1")).willReturn(Optional.empty());
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
 
         // when & then
         mockMvc.perform(post("/auth/register")
