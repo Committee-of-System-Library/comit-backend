@@ -1,6 +1,6 @@
 package kr.ac.knu.comit.member.service;
 
-import kr.ac.knu.comit.global.auth.MemberPrincipal;
+import java.time.LocalDateTime;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
@@ -15,113 +15,59 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberRegistrationService {
 
-    private static final int MAX_NICKNAME_LENGTH = 15;
-    private static final int MAX_REGISTER_RETRY_ATTEMPTS = 3;
-    private static final String FALLBACK_NICKNAME = "comit-user";
-
     private final MemberRepository memberRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Member register(MemberPrincipal principal) {
-        for (int attempt = 0; attempt < MAX_REGISTER_RETRY_ATTEMPTS; attempt++) {
-            String nickname = resolveAvailableNickname(principal);
-            try {
-                return memberRepository.saveAndFlush(
-                        Member.create(principal.ssoSub(), nickname, principal.studentNumber())
-                );
-            } catch (DataIntegrityViolationException exception) {
-                if (!isNicknameCollision(exception)) {
-                    throw exception;
-                }
+    public Member register(
+            String ssoSub,
+            String name,
+            String phone,
+            String nickname,
+            String studentNumber,
+            String majorTrack
+    ) {
+        String normalizedNickname = nickname == null ? null : nickname.trim();
+        if (normalizedNickname != null && !normalizedNickname.isBlank() && memberRepository.existsByNickname(normalizedNickname)) {
+            throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
+        }
+
+        try {
+            return memberRepository.saveAndFlush(
+                    Member.create(
+                            ssoSub,
+                            name,
+                            phone,
+                            nickname,
+                            studentNumber,
+                            majorTrack,
+                            LocalDateTime.now()
+                    )
+            );
+        } catch (DataIntegrityViolationException exception) {
+            if (isNicknameCollision(exception)) {
+                throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
             }
-        }
-
-        throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
-    }
-
-    private String resolveAvailableNickname(MemberPrincipal principal) {
-        String baseNickname = normalizeBaseNickname(principal.name());
-        if (!memberRepository.existsByNickname(baseNickname)) {
-            return baseNickname;
-        }
-
-        String suffixSeed = buildSuffixSeed(principal);
-        for (int suffixLength = 4; suffixLength <= suffixSeed.length(); suffixLength++) {
-            String suffix = suffixSeed.substring(suffixSeed.length() - suffixLength);
-            String candidate = appendSuffix(baseNickname, suffix);
-            if (!memberRepository.existsByNickname(candidate)) {
-                return candidate;
+            if (isSsoSubCollision(exception)) {
+                throw new BusinessException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
             }
+            throw exception;
         }
-
-        throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
-    }
-
-    private String normalizeBaseNickname(String nickname) {
-        String normalized = nickname == null ? "" : nickname.trim();
-        if (normalized.isBlank()) {
-            normalized = FALLBACK_NICKNAME;
-        }
-        return truncate(normalized, MAX_NICKNAME_LENGTH);
-    }
-
-    private String buildSuffixSeed(MemberPrincipal principal) {
-        String studentNumber = sanitizeAlphaNumeric(principal.studentNumber());
-        if (!studentNumber.isBlank()) {
-            return studentNumber;
-        }
-
-        String ssoSub = sanitizeAlphaNumeric(principal.ssoSub());
-        if (!ssoSub.isBlank()) {
-            return ssoSub.toLowerCase();
-        }
-
-        return "user";
-    }
-
-    private String appendSuffix(String baseNickname, String suffix) {
-        String sanitizedSuffix = sanitizeAlphaNumeric(suffix).toLowerCase();
-        if (sanitizedSuffix.isBlank()) {
-            sanitizedSuffix = "user";
-        }
-
-        int maxSuffixLength = Math.max(1, MAX_NICKNAME_LENGTH - 2);
-        if (sanitizedSuffix.length() > maxSuffixLength) {
-            sanitizedSuffix = sanitizedSuffix.substring(sanitizedSuffix.length() - maxSuffixLength);
-        }
-
-        int baseLimit = Math.max(1, MAX_NICKNAME_LENGTH - sanitizedSuffix.length() - 1);
-        return truncate(baseNickname, baseLimit) + "-" + sanitizedSuffix;
-    }
-
-    private String sanitizeAlphaNumeric(String value) {
-        if (value == null) {
-            return "";
-        }
-
-        StringBuilder builder = new StringBuilder(value.length());
-        for (char ch : value.toCharArray()) {
-            if (Character.isLetterOrDigit(ch)) {
-                builder.append(ch);
-            }
-        }
-        return builder.toString();
-    }
-
-    private String truncate(String value, int maxLength) {
-        if (value.length() <= maxLength) {
-            return value;
-        }
-        return value.substring(0, maxLength);
     }
 
     private boolean isNicknameCollision(DataIntegrityViolationException exception) {
+        String message = normalizedConstraintMessage(exception);
+        return message.contains("uk_member_nickname") || message.contains("nickname");
+    }
+
+    private boolean isSsoSubCollision(DataIntegrityViolationException exception) {
+        String message = normalizedConstraintMessage(exception);
+        return message.contains("uk_member_sso_sub") || message.contains("sso_sub");
+    }
+
+    private String normalizedConstraintMessage(DataIntegrityViolationException exception) {
         String message = exception.getMostSpecificCause() == null
                 ? exception.getMessage()
                 : exception.getMostSpecificCause().getMessage();
-
-        return message != null
-                && (message.contains("uk_member_nickname")
-                || message.contains("nickname"));
+        return message == null ? "" : message.toLowerCase();
     }
 }

@@ -183,8 +183,12 @@ class PostRepositoryIntegrationTest {
         String studentNumber = buildStudentNumber(suffix);
         return memberRepository.save(Member.create(
                 "sso-" + suffix,
+                "테스트유저",
+                "010-0000-0000",
                 nickname,
-                studentNumber
+                studentNumber,
+                null,
+                LocalDateTime.now()
         ));
     }
 

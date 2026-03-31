@@ -28,11 +28,12 @@ public interface SsoAuthControllerApi {
 
     @ApiDoc(
             summary = "SSO 로그인 콜백 처리",
-            description = "auth-server가 전달한 custom JWT와 state를 검증한 뒤, SSO 토큰 쿠키를 심고 프론트 성공 URL로 리다이렉트합니다.",
+            description = "auth-server가 전달한 custom JWT와 state를 검증한 뒤, 가입 상태에 따라 프론트 성공 URL 또는 회원가입 URL로 리다이렉트합니다.",
             descriptions = {
                     @FieldDesc(name = "state", value = "로그인 시작 시 발급한 state와 일치해야 합니다."),
                     @FieldDesc(name = "token", value = "auth-server가 내려준 하위 서비스용 custom JWT입니다."),
-                    @FieldDesc(name = "tokenCookie", value = "이후 API 인증에 사용할 HttpOnly 쿠키입니다.")
+                    @FieldDesc(name = "tokenCookie", value = "이후 API 인증과 회원가입 진행에 사용할 HttpOnly 쿠키입니다."),
+                    @FieldDesc(name = "Location", value = "기가입 사용자는 success URL, 미가입 사용자는 register URL, 외부 사용자는 error URL로 이동합니다.")
             },
             errors = {
                     @ApiError(code = "INVALID_REQUEST", when = "state 값이 누락되거나 기존 state cookie와 일치하지 않을 때"),

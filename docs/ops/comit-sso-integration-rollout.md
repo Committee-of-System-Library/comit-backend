@@ -88,7 +88,7 @@
 
 - 현재 인증 source는 `MemberAuthenticationFilter` 가 읽는 `X-Member-*` 헤더다.
 - `MemberArgumentResolver` 는 request attribute의 `MemberPrincipal`만 읽는다.
-- `MemberService.findOrCreateBySso` 는 `MemberPrincipal`만 있으면 로컬 회원 생성/재조회가 가능하다.
+- `MemberService.findBySso` 는 `MemberPrincipal`로 기존 로컬 회원을 조회하고 학번만 동기화한다.
 
 ### 구현 원칙
 
@@ -106,7 +106,13 @@
 - `GET /auth/sso/callback`
   - query의 `state`, `token` 검증
   - SSO token cookie 저장
-  - frontend success URL 로 redirect
+  - 기가입자는 frontend success URL, 미가입자는 frontend register URL 로 redirect
+- `GET /auth/register/prefill`
+  - SSO token cookie 검증
+  - JWT claim 기반 prefill(name, studentNumber, major) 반환
+- `POST /auth/register`
+  - SSO token cookie 검증
+  - nickname, phone, agreedToTerms로 명시적 회원가입 완료
 - `POST /auth/sso/logout`
   - SSO token cookie 삭제
   - state cookie 정리
@@ -118,8 +124,9 @@
 3. 있으면 HS256 + client secret으로 JWT 검증
 4. `aud`, `iss`, `exp` 검증
 5. claim을 `MemberPrincipal`로 변환
-6. `MemberService.findOrCreateBySso(...)` 호출
-7. request attribute에 최종 `MemberPrincipal` 저장
+6. `MemberService.findBySso(...)` 호출
+7. 회원이 없고 `/auth/register/**` 외 경로면 `REGISTRATION_REQUIRED`
+8. 회원이 있으면 request attribute에 최종 `MemberPrincipal` 저장
 
 ### claim -> MemberPrincipal 매핑 규칙
 
@@ -142,6 +149,7 @@
 - `comit.auth.sso.issuer`
 - `comit.auth.sso.redirect-uri`
 - `comit.auth.sso.frontend-success-url`
+- `comit.auth.sso.frontend-register-url`
 - `comit.auth.sso.frontend-error-url`
 - `comit.auth.sso.cookie-path`
 - `comit.auth.sso.cookie-secure`

@@ -156,11 +156,17 @@ GET /auth/sso/callback?state={uuid}&token={jwt}
    이 경우 쿠키를 발급하지 않고 `frontendErrorUrl`로 302 리다이렉트합니다.
    (`SsoCallbackRejected` 결과 반환)
 
-4. **쿠키 처리** — 정상 사용자(`CSE_STUDENT` / `KNU_OTHER_DEPT`) 검증 성공 시:
+4. **가입 상태 확인** — 정상 사용자(`CSE_STUDENT` / `KNU_OTHER_DEPT`) 검증 성공 후 `member.sso_sub`로 가입 여부를 확인합니다.
+   - 기존 회원이면 `SsoCallbackSuccess`
+   - 미가입 회원이면 `SsoCallbackPendingRegistration`
+
+5. **쿠키 처리** — 성공/미가입 분기 모두:
    - `COMIT_SSO_TOKEN` 쿠키 발급 (HttpOnly, 1시간 유효)
    - `COMIT_SSO_STATE` 쿠키 삭제 (maxAge=0)
 
-5. **302 리다이렉트** — `frontendSuccessUrl`로 이동합니다. (기본값: `http://localhost:5173`)
+6. **302 리다이렉트**
+   - 기존 회원 → `frontendSuccessUrl`
+   - 미가입 회원 → `frontendRegisterUrl`
 
 ```
 GET /auth/sso/callback?state=X&token=Y
@@ -177,13 +183,12 @@ GET /auth/sso/callback?state=X&token=Y
             │         └─ 만료 시간 검증
             └─ userType == EXTERNAL?
                  ├─ YES → SsoCallbackRejected(frontendErrorUrl)
-                 └─ NO  → SsoCallbackSuccess(successUrl, cookies)
-  └─▶ SsoCallbackSuccess  → 302 응답
-       ├─ Set-Cookie: COMIT_SSO_TOKEN=...  (1시간)
-       ├─ Set-Cookie: COMIT_SSO_STATE=     (삭제)
-       └─ Location: {frontendSuccessUrl}
-  └─▶ SsoCallbackRejected → 302 응답
-       └─ Location: {frontendErrorUrl}
+                 └─ NO  → memberRepository.findBySsoSubAndDeletedAtIsNull(...)
+                           ├─ exists → SsoCallbackSuccess(successUrl, cookies)
+                           └─ empty  → SsoCallbackPendingRegistration(registerUrl, cookies)
+  └─▶ SsoCallbackSuccess              → 302 Location: {frontendSuccessUrl}
+  └─▶ SsoCallbackPendingRegistration  → 302 Location: {frontendRegisterUrl}
+  └─▶ SsoCallbackRejected             → 302 Location: {frontendErrorUrl}
 ```
 
 ---
@@ -197,7 +202,7 @@ GET /auth/sso/callback?state=X&token=Y
 ### 필터 실행 조건
 
 - `comit.auth.sso.enabled=true` 일 때만 활성화됩니다.
-- `/auth/sso/**` 경로는 필터를 건너뜁니다. (`shouldNotFilter`)
+- `/auth/sso/**`, `/auth/register/**` 경로는 필터를 건너뜁니다. (`shouldNotFilter`)
 - 모든 요청에 대해 가장 먼저 실행됩니다. (`@Order(HIGHEST_PRECEDENCE)`)
 
 ### 처리 순서
@@ -217,10 +222,13 @@ HTTP 요청 (Cookie: COMIT_SSO_TOKEN=xxx)
        ├─ ExternalIdentityMapper.toPrincipal(identity)
        │   └─ MemberPrincipal (memberId=null, 임시)
        │
-       ├─ MemberService.findOrCreateBySso(provisionalPrincipal)
-       │   └─ DB에서 ssoSub으로 조회 → 없으면 자동 회원가입
+       ├─ MemberService.findBySso(provisionalPrincipal)
+       │   └─ DB에서 ssoSub으로 조회 → 없으면 pending registration
        │
-       ├─ ExternalIdentityMapper.toPrincipal(member.getId(), identity)
+       ├─ member가 없고 요청 경로가 /auth/register/** 외부면
+       │   └─ REGISTRATION_REQUIRED
+       │
+       ├─ member가 있으면 ExternalIdentityMapper.toPrincipal(member.getId(), identity)
        │   └─ MemberPrincipal (memberId=실제 DB ID, 확정)
        │
        └─ request.setAttribute("memberPrincipal", authenticatedPrincipal)

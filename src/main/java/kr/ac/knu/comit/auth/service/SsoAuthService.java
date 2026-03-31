@@ -2,6 +2,7 @@ package kr.ac.knu.comit.auth.service;
 
 import java.util.UUID;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
+import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
 import kr.ac.knu.comit.auth.dto.SsoCallbackRejected;
 import kr.ac.knu.comit.auth.dto.SsoCallbackResult;
 import kr.ac.knu.comit.auth.dto.SsoCallbackSuccess;
@@ -11,6 +12,7 @@ import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
+import kr.ac.knu.comit.member.domain.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class SsoAuthService {
     private final ExternalAuthClient externalAuthClient;
     private final AuthCookieManager authCookieManager;
     private final ExternalIdentityMapper externalIdentityMapper;
+    private final MemberRepository memberRepository;
 
     public SsoLoginStart startLogin() {
         validateFrontendUrls();
@@ -45,6 +48,14 @@ public class SsoAuthService {
         if (principal.userType() == MemberPrincipal.UserType.EXTERNAL) {
             return new SsoCallbackRejected(
                     buildFrontendErrorRedirectUrl("EXTERNAL_USER_NOT_ALLOWED"),
+                    authCookieManager.clearStateCookie()
+            );
+        }
+
+        if (memberRepository.findBySsoSubAndDeletedAtIsNull(principal.ssoSub()).isEmpty()) {
+            return new SsoCallbackPendingRegistration(
+                    ssoProperties.getFrontendRegisterUrl(),
+                    authCookieManager.createTokenCookie(token),
                     authCookieManager.clearStateCookie()
             );
         }
@@ -78,8 +89,15 @@ public class SsoAuthService {
         }
     }
 
+    private void validateFrontendRegisterUrl() {
+        if (isBlank(ssoProperties.getFrontendRegisterUrl())) {
+            throw new BusinessException("SSO 설정이 올바르지 않습니다.", CommonErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private void validateFrontendUrls() {
         validateFrontendSuccessUrl();
+        validateFrontendRegisterUrl();
         validateFrontendErrorUrl();
     }
 

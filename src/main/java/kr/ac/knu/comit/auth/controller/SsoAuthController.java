@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.auth.controller;
 
 import kr.ac.knu.comit.auth.controller.api.SsoAuthControllerApi;
+import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
 import kr.ac.knu.comit.auth.dto.SsoCallbackRejected;
 import kr.ac.knu.comit.auth.dto.SsoCallbackResult;
 import kr.ac.knu.comit.auth.dto.SsoCallbackSuccess;
@@ -39,6 +40,11 @@ public class SsoAuthController implements SsoAuthControllerApi {
                     .header(HttpHeaders.SET_COOKIE, success.tokenCookieHeader())
                     .header(HttpHeaders.SET_COOKIE, success.clearStateCookieHeader())
                     .header(HttpHeaders.LOCATION, success.redirectUrl())
+                    .build();
+            case SsoCallbackPendingRegistration pendingRegistration -> ResponseEntity.status(HttpStatus.FOUND)
+                    .header(HttpHeaders.SET_COOKIE, pendingRegistration.tokenCookie())
+                    .header(HttpHeaders.SET_COOKIE, pendingRegistration.clearStateCookie())
+                    .header(HttpHeaders.LOCATION, pendingRegistration.redirectUrl())
                     .build();
             case SsoCallbackRejected rejected -> ResponseEntity.status(HttpStatus.FOUND)
                     .header(HttpHeaders.SET_COOKIE, rejected.clearStateCookieHeader())

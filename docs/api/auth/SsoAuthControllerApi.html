@@ -269,7 +269,7 @@
         <section class="content"><article class="endpoint" id="handleCallback">
     <div class="eyebrow">GET</div>
     <h2>SSO 로그인 콜백 처리</h2>
-    <p>auth-server가 전달한 custom JWT와 state를 검증한 뒤, SSO 토큰 쿠키를 심고 프론트 성공 URL로 리다이렉트합니다.</p>
+    <p>auth-server가 전달한 custom JWT와 state를 검증한 뒤, 가입 상태에 따라 프론트 성공 URL 또는 회원가입 URL로 리다이렉트합니다.</p>
     <div class="path-box"><span class="method">GET</span>/auth/sso/callback</div>
     <div class="section-grid"><section class="card">
     <h3>쿼리 파라미터</h3>
@@ -283,16 +283,16 @@
         </tr>
     </thead>
     <tbody><tr>
-    <td><code>state</code></td>
+    <td><code>arg0</code></td>
     <td><span class="type-chip type-string">String</span></td>
     <td><span class="badge-required">required</span></td>
-    <td>로그인 시작 시 발급한 state와 일치해야 합니다.</td>
+    <td>-</td>
 </tr>
 <tr>
-    <td><code>token</code></td>
+    <td><code>arg1</code></td>
     <td><span class="type-chip type-string">String</span></td>
     <td><span class="badge-required">required</span></td>
-    <td>auth-server가 내려준 하위 서비스용 custom JWT입니다.</td>
+    <td>-</td>
 </tr>
 </tbody>
 </table>

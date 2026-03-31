@@ -11,6 +11,7 @@ public record ExternalIdentity(
         String name,
         String email,
         String studentNumber,
+        String major,
         String userType,
         String role
 ) {
