@@ -57,7 +57,7 @@ import org.springframework.test.web.servlet.MvcResult;
         "comit.auth.sso.issuer=https://chcse.knu.ac.kr/appfn/api",
         "comit.auth.sso.redirect-uri=https://chcse.knu.ac.kr/comit-staging/api/auth/sso/callback",
         "comit.auth.sso.frontend-success-url=https://chcse.knu.ac.kr/comit-staging",
-        "comit.auth.sso.frontend-error-url=https://chcse.knu.ac.kr/comit-staging/sso-error",
+        "comit.auth.sso.frontend-error-url=https://chcse.knu.ac.kr/comit-staging/error",
         "comit.auth.sso.token-cookie-name=COMIT_SSO_TOKEN",
         "comit.auth.sso.state-cookie-name=COMIT_SSO_STATE",
         "comit.auth.sso.state-ttl-seconds=300",
@@ -172,7 +172,7 @@ class SsoAuthWebTest {
                         .param("token", "token-123")
                         .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123")))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("https://chcse.knu.ac.kr/comit-staging/sso-error?reason=EXTERNAL_USER_NOT_ALLOWED"))
+                .andExpect(redirectedUrl("https://chcse.knu.ac.kr/comit-staging/error?reason=EXTERNAL_USER_NOT_ALLOWED"))
                 .andReturn();
 
         // then
