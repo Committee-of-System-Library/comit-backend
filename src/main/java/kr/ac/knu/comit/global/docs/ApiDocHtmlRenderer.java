@@ -99,6 +99,26 @@ final class ApiDocHtmlRenderer {
                             color: var(--muted);
                             font-size: 0.92rem;
                         }
+                        .spec-section {
+                            margin-top: 48px;
+                        }
+                        .spec-heading {
+                            margin: 0 0 6px;
+                            font-size: 1.2rem;
+                            color: var(--text);
+                        }
+                        .spec-desc {
+                            margin: 0 0 16px;
+                            color: var(--muted);
+                            font-size: 0.92rem;
+                        }
+                        .spec-pill {
+                            background: #edf4ff;
+                            color: #2563eb;
+                        }
+                        .spec-card {
+                            border-left: 3px solid var(--accent);
+                        }
                     </style>
                 </head>
                 <body>
@@ -108,8 +128,14 @@ final class ApiDocHtmlRenderer {
                             <p>@ApiContract 인터페이스에서 추출한 정적 API 문서입니다. 각 페이지에서 엔드포인트, 요청/응답 필드, 예시 JSON을 확인할 수 있습니다.</p>
                         </section>
                         <section class="grid" id="doc-grid"></section>
+                        <section class="spec-section">
+                            <h2 class="spec-heading">기능 명세</h2>
+                            <p class="spec-desc">도메인별 기능 목표, 시나리오, 정책을 정리한 문서입니다.</p>
+                            <div class="grid" id="spec-grid"></div>
+                        </section>
                     </main>
                     <script src="./index.js"></script>
+                    <script src="./spec-index.js"></script>
                     <script>
                         const docs = window.API_DOCS ?? [];
                         const grid = document.getElementById('doc-grid');
@@ -134,6 +160,27 @@ final class ApiDocHtmlRenderer {
 
                             link.append(pill, title, summary, meta);
                             grid.appendChild(link);
+                        });
+
+                        const specs = window.SPEC_DOCS ?? [];
+                        const specGrid = document.getElementById('spec-grid');
+                        specs.forEach((spec) => {
+                            const link = document.createElement('a');
+                            link.className = 'card spec-card';
+                            link.href = typeof spec.href === 'string' ? spec.href : '#';
+
+                            const pill = document.createElement('span');
+                            pill.className = 'pill spec-pill';
+                            pill.textContent = '기능 명세';
+
+                            const title = document.createElement('h2');
+                            title.textContent = spec.title || '';
+
+                            const summary = document.createElement('p');
+                            summary.textContent = spec.summary || '';
+
+                            link.append(pill, title, summary);
+                            specGrid.appendChild(link);
                         });
                     </script>
                 </body>
@@ -166,6 +213,23 @@ final class ApiDocHtmlRenderer {
                 .orElse("");
 
         return "window.API_DOCS = [\n" + items + "\n];\n";
+    }
+
+    static String renderSpecIndexScript(List<FeatureSpecHtmlRenderer.SpecInfo> specs) {
+        String items = specs.stream()
+                .map(spec -> """
+                            {
+                              title: "%s",
+                              summary: "%s",
+                              href: "./%s"
+                            }""".formatted(
+                        escapeJs(spec.title()),
+                        escapeJs(spec.summary()),
+                        escapeJs(spec.href())
+                ))
+                .reduce((l, r) -> l + ",\n" + r)
+                .orElse("");
+        return "window.SPEC_DOCS = [\n" + items + "\n];\n";
     }
 
     static String renderDocument(GeneratedApiDocument document) {

@@ -78,5 +78,5 @@ tasks.register('generateApiDocs', JavaExec) {
     dependsOn classes
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'kr.ac.knu.comit.global.docs.ApiDocGenerator'
-    args = ['kr.ac.knu.comit', "${projectDir}/docs/api"]
+    args = ['kr.ac.knu.comit', "${projectDir}/docs/api", "${projectDir}/docs/features"]
 }

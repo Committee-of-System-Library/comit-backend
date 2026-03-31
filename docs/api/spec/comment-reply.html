@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>댓글 · 대댓글 (Comment &amp; Reply) — COMIT Spec</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #1b2a41;
+            --muted: #607086;
+            --line: #d8e2ef;
+            --accent: #3182f6;
+            --accent-soft: #e9f2ff;
+            --code-bg: #f1f5f9;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "SUIT", "Pretendard", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 50%, #edf3fa 100%);
+            color: var(--text);
+            line-height: 1.75;
+        }
+        .shell { max-width: 860px; margin: 0 auto; padding: 48px 20px 72px; }
+        .back {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.85rem; color: var(--accent);
+            text-decoration: none; margin-bottom: 32px;
+        }
+        .back:hover { text-decoration: underline; }
+        .content {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 40px 48px;
+            box-shadow: 0 8px 32px rgba(15,23,42,0.06);
+        }
+        h1 { font-size: 1.9rem; margin: 0 0 8px; border-bottom: 2px solid var(--line); padding-bottom: 16px; }
+        h2 { font-size: 1.25rem; margin: 36px 0 10px; color: var(--accent); }
+        h3 { font-size: 1.05rem; margin: 24px 0 8px; font-weight: 600; }
+        h4 { font-size: 0.95rem; margin: 16px 0 6px; color: var(--muted); font-weight: 600; }
+        p { margin: 0 0 12px; }
+        ul, ol { margin: 0 0 12px; padding-left: 22px; }
+        li { margin-bottom: 4px; }
+        code {
+            background: var(--code-bg); padding: 2px 6px;
+            border-radius: 4px; font-size: 0.875em;
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+        }
+        pre {
+            background: var(--code-bg); border: 1px solid var(--line);
+            border-radius: 10px; padding: 16px 20px;
+            overflow-x: auto; margin: 0 0 16px;
+        }
+        pre code { background: none; padding: 0; font-size: 0.875rem; }
+        hr { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+        blockquote {
+            border-left: 3px solid var(--accent); margin: 0 0 12px;
+            padding: 8px 16px; background: var(--accent-soft);
+            border-radius: 0 8px 8px 0; color: var(--muted);
+        }
+        strong { font-weight: 600; }
+        a { color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <a class="back" href="../index.html">← API Docs 홈으로</a>
+        <div class="content"><h1>댓글 · 대댓글 (Comment & Reply)</h1>
+<h2>개요</h2>
+<p>게시글에 댓글을 달고, 댓글에 대댓글을 달 수 있는 2단계 스레드 구조.</p>
+<p>대대댓글(3단계 이상)은 의도적으로 금지한다.</p>
+<p>댓글에는 "도움이요" 리액션을 달 수 있고, 도움이요 수가 높은 댓글이 상단에 노출된다.</p>
+<hr>
+<h2>도메인 모델</h2>
+<p><code>Comment</code> 엔티티 하나로 댓글과 대댓글을 모두 표현한다.</p>
+<p>대댓글 여부는 <code>parentComment</code> 필드의 null 여부로 구분한다.</p>
+<pre><code class="language-">Comment
+├── id
+├── post           (ManyToOne, LAZY)
+├── member         (ManyToOne, LAZY)
+├── parentComment  (ManyToOne, LAZY, nullable) ← null이면 댓글, 값이 있으면 대댓글
+├── content
+├── helpfulCount
+├── createdAt
+├── updatedAt
+└── deletedAt      ← null이면 활성, 값이 있으면 소프트 삭제</code></pre>
+<p><code>CommentHelpful</code> 엔티티는 (comment_id, member_id) unique constraint로 중복 도움이요를 막는다.</p>
+<p><code>Comment</code>와 <code>@ManyToOne</code> 관계를 맺지 않고 raw <code>Long</code>으로 저장한다.</p>
+<p>→ helpful 여부 조회 시 Comment 엔티티를 불필요하게 로딩하지 않기 위함.</p>
+<hr>
+<h2>흐름</h2>
+<h3>댓글 / 대댓글 생성</h3>
+<ol>
+<li>요청에 <code>parentCommentId</code>가 없으면 → <code>Comment.create(post, author, content)</code> 호출, 최상위 댓글 생성.</li>
+<li>요청에 <code>parentCommentId</code>가 있으면 → <code>Comment.reply(post, parentComment, author, content)</code> 호출.</li>
+</ol>
+<p>- <code>parentComment</code>가 이미 대댓글(<code>isReply() == true</code>)이면 <code>INVALID_PARENT_COMMENT</code> 예외.</p>
+<p>- <code>parentComment</code>가 다른 게시글 소속이면 동일하게 <code>INVALID_PARENT_COMMENT</code> 예외.</p>
+<p>- 두 검증 모두 도메인 객체 안(<code>Comment.validateParentComment</code>)에서 처리한다.</p>
+<h3>댓글 목록 조회</h3>
+<p>N+1 없이 2번의 쿼리로 전체 스레드를 구성한다.</p>
+<pre><code class="language-">쿼리 1: findActiveTopLevelByPostId   → 최상위 댓글 목록 (JOIN FETCH member, helpfulCount DESC 정렬)
+쿼리 2: findActiveRepliesByPostId    → 해당 게시글의 대댓글 전체 (JOIN FETCH member, JOIN FETCH parentComment)
+쿼리 3: findHelpfulCommentIds        → 현재 요청자가 helpful 누른 댓글 ID 목록
+
+응답 조립:
+  - replies를 parentCommentId 기준으로 Map&lt;Long, List&lt;ReplyResponse&gt;&gt;으로 groupBy
+  - 최상위 댓글 순회 시 Map에서 replies를 꺼내 CommentResponse에 포함</code></pre>
+<p><code>helpfulIds</code>를 <code>Set<Long></code>으로 변환해 <code>contains()</code> 조회를 O(1)로 처리한다.</p>
+<h3>댓글 삭제</h3>
+<p>소프트 삭제를 사용한다 (<code>deletedAt</code> 세팅). 물리 삭제 없음.</p>
+<ul>
+<li>최상위 댓글 삭제 시: 하위 대댓글도 bulk UPDATE 쿼리 한 방으로 함께 소프트 삭제.</li>
+</ul>
+<p>(<code>softDeleteRepliesByParentCommentId</code>)</p>
+<ul>
+<li>대댓글 삭제 시: 해당 대댓글만 소프트 삭제.</li>
+</ul>
+<h3>도움이요 토글</h3>
+<pre><code class="language-">INSERT IGNORE INTO comment_helpful (comment_id, member_id, created_at) VALUES (?, ?, NOW())
+  → affected rows = 1: 최초 helpful → incrementHelpfulCount
+  → affected rows = 0: 이미 helpful 상태 → DELETE + decrementHelpfulCount</code></pre>
+<p><code>decrementHelpfulCount</code> 쿼리에 <code>AND c.helpfulCount > 0</code> 조건을 포함해 음수 방지.</p>
+<hr>
+<h2>주요 설계 결정</h2>
+<h3>단방향 자기 참조로 대댓글 구현</h3>
+<p><strong>결정:</strong> <code>Comment.parentComment</code>를 단방향 <code>@ManyToOne</code>으로만 유지. <code>@OneToMany replies</code> 없음.</p>
+<p><strong>이유:</strong></p>
+<p>양방향 연관관계를 추가하면 <code>Comment</code> 로딩 시 replies 컬렉션이 딸려오거나, <code>@JsonManagedReference</code>/DTO 변환 없이는 순환 참조가 발생한다.</p>
+<p>댓글 목록 조회는 어차피 게시글 단위 전체 조회이므로, 부모-자식 관계를 DB 쿼리 레벨에서 직접 다루는 것이 더 명확하다.</p>
+<p><strong>트레이드오프:</strong> <code>comment.getReplies()</code> 같은 도메인 메서드를 쓸 수 없다. 대신 Repository 쿼리로 명시적으로 조회한다.</p>
+<hr>
+<h3>대대댓글(3단계) 금지를 도메인에서 강제</h3>
+<p><strong>결정:</strong> <code>Comment.reply()</code> 팩토리 메서드 내부에서 <code>parentComment.isReply()</code>를 검사해 3단계 생성을 막는다.</p>
+<p><strong>이유:</strong></p>
+<p>Controller나 Service에서 막으면 다른 경로로 우회 가능성이 생긴다.</p>
+<p>규칙이 도메인 객체 안에 있으면 어느 경로로 생성하든 동일하게 적용된다.</p>
+<p><strong>트레이드오프:</strong> 나중에 3단계를 허용하려면 도메인 로직을 수정해야 한다. 의도적인 설계 고정.</p>
+<hr>
+<h3><code>CommentHelpful</code>에 raw Long ID 저장</h3>
+<p><strong>결정:</strong> <code>CommentHelpful.commentId</code>, <code>memberId</code>를 <code>@ManyToOne</code> FK 없이 Long으로 저장한다.</p>
+<p><strong>이유:</strong></p>
+<p>helpful 조회 패턴은 항상 "이 memberId가 이 commentId들에 helpful 눌렀는가"이다.</p>
+<p><code>Comment</code> 또는 <code>Member</code> 엔티티를 로딩할 이유가 없고, 로딩하면 오히려 불필요한 JOIN이 추가된다.</p>
+<p><strong>트레이드오프:</strong> JPA 연관관계 관리 대신 DB unique constraint으로만 무결성을 보장한다. 애플리케이션 레벨의 참조 무결성은 없다.</p>
+<hr>
+<h3>대댓글 bulk 소프트 삭제</h3>
+<p><strong>결정:</strong> 최상위 댓글 삭제 시 대댓글을 in-memory 루프로 삭제하지 않고, bulk UPDATE 쿼리 한 방으로 처리한다.</p>
+<p><strong>이유:</strong></p>
+<p>대댓글이 많을 경우 모두 메모리에 올린 뒤 N번의 UPDATE를 날리는 것은 불필요한 부하다.</p>
+<p><code>softDeleteRepliesByParentCommentId(parentId, now)</code> 한 번으로 처리하면 쿼리가 1개로 고정된다.</p>
+<p><strong>트레이드오프:</strong> bulk UPDATE는 영속성 컨텍스트를 우회하므로 <code>@Modifying(clearAutomatically = true)</code>로 1차 캐시를 비워야 한다.</p>
+<hr>
+<h2>예외 케이스</h2>
+<p>| 상황 | 처리 방식 | 에러 코드 |</p>
+<p>|---|---|---|</p>
+<p>| 존재하지 않는 댓글 조회/수정/삭제 | <code>COMMENT_NOT_FOUND</code> | 404 |</p>
+<p>| 대대댓글 생성 시도 (부모가 이미 대댓글) | <code>INVALID_PARENT_COMMENT</code> | 400 |</p>
+<p>| 다른 게시글의 댓글을 부모로 지정 | <code>INVALID_PARENT_COMMENT</code> | 400 |</p>
+<p>| null 또는 공백 내용으로 댓글 생성/수정 | <code>INVALID_COMMENT_CONTENT</code> | 400 |</p>
+<p>| 1000자 초과 내용 입력 | validation 실패 (<code>@Size</code>) | 400 |</p>
+<p>| 본인 댓글이 아닌데 수정/삭제 시도 | <code>FORBIDDEN</code> | 403 |</p>
+<p>| 삭제된 게시글에 댓글 생성 | <code>PostService.getActivePostOrThrow</code> 실패 | 404 |</p>
+<p>| 삭제된 부모 댓글의 대댓글은 응답에서 제외 | <code>findActiveRepliesByPostId</code>에서 <code>parent.deletedAt IS NULL</code> 조건으로 필터 | — |</p>
+<hr>
+<h2>관련 ADR</h2>
+<ul>
+<li><a href="../adr/002-problem-detail-error-response.md">ADR-002: ProblemDetail 기반 에러 응답 표준</a></li>
+</ul>
+<hr>
+<h2>변경 이력</h2>
+<p>| 날짜 | 변경 내용 |</p>
+<p>|---|---|</p>
+<p>| 2026-03-25 | 최초 작성 |</p>
+</div>
+    </div>
+</body>
+</html>
