@@ -10,12 +10,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import kr.ac.knu.comit.comment.domain.Comment;
-import kr.ac.knu.comit.comment.domain.CommentHelpfulRepository;
+import kr.ac.knu.comit.comment.domain.CommentLikeRepository;
 import kr.ac.knu.comit.comment.domain.CommentRepository;
 import kr.ac.knu.comit.comment.dto.CommentListResponse;
 import kr.ac.knu.comit.comment.dto.CommentResponse;
 import kr.ac.knu.comit.comment.dto.CreateCommentRequest;
-import kr.ac.knu.comit.comment.dto.HelpfulToggleResponse;
+import kr.ac.knu.comit.comment.dto.LikeToggleResponse;
 import kr.ac.knu.comit.comment.dto.ReplyResponse;
 import kr.ac.knu.comit.comment.dto.UpdateCommentRequest;
 import kr.ac.knu.comit.global.exception.BusinessException;
@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final CommentHelpfulRepository commentHelpfulRepository;
+    private final CommentLikeRepository commentLikeRepository;
     private final MemberService memberService;
     private final PostService postService;
 
@@ -47,17 +47,17 @@ public class CommentService {
             return new CommentListResponse(List.of());
         }
 
-        Set<Long> helpfulIds = Set.copyOf(commentHelpfulRepository.findHelpfulCommentIds(
+        Set<Long> likedIds = Set.copyOf(commentLikeRepository.findLikedCommentIds(
                 memberId,
                 combineCommentIds(topLevelComments, replies)
         ));
-        Map<Long, List<ReplyResponse>> repliesByParentId = groupRepliesByParentId(replies, helpfulIds, memberId);
+        Map<Long, List<ReplyResponse>> repliesByParentId = groupRepliesByParentId(replies, likedIds, memberId);
 
         return new CommentListResponse(
                 topLevelComments.stream()
                         .map(comment -> CommentResponse.from(
                                 comment,
-                                helpfulIds.contains(comment.getId()),
+                                likedIds.contains(comment.getId()),
                                 comment.isWrittenBy(memberId),
                                 repliesByParentId.getOrDefault(comment.getId(), List.of())
                         ))
@@ -93,18 +93,18 @@ public class CommentService {
     }
 
     @Transactional
-    public HelpfulToggleResponse toggleHelpful(Long commentId, Long memberId) {
+    public LikeToggleResponse toggleLike(Long commentId, Long memberId) {
         findCommentOrThrow(commentId);
 
-        int inserted = commentHelpfulRepository.insertIgnore(commentId, memberId);
+        int inserted = commentLikeRepository.insertIgnore(commentId, memberId);
         if (inserted == 1) {
-            commentRepository.incrementHelpfulCount(commentId);
-            return HelpfulToggleResponse.helpfulState();
+            commentRepository.incrementLikeCount(commentId);
+            return LikeToggleResponse.likedState();
         }
 
-        commentHelpfulRepository.deleteByCommentIdAndMemberId(commentId, memberId);
-        commentRepository.decrementHelpfulCount(commentId);
-        return HelpfulToggleResponse.notHelpfulState();
+        commentLikeRepository.deleteByCommentIdAndMemberId(commentId, memberId);
+        commentRepository.decrementLikeCount(commentId);
+        return LikeToggleResponse.unlikedState();
     }
 
     private Comment findCommentOrThrow(Long commentId) {
@@ -118,14 +118,14 @@ public class CommentService {
                 .toList();
     }
 
-    private Map<Long, List<ReplyResponse>> groupRepliesByParentId(List<Comment> replies, Set<Long> helpfulIds, Long memberId) {
+    private Map<Long, List<ReplyResponse>> groupRepliesByParentId(List<Comment> replies, Set<Long> likedIds, Long memberId) {
         return replies.stream()
                 .collect(groupingBy(
                         Comment::getParentCommentId,
                         mapping(
                                 reply -> ReplyResponse.from(
                                         reply,
-                                        helpfulIds.contains(reply.getId()),
+                                        likedIds.contains(reply.getId()),
                                         reply.isWrittenBy(memberId)
                                 ),
                                 toList()

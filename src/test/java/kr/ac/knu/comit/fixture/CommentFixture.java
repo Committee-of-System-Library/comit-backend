@@ -7,17 +7,17 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 public class CommentFixture {
 
-    public static Comment topLevelComment(Long id, Post post, Member author, String content, int helpfulCount) {
+    public static Comment topLevelComment(Long id, Post post, Member author, String content, int likeCount) {
         Comment comment = Comment.create(post, author, content);
         ReflectionTestUtils.setField(comment, "id", id);
-        ReflectionTestUtils.setField(comment, "helpfulCount", helpfulCount);
+        ReflectionTestUtils.setField(comment, "likeCount", likeCount);
         return comment;
     }
 
-    public static Comment replyComment(Long id, Post post, Comment parent, Member author, String content, int helpfulCount) {
+    public static Comment replyComment(Long id, Post post, Comment parent, Member author, String content, int likeCount) {
         Comment comment = Comment.reply(post, parent, author, content);
         ReflectionTestUtils.setField(comment, "id", id);
-        ReflectionTestUtils.setField(comment, "helpfulCount", helpfulCount);
+        ReflectionTestUtils.setField(comment, "likeCount", likeCount);
         return comment;
     }
 }

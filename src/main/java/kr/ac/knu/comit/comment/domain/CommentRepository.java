@@ -27,7 +27,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
               AND c.deletedAt IS NULL
               AND c.hiddenByAdmin = false
               AND c.parentComment IS NULL
-            ORDER BY c.helpfulCount DESC, c.id ASC
+            ORDER BY c.likeCount DESC, c.id ASC
             """)
     List<Comment> findActiveTopLevelByPostId(@Param("postId") Long postId);
 
@@ -103,21 +103,21 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Modifying(clearAutomatically = true)
     @Query("""
             UPDATE Comment c
-            SET c.helpfulCount = c.helpfulCount + 1
+            SET c.likeCount = c.likeCount + 1
             WHERE c.id = :commentId
               AND c.deletedAt IS NULL
             """)
-    void incrementHelpfulCount(@Param("commentId") Long commentId);
+    void incrementLikeCount(@Param("commentId") Long commentId);
 
     @Modifying(clearAutomatically = true)
     @Query("""
             UPDATE Comment c
-            SET c.helpfulCount = c.helpfulCount - 1
+            SET c.likeCount = c.likeCount - 1
             WHERE c.id = :commentId
               AND c.deletedAt IS NULL
-              AND c.helpfulCount > 0
+              AND c.likeCount > 0
             """)
-    void decrementHelpfulCount(@Param("commentId") Long commentId);
+    void decrementLikeCount(@Param("commentId") Long commentId);
 
     interface CommentCountView {
         Long getPostId();

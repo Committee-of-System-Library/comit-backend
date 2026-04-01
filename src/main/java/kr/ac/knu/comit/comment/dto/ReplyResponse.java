@@ -7,19 +7,19 @@ public record ReplyResponse(
         Long id,
         String content,
         String authorNickname,
-        int helpfulCount,
-        boolean helpfulByMe,
+        int likeCount,
+        boolean likedByMe,
         boolean mine,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static ReplyResponse from(Comment comment, boolean helpfulByMe, boolean mine) {
+    public static ReplyResponse from(Comment comment, boolean likedByMe, boolean mine) {
         return new ReplyResponse(
                 comment.getId(),
                 comment.getContent(),
                 comment.getMember().getNickname(),
-                comment.getHelpfulCount(),
-                helpfulByMe,
+                comment.getLikeCount(),
+                likedByMe,
                 mine,
                 comment.getCreatedAt(),
                 comment.getUpdatedAt()

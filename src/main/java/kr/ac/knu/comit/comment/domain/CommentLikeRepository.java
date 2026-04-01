@@ -6,12 +6,12 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface CommentHelpfulRepository extends JpaRepository<CommentHelpful, Long> {
+public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> {
 
     @Modifying(clearAutomatically = true)
     @Query(
             value = """
-                    INSERT IGNORE INTO comment_helpful (comment_id, member_id, created_at)
+                    INSERT IGNORE INTO comment_like (comment_id, member_id, created_at)
                     VALUES (:commentId, :memberId, NOW())
                     """,
             nativeQuery = true
@@ -20,19 +20,19 @@ public interface CommentHelpfulRepository extends JpaRepository<CommentHelpful, 
 
     @Modifying(clearAutomatically = true)
     @Query("""
-            DELETE FROM CommentHelpful ch
-            WHERE ch.commentId = :commentId
-              AND ch.memberId = :memberId
+            DELETE FROM CommentLike cl
+            WHERE cl.commentId = :commentId
+              AND cl.memberId = :memberId
             """)
     void deleteByCommentIdAndMemberId(@Param("commentId") Long commentId, @Param("memberId") Long memberId);
 
     @Query("""
-            SELECT ch.commentId
-            FROM CommentHelpful ch
-            WHERE ch.memberId = :memberId
-              AND ch.commentId IN :commentIds
+            SELECT cl.commentId
+            FROM CommentLike cl
+            WHERE cl.memberId = :memberId
+              AND cl.commentId IN :commentIds
             """)
-    List<Long> findHelpfulCommentIds(
+    List<Long> findLikedCommentIds(
             @Param("memberId") Long memberId,
             @Param("commentIds") List<Long> commentIds
     );

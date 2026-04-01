@@ -2,7 +2,6 @@ package kr.ac.knu.comit.comment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -11,11 +10,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import kr.ac.knu.comit.comment.domain.Comment;
-import kr.ac.knu.comit.comment.domain.CommentHelpfulRepository;
+import kr.ac.knu.comit.comment.domain.CommentLikeRepository;
 import kr.ac.knu.comit.comment.domain.CommentRepository;
 import kr.ac.knu.comit.comment.dto.CommentListResponse;
 import kr.ac.knu.comit.comment.dto.CreateCommentRequest;
-import kr.ac.knu.comit.comment.dto.HelpfulToggleResponse;
+import kr.ac.knu.comit.comment.dto.LikeToggleResponse;
 import kr.ac.knu.comit.fixture.CommentFixture;
 import kr.ac.knu.comit.fixture.MemberFixture;
 import kr.ac.knu.comit.fixture.PostFixture;
@@ -45,7 +44,7 @@ class CommentServiceTest {
     private CommentRepository commentRepository;
 
     @Mock
-    private CommentHelpfulRepository commentHelpfulRepository;
+    private CommentLikeRepository commentLikeRepository;
 
     @Mock
     private MemberService memberService;
@@ -72,7 +71,7 @@ class CommentServiceTest {
             given(postService.getActivePostOrThrow(10L)).willReturn(post);
             given(commentRepository.findActiveTopLevelByPostId(10L)).willReturn(List.of(parent));
             given(commentRepository.findActiveRepliesByPostId(10L)).willReturn(List.of(reply));
-            given(commentHelpfulRepository.findHelpfulCommentIds(1L, List.of(201L, 202L)))
+            given(commentLikeRepository.findLikedCommentIds(1L, List.of(201L, 202L)))
                     .willReturn(List.of(202L));
 
             // when
@@ -83,9 +82,12 @@ class CommentServiceTest {
             // 대댓글이 부모 아래로 묶이고 사용자 상태가 함께 계산되는지 확인한다.
             assertThat(response.comments()).hasSize(1);
             assertThat(response.comments().getFirst().id()).isEqualTo(201L);
+            assertThat(response.comments().getFirst().likeCount()).isEqualTo(4);
+            assertThat(response.comments().getFirst().likedByMe()).isFalse();
             assertThat(response.comments().getFirst().replies()).hasSize(1);
             assertThat(response.comments().getFirst().replies().getFirst().id()).isEqualTo(202L);
-            assertThat(response.comments().getFirst().replies().getFirst().helpfulByMe()).isTrue();
+            assertThat(response.comments().getFirst().replies().getFirst().likeCount()).isEqualTo(1);
+            assertThat(response.comments().getFirst().replies().getFirst().likedByMe()).isTrue();
             assertThat(response.comments().getFirst().replies().getFirst().mine()).isTrue();
         }
     }
@@ -148,62 +150,62 @@ class CommentServiceTest {
     }
 
     @Nested
-    @DisplayName("toggleHelpful")
-    class ToggleHelpful {
+    @DisplayName("toggleLike")
+    class ToggleLike {
 
         @Test
-        @DisplayName("처음 helpful을 누르면 카운트를 올리고 helpfulState를 반환한다")
-        void incrementsCountAndReturnsHelpfulStateOnFirstToggle() {
+        @DisplayName("처음 좋아요를 누르면 카운트를 올리고 likedState를 반환한다")
+        void incrementsCountAndReturnsLikedStateOnFirstToggle() {
             // given
-            // 아직 helpful 이력이 없는 댓글 상태를 준비한다.
+            // 아직 좋아요 이력이 없는 댓글 상태를 준비한다.
             Post post = PostFixture.post(10L);
             Comment comment = CommentFixture.topLevelComment(201L, post, MemberFixture.member(2L, "writer"), "댓글", 0);
 
             given(commentRepository.findActiveById(201L)).willReturn(Optional.of(comment));
-            given(commentHelpfulRepository.insertIgnore(201L, 1L)).willReturn(1);
+            given(commentLikeRepository.insertIgnore(201L, 1L)).willReturn(1);
 
             // when
-            // helpful 토글을 한 번 실행한다.
-            HelpfulToggleResponse response = commentService.toggleHelpful(201L, 1L);
+            // 좋아요 토글을 한 번 실행한다.
+            LikeToggleResponse response = commentService.toggleLike(201L, 1L);
 
             // then
-            // helpful 상태와 카운트 증가 쿼리가 함께 반영되어야 한다.
-            assertThat(response.helpful()).isTrue();
-            then(commentRepository).should().incrementHelpfulCount(201L);
+            // 좋아요 상태와 카운트 증가 쿼리가 함께 반영되어야 한다.
+            assertThat(response.liked()).isTrue();
+            then(commentRepository).should().incrementLikeCount(201L);
         }
 
         @Test
-        @DisplayName("이미 helpful 상태에서 다시 누르면 카운트를 내리고 notHelpfulState를 반환한다")
-        void decrementsCountAndReturnsNotHelpfulStateOnSecondToggle() {
+        @DisplayName("이미 좋아요 상태에서 다시 누르면 카운트를 내리고 unlikedState를 반환한다")
+        void decrementsCountAndReturnsUnlikedStateOnSecondToggle() {
             // given
-            // 이미 helpful 상태인 댓글을 준비한다.
+            // 이미 좋아요 상태인 댓글을 준비한다.
             Post post = PostFixture.post(10L);
             Comment comment = CommentFixture.topLevelComment(201L, post, MemberFixture.member(2L, "writer"), "댓글", 1);
 
             given(commentRepository.findActiveById(201L)).willReturn(Optional.of(comment));
-            given(commentHelpfulRepository.insertIgnore(201L, 1L)).willReturn(0);
+            given(commentLikeRepository.insertIgnore(201L, 1L)).willReturn(0);
 
             // when
-            // helpful 토글을 다시 실행한다.
-            HelpfulToggleResponse response = commentService.toggleHelpful(201L, 1L);
+            // 좋아요 토글을 다시 실행한다.
+            LikeToggleResponse response = commentService.toggleLike(201L, 1L);
 
             // then
-            // helpful 취소 처리와 카운트 감소 쿼리가 호출되어야 한다.
-            assertThat(response.helpful()).isFalse();
-            then(commentHelpfulRepository).should().deleteByCommentIdAndMemberId(201L, 1L);
-            then(commentRepository).should().decrementHelpfulCount(201L);
+            // 좋아요 취소 처리와 카운트 감소 쿼리가 호출되어야 한다.
+            assertThat(response.liked()).isFalse();
+            then(commentLikeRepository).should().deleteByCommentIdAndMemberId(201L, 1L);
+            then(commentRepository).should().decrementLikeCount(201L);
         }
 
         @Test
-        @DisplayName("존재하지 않는 댓글에 helpful을 누르면 COMMENT_NOT_FOUND 예외를 던진다")
+        @DisplayName("존재하지 않는 댓글에 좋아요를 누르면 COMMENT_NOT_FOUND 예외를 던진다")
         void throwsWhenCommentNotFound() {
             // given
             // 존재하지 않는 댓글 ID 조회 결과를 준비한다.
             given(commentRepository.findActiveById(999L)).willReturn(Optional.empty());
 
             // when & then
-            // helpful 토글 시도가 COMMENT_NOT_FOUND로 변환되는지 확인한다.
-            assertThatThrownBy(() -> commentService.toggleHelpful(999L, 1L))
+            // 좋아요 토글 시도가 COMMENT_NOT_FOUND로 변환되는지 확인한다.
+            assertThatThrownBy(() -> commentService.toggleLike(999L, 1L))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(CommentErrorCode.COMMENT_NOT_FOUND);

@@ -3,7 +3,7 @@ package kr.ac.knu.comit.comment.controller;
 import kr.ac.knu.comit.comment.controller.api.CommentControllerApi;
 import kr.ac.knu.comit.comment.dto.CommentListResponse;
 import kr.ac.knu.comit.comment.dto.CreateCommentRequest;
-import kr.ac.knu.comit.comment.dto.HelpfulToggleResponse;
+import kr.ac.knu.comit.comment.dto.LikeToggleResponse;
 import kr.ac.knu.comit.comment.dto.UpdateCommentRequest;
 import kr.ac.knu.comit.comment.service.CommentService;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
@@ -65,12 +65,12 @@ public class CommentController implements CommentControllerApi {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<HelpfulToggleResponse>> toggleHelpful(
+    public ResponseEntity<ApiResponse<LikeToggleResponse>> toggleLike(
             Long commentId,
             MemberPrincipal principal
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                commentService.toggleHelpful(commentId, principal.memberId())
+                commentService.toggleLike(commentId, principal.memberId())
         ));
     }
 }
