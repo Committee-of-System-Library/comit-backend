@@ -34,6 +34,10 @@ public class MemberService {
         return memberRepository.findBySsoSubAndDeletedAtIsNull(ssoSub).isPresent();
     }
 
+    public boolean hasDeletedMember(String ssoSub) {
+        return memberRepository.existsBySsoSubAndDeletedAtIsNotNull(ssoSub);
+    }
+
     public boolean hasAnyMember(String ssoSub) {
         return memberRepository.existsBySsoSub(ssoSub);
     }

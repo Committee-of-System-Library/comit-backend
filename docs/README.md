@@ -6,6 +6,7 @@
 
 - [Comit CPS (왜 만드는지 / 누구를 위한 것인지)](./features/comit-cps.md)
 - [게시글·댓글 신고 기능 명세](./features/post-comment-report.md)
+- [SSO 2단계 회원가입 및 동적 redirectUri 기능 명세](./features/sso-registration-flow.md)
 - [API 계약 가이드](./guides/api-contract.md)
 - [API 문서 생성기 동작 가이드](./guides/api-doc-generator-flow.md)
 - [Feature Toggle 설계 가이드](./guides/feature-toggle.md)
@@ -16,6 +17,7 @@
 - [Comit prod-like 백엔드 롤아웃 계획](./ops/comit-prod-like-backend-rollout.md)
 - [Comit SSO 연동 롤아웃 계획](./ops/comit-sso-integration-rollout.md)
 - [Comit staging 검증 기록](./ops/comit-staging-verification.md)
+- [Backend self-hosted runner 배포 흐름 HTML](./ops/backend-self-hosted-runner-flow.html) - 상단 Mermaid 미니맵과 카드형 상세 설명으로 push -> runner -> server 흐름을 설명
 - [ADR-002 ProblemDetail 기반 에러 응답 표준 채택](./adr/002-problem-detail-error-response.md)
 
 ## 디렉토리 구조
@@ -50,7 +52,7 @@
 | 변경 유형 | 같이 갱신할 문서 |
 |---|---|
 | 제품 방향, 타겟 사용자, MVP 범위 | `features/comit-cps.md`, `features/README.md`, `docs/README.md` |
-| 기능 설계, 흐름, 예외 케이스 | 해당 `features/*.md`, `features/README.md` |
+| 기능 설계, 흐름, 예외 케이스 | 해당 `features/*.md`, `features/README.md`, 필요 시 `guides/sso-auth-flow.md` |
 | 에러 응답 포맷, 에러 코드 체계 | `adr/002-problem-detail-error-response.md`, `guides/api-contract.md`, `docs/api/` |
 | 컨트롤러 계약, DTO, validation | `guides/api-contract.md`, `docs/api/` |
 | API 문서 생성기/어노테이션 규칙 | `guides/api-doc-generator-flow.md`, `docs/api/` |

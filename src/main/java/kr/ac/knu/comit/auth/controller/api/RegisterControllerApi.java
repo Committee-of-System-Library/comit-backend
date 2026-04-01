@@ -53,7 +53,7 @@ public interface RegisterControllerApi {
             description = "SSO 토큰 쿠키와 사용자가 입력한 닉네임, 연락처, 약관 동의 여부로 회원가입을 완료합니다.",
             descriptions = {
                     @FieldDesc(name = "nickname", value = "1자 이상 15자 이하의 닉네임입니다."),
-                    @FieldDesc(name = "phone", value = "연락처입니다."),
+                    @FieldDesc(name = "phone", value = "숫자와 하이픈만 포함한 10~15자 연락처입니다."),
                     @FieldDesc(name = "agreedToTerms", value = "약관 동의 여부입니다. true여야만 회원가입이 완료됩니다.")
             },
             errors = {

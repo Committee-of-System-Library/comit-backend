@@ -14,6 +14,7 @@ import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberService;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
@@ -26,6 +27,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ConditionalOnProperty(prefix = "comit.auth.sso", name = "enabled", havingValue = "true")
+@Slf4j
 @RequiredArgsConstructor
 public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
@@ -76,6 +78,7 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
             handlerExceptionResolver.resolveException(request, response, null, e);
             return;
         } catch (Exception exception) {
+            log.warn("Failed to authenticate SSO cookie for requestUri={}", request.getRequestURI(), exception);
             response.addHeader(HttpHeaders.SET_COOKIE, authCookieManager.clearAuthenticationCookie());
         }
 
@@ -84,7 +87,11 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String requestUri = request.getRequestURI();
-        return requestUri.contains("/auth/sso") || requestUri.contains("/auth/register");
+        String servletPath = request.getServletPath();
+        return isAuthPath(servletPath, "/auth/sso") || isAuthPath(servletPath, "/auth/register");
+    }
+
+    private boolean isAuthPath(String servletPath, String path) {
+        return servletPath.equals(path) || servletPath.startsWith(path + "/");
     }
 }

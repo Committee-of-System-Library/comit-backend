@@ -72,6 +72,8 @@ comit:
       client-secret: ${COMIT_AUTH_SSO_CLIENT_SECRET:}
       issuer: ${COMIT_AUTH_SSO_ISSUER:https://chcse.knu.ac.kr/appfn/api}
       redirect-uri: ${COMIT_AUTH_SSO_REDIRECT_URI:}
+      allowed-redirect-uris: ${COMIT_AUTH_SSO_ALLOWED_REDIRECT_URIS:https://chcse.knu.ac.kr,https://knu-cse-comit-client.vercel.app,https://comit-sso-smoke.vercel.app,http://localhost:5173}
+      redirect-uri-cookie-name: ${COMIT_AUTH_SSO_REDIRECT_URI_COOKIE_NAME:comit-redirect-uri}
       frontend-success-url: ${COMIT_AUTH_SSO_FRONTEND_SUCCESS_URL:http://localhost:5173}
       frontend-register-url: ${COMIT_AUTH_SSO_FRONTEND_REGISTER_URL:http://localhost:5173/register}
       frontend-error-url: ${COMIT_AUTH_SSO_FRONTEND_ERROR_URL:http://localhost:5173/error}

@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.auth.service;
 
+import java.net.URI;
 import java.util.UUID;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
@@ -30,40 +31,57 @@ public class SsoAuthService {
     private final MemberService memberService;
 
     public SsoLoginStart startLogin() {
+        return startLogin(null);
+    }
+
+    public SsoLoginStart startLogin(String redirectUri) {
         validateFrontendUrls();
 
         String state = UUID.randomUUID().toString();
         String loginUrl = externalAuthClient.buildLoginRedirectUrl(state);
+        String redirectUriCookieHeader = createRedirectUriCookieHeader(redirectUri);
 
-        return new SsoLoginStart(loginUrl, authCookieManager.createStateCookie(state));
+        return new SsoLoginStart(loginUrl, authCookieManager.createStateCookie(state), redirectUriCookieHeader);
     }
 
-    public SsoCallbackResult handleCallback(String state, String token, String storedState) {
+    public SsoCallbackResult handleCallback(String state, String token, String storedState, String storedRedirectUri) {
         validateFrontendUrls();
         validateState(state, storedState);
+        validateStoredRedirectUri(storedRedirectUri);
 
         ExternalIdentity identity = externalAuthClient.verify(token);
         MemberPrincipal principal = externalIdentityMapper.toPrincipal(identity);
 
         if (principal.userType() == MemberPrincipal.UserType.EXTERNAL) {
             return new SsoCallbackRejected(
-                    buildFrontendErrorRedirectUrl("EXTERNAL_USER_NOT_ALLOWED"),
-                    authCookieManager.clearStateCookie()
+                    resolveErrorUrl(storedRedirectUri, "EXTERNAL_USER_NOT_ALLOWED"),
+                    authCookieManager.clearStateCookie(),
+                    authCookieManager.clearRedirectUriCookie()
+            );
+        }
+
+        if (memberService.hasDeletedMember(principal.ssoSub())) {
+            return new SsoCallbackRejected(
+                    resolveErrorUrl(storedRedirectUri, "ACCOUNT_DEACTIVATED"),
+                    authCookieManager.clearStateCookie(),
+                    authCookieManager.clearRedirectUriCookie()
             );
         }
 
         if (!memberService.hasActiveMember(principal.ssoSub())) {
             return new SsoCallbackPendingRegistration(
-                    ssoProperties.getFrontendRegisterUrl(),
+                    resolveRegisterUrl(storedRedirectUri),
                     authCookieManager.createTokenCookie(token),
-                    authCookieManager.clearStateCookie()
+                    authCookieManager.clearStateCookie(),
+                    authCookieManager.clearRedirectUriCookie()
             );
         }
 
         return new SsoCallbackSuccess(
-                ssoProperties.getFrontendSuccessUrl(),
+                resolveSuccessUrl(storedRedirectUri),
                 authCookieManager.createTokenCookie(token),
-                authCookieManager.clearStateCookie()
+                authCookieManager.clearStateCookie(),
+                authCookieManager.clearRedirectUriCookie()
         );
     }
 
@@ -101,6 +119,83 @@ public class SsoAuthService {
         validateFrontendErrorUrl();
     }
 
+    private String createRedirectUriCookieHeader(String redirectUri) {
+        if (isBlank(redirectUri)) {
+            return authCookieManager.clearRedirectUriCookie();
+        }
+        validateRedirectUri(redirectUri);
+        return authCookieManager.createRedirectUriCookie(redirectUri);
+    }
+
+    private void validateStoredRedirectUri(String storedRedirectUri) {
+        if (!isBlank(storedRedirectUri)) {
+            validateRedirectUri(storedRedirectUri);
+        }
+    }
+
+    private void validateRedirectUri(String redirectUri) {
+        try {
+            URI uri = URI.create(redirectUri);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            if (scheme == null || host == null) {
+                throw new IllegalArgumentException("redirectUri must be absolute");
+            }
+
+            boolean isHttps = "https".equals(scheme);
+            boolean isLocalhost = "http".equals(scheme) && "localhost".equals(host);
+            if (!isHttps && !isLocalhost) {
+                throw new IllegalArgumentException("redirectUri scheme is not allowed");
+            }
+
+            String origin = buildOrigin(uri);
+            boolean allowed = ssoProperties.getAllowedRedirectUris().stream()
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .anyMatch(origin::equals);
+            if (!allowed) {
+                throw new IllegalArgumentException("redirectUri is not in allowlist");
+            }
+        } catch (IllegalArgumentException exception) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private String resolveSuccessUrl(String storedRedirectUri) {
+        if (isBlank(storedRedirectUri)) {
+            return ssoProperties.getFrontendSuccessUrl();
+        }
+
+        return buildStageRedirectUrl(storedRedirectUri, "success");
+    }
+
+    private String resolveRegisterUrl(String storedRedirectUri) {
+        if (isBlank(storedRedirectUri)) {
+            return ssoProperties.getFrontendRegisterUrl();
+        }
+
+        return buildStageRedirectUrl(storedRedirectUri, "register");
+    }
+
+    private String resolveErrorUrl(String storedRedirectUri, String reason) {
+        if (isBlank(storedRedirectUri)) {
+            return buildFrontendErrorRedirectUrl(reason);
+        }
+
+        return UriComponentsBuilder.fromUriString(storedRedirectUri)
+                .queryParam("stage", "error")
+                .queryParam("reason", reason)
+                .build(true)
+                .toUriString();
+    }
+
+    private String buildStageRedirectUrl(String redirectUri, String stage) {
+        return UriComponentsBuilder.fromUriString(redirectUri)
+                .queryParam("stage", stage)
+                .build(true)
+                .toUriString();
+    }
+
     private String buildFrontendErrorRedirectUrl(String reason) {
         validateFrontendErrorUrl();
 
@@ -112,6 +207,11 @@ public class SsoAuthService {
         } catch (IllegalArgumentException exception) {
             throw new BusinessException("SSO 설정이 올바르지 않습니다.", CommonErrorCode.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private String buildOrigin(URI uri) {
+        int port = uri.getPort();
+        return uri.getScheme() + "://" + uri.getHost() + (port != -1 ? ":" + port : "");
     }
 
     private boolean isBlank(String value) {

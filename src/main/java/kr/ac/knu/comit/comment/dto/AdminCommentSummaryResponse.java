@@ -9,7 +9,7 @@ public record AdminCommentSummaryResponse(
         Long parentCommentId,
         String content,
         String authorNickname,
-        int helpfulCount,
+        int likeCount,
         boolean hiddenByAdmin,
         LocalDateTime createdAt
 ) {
@@ -20,7 +20,7 @@ public record AdminCommentSummaryResponse(
                 comment.getParentCommentId(),
                 comment.getContent(),
                 comment.getMember().getNickname(),
-                comment.getHelpfulCount(),
+                comment.getLikeCount(),
                 comment.isHiddenByAdmin(),
                 comment.getCreatedAt()
         );
