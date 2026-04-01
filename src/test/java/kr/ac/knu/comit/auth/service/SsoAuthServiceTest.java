@@ -208,6 +208,54 @@ class SsoAuthServiceTest {
         }
 
         @Test
+        @DisplayName("soft delete 회원이 있으면 회원가입 URL 대신 에러 URL로 리디렉션한다")
+        void returnsRejectedWhenDeletedMemberExists() {
+            // given
+            ExternalIdentity identity = new ExternalIdentity(
+                    "sub-1",
+                    "홍길동",
+                    "hong@knu.ac.kr",
+                    "2023012780",
+                    "심화",
+                    "CSE_STUDENT",
+                    "STUDENT"
+            );
+            MemberPrincipal principal = new MemberPrincipal(
+                    null,
+                    "sub-1",
+                    "홍길동",
+                    "hong@knu.ac.kr",
+                    "2023012780",
+                    MemberPrincipal.UserType.CSE_STUDENT,
+                    MemberPrincipal.MemberRole.STUDENT
+            );
+
+            givenFrontendUrls();
+            given(externalAuthClient.verify("valid-token")).willReturn(identity);
+            given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal);
+            given(memberService.hasDeletedMember("sub-1")).willReturn(true);
+            given(authCookieManager.clearStateCookie()).willReturn("Set-Cookie: state=; Max-Age=0");
+            given(authCookieManager.clearRedirectUriCookie())
+                    .willReturn("Set-Cookie: comit-redirect-uri=; Max-Age=0");
+
+            // when
+            SsoCallbackResult result = ssoAuthService.handleCallback(
+                    "state-1",
+                    "valid-token",
+                    "state-1",
+                    "https://comit-sso-smoke.vercel.app"
+            );
+
+            // then
+            assertThat(result).isInstanceOf(SsoCallbackRejected.class);
+            SsoCallbackRejected rejected = (SsoCallbackRejected) result;
+            assertThat(rejected.redirectUrl())
+                    .isEqualTo("https://comit-sso-smoke.vercel.app?stage=error&reason=MEMBER_ALREADY_EXISTS");
+            assertThat(rejected.clearRedirectUriCookieHeader())
+                    .isEqualTo("Set-Cookie: comit-redirect-uri=; Max-Age=0");
+        }
+
+        @Test
         @DisplayName("외부인이면 토큰 쿠키 없이 에러 URL로 리디렉션한다")
         void returnsRejectedForExternalUser() {
             // given
@@ -274,6 +322,7 @@ class SsoAuthServiceTest {
         given(ssoProperties.getFrontendErrorUrl()).willReturn("https://comit.knu.ac.kr/error");
         lenient().when(ssoProperties.getAllowedRedirectUris())
                 .thenReturn(List.of("https://comit-sso-smoke.vercel.app"));
+        lenient().when(memberService.hasDeletedMember("sub-1")).thenReturn(false);
     }
 
     private Member existingMember() {

@@ -65,6 +65,18 @@ Then:
 - SSO 토큰 쿠키가 세팅된다.
 - `frontendRegisterUrl`로 302 리디렉션된다.
 
+### Scenario A-1. soft delete 된 회원은 회원가입 페이지로 보내지지 않는다
+Given:
+- INTERNAL user_type을 가진 SSO 사용자가 콜백 토큰을 전달했다.
+- DB에는 동일한 `ssoSub`를 가진 soft delete 회원이 존재한다.
+
+When:
+- `/auth/sso/callback`이 호출된다.
+
+Then:
+- 서버는 register URL이 아니라 error URL로 리디렉션한다.
+- `reason=MEMBER_ALREADY_EXISTS`로 재가입 불가 상태를 명시한다.
+
 ### Scenario B. 프론트가 prefill 값을 조회한다
 Given:
 - SSO 토큰 쿠키가 세팅되어 있다.
@@ -157,6 +169,7 @@ Then:
 - 프론트에서 `name`, `studentNumber`, `major`를 전달받아 저장하는 것
 - 미가입 상태에서 일반 API 접근 허용
 - auto-create로 닉네임을 자동 생성하는 것
+- soft delete 된 기존 회원을 새 회원가입 플로우로 다시 진입시키는 것
 
 ---
 
@@ -299,12 +312,27 @@ Then:
 - 개발용 `http://localhost:*`는 http 예외를 허용한다. 그 외는 https만 허용한다.
 - 한 브라우저에서 동시에 여러 SSO 로그인 시도를 완전하게 지원하는 것은 이번 범위 밖이다.
 
-### 12.5 Routing Contract
+### 12.5 Frontend Usage Modes
+
+#### Production / deployed frontend
+- 운영 프론트는 `GET /auth/sso/login`만 호출해도 된다.
+- 서버에 설정된 `frontendSuccessUrl`, `frontendRegisterUrl`, `frontendErrorUrl`를 기본 복귀 경로로 사용한다.
+- 운영 프론트는 고정된 서비스 URL을 가지므로 `redirectUri`를 굳이 넘기지 않아도 된다.
+
+#### Dev / smoke / preview frontend
+- localhost, 개인 Vercel, smoke front, preview deploy는 `redirectUri`를 명시적으로 넘긴다.
+- 이 값은 allowlist origin exact match를 통과해야 한다.
+- 서버는 callback 결과에 따라 `redirectUri?stage=success|register|error` 형태로 되돌린다.
+- error 케이스는 `redirectUri?stage=error&reason=...` 형식을 사용한다.
+
+### 12.6 Routing Contract
 - `redirectUri`는 `?stage=...` 단일 페이지 모델을 전제로 한다.
 - `/register` 전용 경로 지원은 별도 프론트 구현 범위로 둔다.
+- 운영 프론트는 fallback URL 3개(success/register/error)를 그대로 사용한다.
+- dev/smoke/preview 프론트는 동일 endpoint를 호출하되 `redirectUri`로 복귀 base URL을 override한다.
 - `redirectUri`에 기존 query string이 있어도 서버는 `stage`와 `reason`을 URI builder로 병합한다.
 
-### 12.6 Scenarios
+### 12.7 Scenarios
 
 **Scenario G. allowlist에 있는 redirectUri로 로그인 — 기가입 사용자**
 - `GET /auth/sso/login?redirectUri=https://comit-sso-smoke.vercel.app`
@@ -329,7 +357,7 @@ Then:
 - → 서버가 `comit-redirect-uri` clear 쿠키를 Set-Cookie로 응답
 - → 콜백은 설정 fallback URL 사용
 
-### 12.7 Functional Requirements
+### 12.8 Functional Requirements
 - FR-D1: `GET /auth/sso/login`은 선택적 `redirectUri` 쿼리 파라미터를 받는다.
 - FR-D2: `redirectUri`는 absolute URI여야 한다. 파싱 실패 시 `400 INVALID_REQUEST`.
 - FR-D3: allowlist 검증은 **origin(scheme + host + port) exact match** 기준이다. `startsWith` 금지.
@@ -342,25 +370,25 @@ Then:
 - FR-D10: callback 완료 후 `comit-redirect-uri` 쿠키는 항상 제거된다 (3분기 모두).
 - FR-D11: stage suffix 조합은 문자열 연결이 아닌 **URI builder**로 한다.
 
-### 12.8 Behavioral Rules
+### 12.9 Behavioral Rules
 - `stage=success` — 기가입 INTERNAL 콜백
 - `stage=register` — 미가입 INTERNAL 콜백
 - `stage=error&reason=EXTERNAL_USER_NOT_ALLOWED` — EXTERNAL 콜백
 - `reason`은 error 경로에만 붙는다.
 - `redirectUri`에 기존 query가 있어도 서버는 기존 query를 보존하고 `stage`를 병합한다.
 
-### 12.9 Security Constraints
+### 12.10 Security Constraints
 - allowlist는 origin exact match. `startsWith` 또는 `contains` 검증 금지.
 - `redirectUri`를 DB 저장하거나 서버 간 전달하지 않는다.
 - open redirect 방지: allowlist 밖 URI는 반드시 400 응답.
 
-### 12.10 Test Criteria
+### 12.11 Test Criteria
 - service test: allowlist 통과 / origin mismatch 실패 / scheme mismatch 실패 / fallback / stale cookie 제거
 - web test: `GET /auth/sso/login?redirectUri=...` → Set-Cookie에 `comit-redirect-uri` 포함
 - callback web test: success/register/error 모두 `comit-redirect-uri` clear + 올바른 Location
 - `./gradlew compileTestJava && ./gradlew test`
 
-### 12.11 Implementation Guardrails
+### 12.12 Implementation Guardrails
 - `startsWith` 기반 allowlist 검증 금지
 - `?stage=...` suffix는 `UriComponentsBuilder`로 조합
 - `ComitSsoProperties`에 `allowedRedirectUris: List<String>` 및 `redirectUriCookieName` 추가

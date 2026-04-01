@@ -54,6 +54,10 @@ public class RegisterService {
     }
 
     private ExternalIdentity verifyRegistrationIdentity(String token) {
+        if (token == null || token.isBlank()) {
+            throw new BusinessException(CommonErrorCode.UNAUTHORIZED);
+        }
+
         ExternalIdentity identity = externalAuthClient.verify(token);
         MemberPrincipal principal = externalIdentityMapper.toPrincipal(identity);
         if (principal.userType() == MemberPrincipal.UserType.EXTERNAL) {

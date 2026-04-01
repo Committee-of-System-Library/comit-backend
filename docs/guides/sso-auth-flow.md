@@ -160,8 +160,9 @@ GET /auth/sso/callback?state={uuid}&token={jwt}
    (`SsoCallbackRejected` 결과 반환)
 
 4. **가입 상태 확인** — 정상 사용자(`CSE_STUDENT` / `KNU_OTHER_DEPT`) 검증 성공 후 `member.sso_sub`로 가입 여부를 확인합니다.
-   - 기존 회원이면 `SsoCallbackSuccess`
-   - 미가입 회원이면 `SsoCallbackPendingRegistration`
+   - 기존 활성 회원이면 `SsoCallbackSuccess`
+   - soft delete 된 동일 `ssoSub`가 있으면 `SsoCallbackRejected`
+   - 회원이 전혀 없으면 `SsoCallbackPendingRegistration`
 
 5. **쿠키 처리** — 성공/미가입/거부 분기 모두:
    - `COMIT_SSO_TOKEN` 쿠키 발급 (HttpOnly, 1시간 유효)
@@ -169,9 +170,9 @@ GET /auth/sso/callback?state={uuid}&token={jwt}
    - `comit-redirect-uri` 쿠키 삭제 (동적 복귀 URL 사용 여부와 무관하게 콜백 후 항상 제거)
 
 6. **302 리다이렉트**
-   - 기존 회원 → `redirectUri?stage=success` 또는 `frontendSuccessUrl`
+   - 기존 활성 회원 → `redirectUri?stage=success` 또는 `frontendSuccessUrl`
    - 미가입 회원 → `redirectUri?stage=register` 또는 `frontendRegisterUrl`
-   - 외부 사용자 → `redirectUri?stage=error&reason=EXTERNAL_USER_NOT_ALLOWED` 또는 `frontendErrorUrl`
+   - 외부 사용자 또는 soft delete 된 기존 회원 → `redirectUri?stage=error&reason=...` 또는 `frontendErrorUrl`
 
 ```
 GET /auth/sso/callback?state=X&token=Y
@@ -188,12 +189,14 @@ GET /auth/sso/callback?state=X&token=Y
             │         └─ 만료 시간 검증
             └─ userType == EXTERNAL?
                  ├─ YES → SsoCallbackRejected(errorUrl)
-                 └─ NO  → MemberService.hasActiveMember(ssoSub)
-                           ├─ true  → SsoCallbackSuccess(successUrl, cookies)
-                           └─ false → SsoCallbackPendingRegistration(registerUrl, cookies)
+                 └─ NO  → MemberService.hasDeletedMember(ssoSub)?
+                           ├─ true  → SsoCallbackRejected(errorUrl)
+                           └─ false → MemberService.hasActiveMember(ssoSub)
+                                     ├─ true  → SsoCallbackSuccess(successUrl, cookies)
+                                     └─ false → SsoCallbackPendingRegistration(registerUrl, cookies)
   └─▶ SsoCallbackSuccess              → 302 Location: {redirectUri?stage=success or frontendSuccessUrl}
   └─▶ SsoCallbackPendingRegistration  → 302 Location: {redirectUri?stage=register or frontendRegisterUrl}
-  └─▶ SsoCallbackRejected             → 302 Location: {redirectUri?stage=error&reason=... or frontendErrorUrl}
+   └─▶ SsoCallbackRejected             → 302 Location: {redirectUri?stage=error&reason=... or frontendErrorUrl}
 ```
 
 ---
@@ -387,14 +390,29 @@ X-Member-Role: STUDENT
 
 ### 로그인
 
+#### 운영 프론트
+
+운영 프론트는 서버에 설정된 fallback URL을 사용하므로, 기본적으로 `redirectUri`를 따로 넘기지 않습니다.
+
 ```javascript
 // 로그인 버튼 클릭 핸들러
 function handleLogin() {
-  // 현재 페이지 저장이 필요하다면 localStorage 등에 미리 저장
   window.location.href = "/auth/sso/login";
-  // 이 이후는 브라우저가 자동으로 처리 (리다이렉트 연쇄)
 }
 ```
+
+#### 개발 / smoke / preview 프론트
+
+dev 서버, localhost, smoke front, preview deploy처럼 운영 fallback URL과 다른 주소로 돌아와야 하는 경우에는 `redirectUri`를 함께 넘깁니다.
+
+```javascript
+function handleLoginForDev() {
+  const redirectUri = encodeURIComponent(window.location.origin);
+  window.location.href = `/auth/sso/login?redirectUri=${redirectUri}`;
+}
+```
+
+이때 `redirectUri`는 아무 주소나 허용되지 않고, 서버의 allowlist origin exact match 검증을 통과해야 합니다.
 
 ### 로그인 성공 감지
 

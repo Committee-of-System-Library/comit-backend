@@ -97,6 +97,7 @@ class SsoAuthWebTest {
                 .willReturn("https://chcse.knu.ac.kr/appfn/api/login?state=state-123");
         given(externalAuthClient.verify(any())).willReturn(externalIdentity());
         given(memberService.findBySso(any())).willReturn(Optional.of(authenticatedMember()));
+        given(memberService.hasDeletedMember("sso-sub-1")).willReturn(false);
         given(memberService.hasActiveMember("sso-sub-1")).willReturn(true);
         given(memberService.getMyProfile(1L))
                 .willReturn(new MemberProfileResponse(1L, "comit-user", "2023012780", true));
@@ -199,6 +200,29 @@ class SsoAuthWebTest {
         // then
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN="));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=").contains("Max-Age=0"));
+    }
+
+    @Test
+    @DisplayName("soft delete 회원이 있으면 register 대신 error URL로 리다이렉트한다")
+    void redirectsDeletedMemberToErrorInsteadOfRegister() throws Exception {
+        // given
+        given(memberService.hasDeletedMember("sso-sub-1")).willReturn(true);
+
+        // when
+        MvcResult result = mockMvc.perform(get("/auth/sso/callback")
+                        .param("state", "state-123")
+                        .param("token", "token-123")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123"))
+                        .cookie(new jakarta.servlet.http.Cookie("comit-redirect-uri", "https://comit-sso-smoke.vercel.app")))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("https://comit-sso-smoke.vercel.app?stage=error&reason=MEMBER_ALREADY_EXISTS"))
+                .andReturn();
+
+        // then
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE=").contains("Max-Age=0"));
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
@@ -334,6 +358,23 @@ class SsoAuthWebTest {
                                   "nickname": "길동이",
                                   "phone": "010-1234-5678",
                                   "agreedToTerms": false
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"));
+    }
+
+    @Test
+    @DisplayName("register API는 phone 형식이 잘못되면 INVALID_REQUEST를 반환한다")
+    void rejectsRegistrationWhenPhoneFormatIsInvalid() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "nickname": "길동이",
+                                  "phone": "invalid-phone",
+                                  "agreedToTerms": true
                                 }
                                 """))
                 .andExpect(status().isBadRequest())

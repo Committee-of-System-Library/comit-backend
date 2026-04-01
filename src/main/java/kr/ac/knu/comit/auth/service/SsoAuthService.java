@@ -65,6 +65,14 @@ public class SsoAuthService {
             );
         }
 
+        if (memberService.hasDeletedMember(principal.ssoSub())) {
+            return new SsoCallbackRejected(
+                    resolveErrorUrl(storedRedirectUri, "MEMBER_ALREADY_EXISTS"),
+                    authCookieManager.clearStateCookie(),
+                    authCookieManager.clearRedirectUriCookie()
+            );
+        }
+
         if (!memberService.hasActiveMember(principal.ssoSub())) {
             return new SsoCallbackPendingRegistration(
                     resolveRegisterUrl(storedRedirectUri),

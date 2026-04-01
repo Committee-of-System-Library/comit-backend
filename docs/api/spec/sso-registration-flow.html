@@ -139,6 +139,21 @@
 <li>SSO 토큰 쿠키가 세팅된다.</li>
 <li><code>frontendRegisterUrl</code>로 302 리디렉션된다.</li>
 </ul>
+<h3>Scenario A-1. soft delete 된 회원은 회원가입 페이지로 보내지지 않는다</h3>
+<p>Given:</p>
+<ul>
+<li>INTERNAL user_type을 가진 SSO 사용자가 콜백 토큰을 전달했다.</li>
+<li>DB에는 동일한 <code>ssoSub</code>를 가진 soft delete 회원이 존재한다.</li>
+</ul>
+<p>When:</p>
+<ul>
+<li><code>/auth/sso/callback</code>이 호출된다.</li>
+</ul>
+<p>Then:</p>
+<ul>
+<li>서버는 register URL이 아니라 error URL로 리디렉션한다.</li>
+<li><code>reason=MEMBER_ALREADY_EXISTS</code>로 재가입 불가 상태를 명시한다.</li>
+</ul>
 <h3>Scenario B. 프론트가 prefill 값을 조회한다</h3>
 <p>Given:</p>
 <ul>
@@ -248,6 +263,7 @@
 <li>프론트에서 <code>name</code>, <code>studentNumber</code>, <code>major</code>를 전달받아 저장하는 것</li>
 <li>미가입 상태에서 일반 API 접근 허용</li>
 <li>auto-create로 닉네임을 자동 생성하는 것</li>
+<li>soft delete 된 기존 회원을 새 회원가입 플로우로 다시 진입시키는 것</li>
 </ul>
 <hr>
 <h2>6. State Model</h2>
@@ -392,13 +408,29 @@
 <li>개발용 <code>http://localhost:*</code>는 http 예외를 허용한다. 그 외는 https만 허용한다.</li>
 <li>한 브라우저에서 동시에 여러 SSO 로그인 시도를 완전하게 지원하는 것은 이번 범위 밖이다.</li>
 </ul>
-<h3>12.5 Routing Contract</h3>
+<h3>12.5 Frontend Usage Modes</h3>
+<h4>Production / deployed frontend</h4>
+<ul>
+<li>운영 프론트는 <code>GET /auth/sso/login</code>만 호출해도 된다.</li>
+<li>서버에 설정된 <code>frontendSuccessUrl</code>, <code>frontendRegisterUrl</code>, <code>frontendErrorUrl</code>를 기본 복귀 경로로 사용한다.</li>
+<li>운영 프론트는 고정된 서비스 URL을 가지므로 <code>redirectUri</code>를 굳이 넘기지 않아도 된다.</li>
+</ul>
+<h4>Dev / smoke / preview frontend</h4>
+<ul>
+<li>localhost, 개인 Vercel, smoke front, preview deploy는 <code>redirectUri</code>를 명시적으로 넘긴다.</li>
+<li>이 값은 allowlist origin exact match를 통과해야 한다.</li>
+<li>서버는 callback 결과에 따라 <code>redirectUri?stage=success|register|error</code> 형태로 되돌린다.</li>
+<li>error 케이스는 <code>redirectUri?stage=error&reason=...</code> 형식을 사용한다.</li>
+</ul>
+<h3>12.6 Routing Contract</h3>
 <ul>
 <li><code>redirectUri</code>는 <code>?stage=...</code> 단일 페이지 모델을 전제로 한다.</li>
 <li><code>/register</code> 전용 경로 지원은 별도 프론트 구현 범위로 둔다.</li>
+<li>운영 프론트는 fallback URL 3개(success/register/error)를 그대로 사용한다.</li>
+<li>dev/smoke/preview 프론트는 동일 endpoint를 호출하되 <code>redirectUri</code>로 복귀 base URL을 override한다.</li>
 <li><code>redirectUri</code>에 기존 query string이 있어도 서버는 <code>stage</code>와 <code>reason</code>을 URI builder로 병합한다.</li>
 </ul>
-<h3>12.6 Scenarios</h3>
+<h3>12.7 Scenarios</h3>
 <p><strong>Scenario G. allowlist에 있는 redirectUri로 로그인 — 기가입 사용자</strong></p>
 <ul>
 <li><code>GET /auth/sso/login?redirectUri=https://comit-sso-smoke.vercel.app</code></li>
@@ -427,7 +459,7 @@
 <li>→ 서버가 <code>comit-redirect-uri</code> clear 쿠키를 Set-Cookie로 응답</li>
 <li>→ 콜백은 설정 fallback URL 사용</li>
 </ul>
-<h3>12.7 Functional Requirements</h3>
+<h3>12.8 Functional Requirements</h3>
 <ul>
 <li>FR-D1: <code>GET /auth/sso/login</code>은 선택적 <code>redirectUri</code> 쿼리 파라미터를 받는다.</li>
 <li>FR-D2: <code>redirectUri</code>는 absolute URI여야 한다. 파싱 실패 시 <code>400 INVALID_REQUEST</code>.</li>
@@ -441,7 +473,7 @@
 <li>FR-D10: callback 완료 후 <code>comit-redirect-uri</code> 쿠키는 항상 제거된다 (3분기 모두).</li>
 <li>FR-D11: stage suffix 조합은 문자열 연결이 아닌 <strong>URI builder</strong>로 한다.</li>
 </ul>
-<h3>12.8 Behavioral Rules</h3>
+<h3>12.9 Behavioral Rules</h3>
 <ul>
 <li><code>stage=success</code> — 기가입 INTERNAL 콜백</li>
 <li><code>stage=register</code> — 미가입 INTERNAL 콜백</li>
@@ -449,20 +481,20 @@
 <li><code>reason</code>은 error 경로에만 붙는다.</li>
 <li><code>redirectUri</code>에 기존 query가 있어도 서버는 기존 query를 보존하고 <code>stage</code>를 병합한다.</li>
 </ul>
-<h3>12.9 Security Constraints</h3>
+<h3>12.10 Security Constraints</h3>
 <ul>
 <li>allowlist는 origin exact match. <code>startsWith</code> 또는 <code>contains</code> 검증 금지.</li>
 <li><code>redirectUri</code>를 DB 저장하거나 서버 간 전달하지 않는다.</li>
 <li>open redirect 방지: allowlist 밖 URI는 반드시 400 응답.</li>
 </ul>
-<h3>12.10 Test Criteria</h3>
+<h3>12.11 Test Criteria</h3>
 <ul>
 <li>service test: allowlist 통과 / origin mismatch 실패 / scheme mismatch 실패 / fallback / stale cookie 제거</li>
 <li>web test: <code>GET /auth/sso/login?redirectUri=...</code> → Set-Cookie에 <code>comit-redirect-uri</code> 포함</li>
 <li>callback web test: success/register/error 모두 <code>comit-redirect-uri</code> clear + 올바른 Location</li>
 <li><code>./gradlew compileTestJava && ./gradlew test</code></li>
 </ul>
-<h3>12.11 Implementation Guardrails</h3>
+<h3>12.12 Implementation Guardrails</h3>
 <ul>
 <li><code>startsWith</code> 기반 allowlist 검증 금지</li>
 <li><code>?stage=...</code> suffix는 <code>UriComponentsBuilder</code>로 조합</li>
