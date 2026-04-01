@@ -82,3 +82,10 @@ comit:
       cookie-path: ${COMIT_AUTH_SSO_COOKIE_PATH:/}
       cookie-secure: ${COMIT_AUTH_SSO_COOKIE_SECURE:true}
       cookie-same-site: ${COMIT_AUTH_SSO_COOKIE_SAME_SITE:Lax}
+  storage:
+    s3:
+      bucket-name: ${S3_BUCKET_NAME:}
+      region: ${S3_REGION:ap-northeast-2}
+      access-key: ${S3_ACCESS_KEY:}
+      secret-key: ${S3_SECRET_KEY:}
+      base-url: ${S3_BASE_URL:}
