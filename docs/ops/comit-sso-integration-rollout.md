@@ -271,7 +271,7 @@
 2. soft delete 회원은 재가입 화면으로 보내지 않는다.
 - 동일 `ssoSub`를 가진 soft delete 회원이 있으면 callback 단계에서 register URL이 아니라 error URL로 보낸다.
 - 운영 의미: “미가입”과 “탈퇴 이력 있음”을 같은 흐름으로 취급하지 않는다.
-- 현재 callback reason은 `MEMBER_ALREADY_EXISTS`를 사용한다.
+- 현재 callback reason은 `ACCOUNT_DEACTIVATED`를 사용한다.
 
 3. `shouldNotFilter()`는 경로 세그먼트 기준으로만 예외 처리한다.
 - `contains("/auth/register")` 같이 넓은 매칭은 미래 경로를 과하게 제외시킬 수 있다.

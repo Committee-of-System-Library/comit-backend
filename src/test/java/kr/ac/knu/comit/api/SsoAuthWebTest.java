@@ -219,7 +219,7 @@ class SsoAuthWebTest {
                         .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123"))
                         .cookie(new jakarta.servlet.http.Cookie("comit-redirect-uri", "https://comit-sso-smoke.vercel.app")))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("https://comit-sso-smoke.vercel.app?stage=error&reason=MEMBER_ALREADY_EXISTS"))
+                .andExpect(redirectedUrl("https://comit-sso-smoke.vercel.app?stage=error&reason=ACCOUNT_DEACTIVATED"))
                 .andReturn();
 
         // then

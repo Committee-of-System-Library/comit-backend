@@ -1,7 +1,6 @@
 package kr.ac.knu.comit.auth.service;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.UUID;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
@@ -45,10 +44,6 @@ public class SsoAuthService {
         return new SsoLoginStart(loginUrl, authCookieManager.createStateCookie(state), redirectUriCookieHeader);
     }
 
-    public SsoCallbackResult handleCallback(String state, String token, String storedState) {
-        return handleCallback(state, token, storedState, null);
-    }
-
     public SsoCallbackResult handleCallback(String state, String token, String storedState, String storedRedirectUri) {
         validateFrontendUrls();
         validateState(state, storedState);
@@ -67,7 +62,7 @@ public class SsoAuthService {
 
         if (memberService.hasDeletedMember(principal.ssoSub())) {
             return new SsoCallbackRejected(
-                    resolveErrorUrl(storedRedirectUri, "MEMBER_ALREADY_EXISTS"),
+                    resolveErrorUrl(storedRedirectUri, "ACCOUNT_DEACTIVATED"),
                     authCookieManager.clearStateCookie(),
                     authCookieManager.clearRedirectUriCookie()
             );
@@ -156,7 +151,6 @@ public class SsoAuthService {
             String origin = buildOrigin(uri);
             boolean allowed = ssoProperties.getAllowedRedirectUris().stream()
                     .filter(value -> value != null && !value.isBlank())
-                    .flatMap(value -> Arrays.stream(value.split(",")))
                     .map(String::trim)
                     .filter(value -> !value.isBlank())
                     .anyMatch(origin::equals);

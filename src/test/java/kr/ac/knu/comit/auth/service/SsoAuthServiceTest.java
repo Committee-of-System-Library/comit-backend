@@ -250,7 +250,7 @@ class SsoAuthServiceTest {
             assertThat(result).isInstanceOf(SsoCallbackRejected.class);
             SsoCallbackRejected rejected = (SsoCallbackRejected) result;
             assertThat(rejected.redirectUrl())
-                    .isEqualTo("https://comit-sso-smoke.vercel.app?stage=error&reason=MEMBER_ALREADY_EXISTS");
+                    .isEqualTo("https://comit-sso-smoke.vercel.app?stage=error&reason=ACCOUNT_DEACTIVATED");
             assertThat(rejected.clearRedirectUriCookieHeader())
                     .isEqualTo("Set-Cookie: comit-redirect-uri=; Max-Age=0");
         }

@@ -75,7 +75,7 @@ When:
 
 Then:
 - 서버는 register URL이 아니라 error URL로 리디렉션한다.
-- `reason=MEMBER_ALREADY_EXISTS`로 재가입 불가 상태를 명시한다.
+- `reason=ACCOUNT_DEACTIVATED`로 탈퇴/비활성 계정 상태를 명시한다.
 
 ### Scenario B. 프론트가 prefill 값을 조회한다
 Given:
