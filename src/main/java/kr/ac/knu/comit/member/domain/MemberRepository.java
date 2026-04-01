@@ -14,6 +14,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     boolean existsBySsoSub(String ssoSub);
 
+    boolean existsBySsoSubAndDeletedAtIsNotNull(String ssoSub);
+
     boolean existsByNickname(String nickname);
 
     boolean existsByNicknameAndIdNot(String nickname, Long id);

@@ -1,5 +1,7 @@
 package kr.ac.knu.comit.auth.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -20,6 +22,8 @@ public class ComitSsoProperties {
     private String frontendSuccessUrl;
     private String frontendRegisterUrl;
     private String frontendErrorUrl;
+    private List<String> allowedRedirectUris = new ArrayList<>();
+    private String redirectUriCookieName;
     private String tokenCookieName;
     private String stateCookieName;
     private long stateTtlSeconds;

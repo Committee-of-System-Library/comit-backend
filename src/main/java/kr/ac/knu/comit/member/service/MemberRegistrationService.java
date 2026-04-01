@@ -17,6 +17,7 @@ public class MemberRegistrationService {
 
     private final MemberRepository memberRepository;
 
+    // Persist-and-flush must complete inside this method so unique-key races can be translated here.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Member register(
             String ssoSub,

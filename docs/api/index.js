@@ -8,7 +8,7 @@ window.API_DOCS = [
 },
 {
   title: "SsoAuthControllerApi",
-  summary: "auth-server가 전달한 custom JWT와 state를 검증한 뒤, 가입 상태에 따라 프론트 성공 URL 또는 회원가입 URL로 리다이렉트합니다.",
+  summary: "auth-server가 전달한 custom JWT와 state를 검증한 뒤, 가입 상태에 따라 stage=success|register|error를 붙여 프론트로 리다이렉트합니다. 로그인 시작 시 저장된 redirectUri cookie가 있으면 그 URL을 우선 사용하고, 콜백 완료 후 redirectUri cookie를 제거합니다.",
   href: "./auth/SsoAuthControllerApi.html",
   endpointCount: 3,
   sectionPath: "auth"

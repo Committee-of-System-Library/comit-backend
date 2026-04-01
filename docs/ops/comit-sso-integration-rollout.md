@@ -259,6 +259,28 @@
 - [x] T6 테스트
 - [x] T7 문서와 API 산출물 갱신
 
+## 운영 메모 — 2단계 회원가입 이후 인증 경계
+
+최근 SSO 2단계 회원가입 도입 이후 운영에서 특히 주의할 포인트는 아래와 같다.
+
+1. `/auth/register/**`는 인증 필터를 건너뛴다.
+- 이 경로는 callback 직후 미가입 사용자가 접근해야 하므로 `SsoAuthenticationFilter` 대상에서 제외한다.
+- 대신 controller/service에서 SSO token cookie를 직접 검증한다.
+- token이 없거나 비어 있으면 `401 UNAUTHORIZED`로 처리한다.
+
+2. soft delete 회원은 재가입 화면으로 보내지 않는다.
+- 동일 `ssoSub`를 가진 soft delete 회원이 있으면 callback 단계에서 register URL이 아니라 error URL로 보낸다.
+- 운영 의미: “미가입”과 “탈퇴 이력 있음”을 같은 흐름으로 취급하지 않는다.
+- 현재 callback reason은 `ACCOUNT_DEACTIVATED`를 사용한다.
+
+3. `shouldNotFilter()`는 경로 세그먼트 기준으로만 예외 처리한다.
+- `contains("/auth/register")` 같이 넓은 매칭은 미래 경로를 과하게 제외시킬 수 있다.
+- `/auth/sso`, `/auth/sso/**`, `/auth/register`, `/auth/register/**`만 정확히 제외한다.
+
+4. 인증 필터의 catch-all 예외는 warn 로그를 남긴다.
+- 잘못된 cookie, 외부 인증 서버 장애, JWT 파싱 실패는 쿠키 제거만 하고 조용히 지나가면 운영 추적이 어렵다.
+- 현재는 warn 로그 후 인증 쿠키를 제거하고 익명 요청으로 계속 진행한다.
+
 ## 남은 작업
 
 - auth-server 쪽 `null -> ADMIN` 전파 수정

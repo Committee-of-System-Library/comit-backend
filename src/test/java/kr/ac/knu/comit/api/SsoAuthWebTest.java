@@ -67,6 +67,7 @@ import org.springframework.test.web.servlet.MvcResult;
         "comit.auth.sso.frontend-success-url=https://chcse.knu.ac.kr/comit-staging",
         "comit.auth.sso.frontend-register-url=https://chcse.knu.ac.kr/comit-staging/register",
         "comit.auth.sso.frontend-error-url=https://chcse.knu.ac.kr/comit-staging/error",
+        "comit.auth.sso.allowed-redirect-uris=https://comit-sso-smoke.vercel.app,https://chcse.knu.ac.kr/comit-staging",
         "comit.auth.sso.token-cookie-name=COMIT_SSO_TOKEN",
         "comit.auth.sso.state-cookie-name=COMIT_SSO_STATE",
         "comit.auth.sso.state-ttl-seconds=300",
@@ -96,6 +97,7 @@ class SsoAuthWebTest {
                 .willReturn("https://chcse.knu.ac.kr/appfn/api/login?state=state-123");
         given(externalAuthClient.verify(any())).willReturn(externalIdentity());
         given(memberService.findBySso(any())).willReturn(Optional.of(authenticatedMember()));
+        given(memberService.hasDeletedMember("sso-sub-1")).willReturn(false);
         given(memberService.hasActiveMember("sso-sub-1")).willReturn(true);
         given(memberService.getMyProfile(1L))
                 .willReturn(new MemberProfileResponse(1L, "comit-user", "2023012780", true));
@@ -116,6 +118,52 @@ class SsoAuthWebTest {
     }
 
     @Test
+    @DisplayName("redirectUri가 있으면 redirectUri cookie도 함께 발급한다")
+    void setsRedirectUriCookieWhenRedirectUriIsProvided() throws Exception {
+        // when
+        MvcResult result = mockMvc.perform(get("/auth/sso/login")
+                        .param("redirectUri", "https://comit-sso-smoke.vercel.app"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("https://chcse.knu.ac.kr/appfn/api/login?")))
+                .andReturn();
+
+        // then
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=https://comit-sso-smoke.vercel.app"));
+    }
+
+    @Test
+    @DisplayName("redirectUri가 없으면 stale redirectUri cookie를 제거한다")
+    void clearsStaleRedirectUriCookieWhenRedirectUriIsMissing() throws Exception {
+        // when
+        MvcResult result = mockMvc.perform(get("/auth/sso/login")
+                        .cookie(new jakarta.servlet.http.Cookie("comit-redirect-uri", "https://stale.example.com")))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("https://chcse.knu.ac.kr/appfn/api/login?")))
+                .andReturn();
+
+        // then
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=").contains("Max-Age=0"));
+    }
+
+    @Test
+    @DisplayName("allowlist 밖 redirectUri는 INVALID_REQUEST를 반환한다")
+    void rejectsInvalidRedirectUri() throws Exception {
+        MvcResult result = mockMvc.perform(get("/auth/sso/login")
+                        .param("redirectUri", "https://evil.com"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
+                .andExpect(header().doesNotExist("Location"))
+                .andReturn();
+
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .noneSatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE="));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .noneSatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri="));
+    }
+
+    @Test
     @DisplayName("유효한 callback이고 이미 가입된 회원이면 success URL로 리다이렉트한다")
     void setsTokenCookieAndRedirectsWhenCallbackIsValid() throws Exception {
         // given
@@ -125,9 +173,10 @@ class SsoAuthWebTest {
         MvcResult result = mockMvc.perform(get("/auth/sso/callback")
                         .param("state", "state-123")
                         .param("token", "token-123")
-                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123")))
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123"))
+                        .cookie(new jakarta.servlet.http.Cookie("comit-redirect-uri", "https://comit-sso-smoke.vercel.app")))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("https://chcse.knu.ac.kr/comit-staging"))
+                .andExpect(redirectedUrl("https://comit-sso-smoke.vercel.app?stage=success"))
                 .andReturn();
 
         // then
@@ -135,6 +184,8 @@ class SsoAuthWebTest {
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN="));
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=").contains("Max-Age=0"));
     }
 
     @Test
@@ -147,9 +198,10 @@ class SsoAuthWebTest {
         MvcResult result = mockMvc.perform(get("/auth/sso/callback")
                         .param("state", "state-123")
                         .param("token", "token-123")
-                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123")))
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123"))
+                        .cookie(new jakarta.servlet.http.Cookie("comit-redirect-uri", "https://comit-sso-smoke.vercel.app")))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("https://chcse.knu.ac.kr/comit-staging/register"))
+                .andExpect(redirectedUrl("https://comit-sso-smoke.vercel.app?stage=register"))
                 .andReturn();
 
         // then
@@ -157,6 +209,33 @@ class SsoAuthWebTest {
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN="));
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=").contains("Max-Age=0"));
+    }
+
+    @Test
+    @DisplayName("soft delete 회원이 있으면 register 대신 error URL로 리다이렉트한다")
+    void redirectsDeletedMemberToErrorInsteadOfRegister() throws Exception {
+        // given
+        given(memberService.hasDeletedMember("sso-sub-1")).willReturn(true);
+
+        // when
+        MvcResult result = mockMvc.perform(get("/auth/sso/callback")
+                        .param("state", "state-123")
+                        .param("token", "token-123")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123"))
+                        .cookie(new jakarta.servlet.http.Cookie("comit-redirect-uri", "https://comit-sso-smoke.vercel.app")))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("https://comit-sso-smoke.vercel.app?stage=error&reason=ACCOUNT_DEACTIVATED"))
+                .andReturn();
+
+        // then
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .noneSatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN="));
     }
 
     @Test
@@ -188,14 +267,17 @@ class SsoAuthWebTest {
         MvcResult result = mockMvc.perform(get("/auth/sso/callback")
                         .param("state", "state-123")
                         .param("token", "token-123")
-                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123")))
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_STATE", "state-123"))
+                        .cookie(new jakarta.servlet.http.Cookie("comit-redirect-uri", "https://comit-sso-smoke.vercel.app")))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("https://chcse.knu.ac.kr/comit-staging/error?reason=EXTERNAL_USER_NOT_ALLOWED"))
+                .andExpect(redirectedUrl("https://comit-sso-smoke.vercel.app?stage=error&reason=EXTERNAL_USER_NOT_ALLOWED"))
                 .andReturn();
 
         // then
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=").contains("Max-Age=0"));
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .noneSatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN="));
     }
@@ -285,6 +367,23 @@ class SsoAuthWebTest {
                                   "nickname": "길동이",
                                   "phone": "010-1234-5678",
                                   "agreedToTerms": false
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"));
+    }
+
+    @Test
+    @DisplayName("register API는 phone 형식이 잘못되면 INVALID_REQUEST를 반환한다")
+    void rejectsRegistrationWhenPhoneFormatIsInvalid() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "nickname": "길동이",
+                                  "phone": "invalid-phone",
+                                  "agreedToTerms": true
                                 }
                                 """))
                 .andExpect(status().isBadRequest())

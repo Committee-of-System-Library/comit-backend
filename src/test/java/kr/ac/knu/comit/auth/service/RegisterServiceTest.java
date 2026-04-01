@@ -92,6 +92,15 @@ class RegisterServiceTest {
     }
 
     @Test
+    @DisplayName("토큰이 없으면 UNAUTHORIZED를 반환한다")
+    void throwsUnauthorizedWhenTokenIsMissing() {
+        assertThatThrownBy(() -> registerService.getPrefill(null))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(CommonErrorCode.UNAUTHORIZED);
+    }
+
+    @Test
     @DisplayName("약관 동의가 false면 INVALID_REQUEST를 반환한다")
     void throwsWhenTermsAreNotAgreed() {
         assertThatThrownBy(() -> registerService.register(
