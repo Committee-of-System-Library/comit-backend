@@ -10,9 +10,19 @@ window.SPEC_DOCS = [
   href: "./spec/comment-reply.html"
 },
 {
+  title: "마이페이지 (My Page)",
+  summary: "- 로그인한 사용자가 자신의 프로필을 조회·편집하고, 활동 내역을 한눈에 볼 수 있어야 한다.",
+  href: "./spec/mypage.html"
+},
+{
   title: "게시글·댓글 신고 기능",
   summary: "- 게시글과 댓글에 대해 사용자가 신고를 남길 수 있어야 한다.",
   href: "./spec/post-comment-report.html"
+},
+{
+  title: "게시글 (Post)",
+  summary: "- KNU CSE 학생들이 QNA·FREE 게시판에 글을 작성하고 조회·수정·삭제할 수 있어야 한다.",
+  href: "./spec/post.html"
 },
 {
   title: "SSO 미가입 회원 2단계 회원가입 플로우",
