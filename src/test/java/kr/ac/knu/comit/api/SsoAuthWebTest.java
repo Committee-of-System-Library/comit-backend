@@ -150,10 +150,17 @@ class SsoAuthWebTest {
     @Test
     @DisplayName("allowlist 밖 redirectUri는 INVALID_REQUEST를 반환한다")
     void rejectsInvalidRedirectUri() throws Exception {
-        mockMvc.perform(get("/auth/sso/login")
+        MvcResult result = mockMvc.perform(get("/auth/sso/login")
                         .param("redirectUri", "https://evil.com"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"));
+                .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"))
+                .andExpect(header().doesNotExist("Location"))
+                .andReturn();
+
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .noneSatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE="));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .noneSatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri="));
     }
 
     @Test
@@ -227,6 +234,8 @@ class SsoAuthWebTest {
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_STATE=").contains("Max-Age=0"));
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .noneSatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN="));
     }
 
     @Test

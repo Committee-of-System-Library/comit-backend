@@ -374,6 +374,7 @@ Then:
 - `stage=success` — 기가입 INTERNAL 콜백
 - `stage=register` — 미가입 INTERNAL 콜백
 - `stage=error&reason=EXTERNAL_USER_NOT_ALLOWED` — EXTERNAL 콜백
+- `stage=error&reason=ACCOUNT_DEACTIVATED` — soft delete 회원 콜백
 - `reason`은 error 경로에만 붙는다.
 - `redirectUri`에 기존 query가 있어도 서버는 기존 query를 보존하고 `stage`를 병합한다.
 
@@ -391,5 +392,5 @@ Then:
 ### 12.12 Implementation Guardrails
 - `startsWith` 기반 allowlist 검증 금지
 - `?stage=...` suffix는 `UriComponentsBuilder`로 조합
-- `ComitSsoProperties`에 `allowedRedirectUris: List<String>` 및 `redirectUriCookieName` 추가
+- `ComitSsoProperties`에 `allowedRedirectUris: List&lt;String&gt;` 및 `redirectUriCookieName` 추가
 - 계약 변경 시 `SsoAuthControllerApi.java`, `docs/guides/sso-auth-flow.md`, `docs/api/` 함께 갱신

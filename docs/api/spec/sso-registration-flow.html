@@ -478,6 +478,7 @@
 <li><code>stage=success</code> — 기가입 INTERNAL 콜백</li>
 <li><code>stage=register</code> — 미가입 INTERNAL 콜백</li>
 <li><code>stage=error&reason=EXTERNAL_USER_NOT_ALLOWED</code> — EXTERNAL 콜백</li>
+<li><code>stage=error&reason=ACCOUNT_DEACTIVATED</code> — soft delete 회원 콜백</li>
 <li><code>reason</code>은 error 경로에만 붙는다.</li>
 <li><code>redirectUri</code>에 기존 query가 있어도 서버는 기존 query를 보존하고 <code>stage</code>를 병합한다.</li>
 </ul>
@@ -498,7 +499,7 @@
 <ul>
 <li><code>startsWith</code> 기반 allowlist 검증 금지</li>
 <li><code>?stage=...</code> suffix는 <code>UriComponentsBuilder</code>로 조합</li>
-<li><code>ComitSsoProperties</code>에 <code>allowedRedirectUris: List<String></code> 및 <code>redirectUriCookieName</code> 추가</li>
+<li><code>ComitSsoProperties</code>에 <code>allowedRedirectUris: List&lt;String&gt;</code> 및 <code>redirectUriCookieName</code> 추가</li>
 <li>계약 변경 시 <code>SsoAuthControllerApi.java</code>, <code>docs/guides/sso-auth-flow.md</code>, <code>docs/api/</code> 함께 갱신</li>
 </ul>
 </div>

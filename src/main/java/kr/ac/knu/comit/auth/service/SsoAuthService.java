@@ -152,7 +152,6 @@ public class SsoAuthService {
             boolean allowed = ssoProperties.getAllowedRedirectUris().stream()
                     .filter(value -> value != null && !value.isBlank())
                     .map(String::trim)
-                    .filter(value -> !value.isBlank())
                     .anyMatch(origin::equals);
             if (!allowed) {
                 throw new IllegalArgumentException("redirectUri is not in allowlist");

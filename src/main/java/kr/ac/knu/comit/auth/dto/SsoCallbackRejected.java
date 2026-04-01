@@ -5,8 +5,4 @@ public record SsoCallbackRejected(
         String clearStateCookieHeader,
         String clearRedirectUriCookieHeader
 ) implements SsoCallbackResult {
-
-    public SsoCallbackRejected(String redirectUrl, String clearStateCookieHeader) {
-        this(redirectUrl, clearStateCookieHeader, null);
-    }
 }

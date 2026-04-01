@@ -6,9 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.lenient;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
 import kr.ac.knu.comit.auth.dto.SsoCallbackRejected;
@@ -20,7 +18,6 @@ import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
-import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -323,17 +320,5 @@ class SsoAuthServiceTest {
         lenient().when(ssoProperties.getAllowedRedirectUris())
                 .thenReturn(List.of("https://comit-sso-smoke.vercel.app"));
         lenient().when(memberService.hasDeletedMember("sub-1")).thenReturn(false);
-    }
-
-    private Member existingMember() {
-        return Member.create(
-                "sub-1",
-                "테스트유저",
-                "010-0000-0000",
-                "comit-user",
-                "2023012780",
-                null,
-                LocalDateTime.now()
-        );
     }
 }

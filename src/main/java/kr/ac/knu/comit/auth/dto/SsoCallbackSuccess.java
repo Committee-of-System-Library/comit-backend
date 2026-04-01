@@ -6,8 +6,4 @@ public record SsoCallbackSuccess(
         String clearStateCookieHeader,
         String clearRedirectUriCookieHeader
 ) implements SsoCallbackResult {
-
-    public SsoCallbackSuccess(String redirectUrl, String tokenCookieHeader, String clearStateCookieHeader) {
-        this(redirectUrl, tokenCookieHeader, clearStateCookieHeader, null);
-    }
 }
