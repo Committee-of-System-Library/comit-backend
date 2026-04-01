@@ -11,13 +11,13 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "comment_helpful",
+        name = "comment_like",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_comment_helpful",
+                name = "uk_comment_like",
                 columnNames = {"comment_id", "member_id"}
         )
 )
-public class CommentHelpful {
+public class CommentLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,14 +32,14 @@ public class CommentHelpful {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    protected CommentHelpful() {
+    protected CommentLike() {
     }
 
-    public static CommentHelpful of(Long commentId, Long memberId) {
-        CommentHelpful helpful = new CommentHelpful();
-        helpful.commentId = commentId;
-        helpful.memberId = memberId;
-        helpful.createdAt = LocalDateTime.now();
-        return helpful;
+    public static CommentLike of(Long commentId, Long memberId) {
+        CommentLike commentLike = new CommentLike();
+        commentLike.commentId = commentId;
+        commentLike.memberId = memberId;
+        commentLike.createdAt = LocalDateTime.now();
+        return commentLike;
     }
 }

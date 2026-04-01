@@ -50,7 +50,7 @@ public interface AdminCommentControllerApi {
                                     "parentCommentId": null,
                                     "content": "댓글 내용",
                                     "authorNickname": "author-1",
-                                    "helpfulCount": 3,
+                                    "likeCount": 3,
                                     "hiddenByAdmin": false,
                                     "createdAt": "2026-03-28T10:00:00"
                                   }

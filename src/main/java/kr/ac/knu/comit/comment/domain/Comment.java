@@ -39,7 +39,7 @@ public class Comment {
     private String content;
 
     @Column(nullable = false)
-    private int helpfulCount;
+    private int likeCount;
 
     @Column(nullable = false)
     private boolean hiddenByAdmin = false;
@@ -70,7 +70,7 @@ public class Comment {
         comment.member = author;
         comment.parentComment = parentComment;
         comment.content = content.strip();
-        comment.helpfulCount = 0;
+        comment.likeCount = 0;
         comment.createdAt = LocalDateTime.now();
         return comment;
     }
@@ -109,8 +109,8 @@ public class Comment {
         return content;
     }
 
-    public int getHelpfulCount() {
-        return helpfulCount;
+    public int getLikeCount() {
+        return likeCount;
     }
 
     public LocalDateTime getCreatedAt() {
