@@ -35,6 +35,17 @@ public class AuthCookieManager {
                 .toString();
     }
 
+    public String createRedirectUriCookie(String redirectUri) {
+        return ResponseCookie.from(ssoProperties.getRedirectUriCookieName(), redirectUri)
+                .httpOnly(true)
+                .secure(ssoProperties.isCookieSecure())
+                .sameSite(ssoProperties.getCookieSameSite())
+                .path(cookiePath())
+                .maxAge(ssoProperties.getStateTtlSeconds())
+                .build()
+                .toString();
+    }
+
     public String clearStateCookie() {
         return clearCookie(ssoProperties.getStateCookieName());
     }
@@ -43,12 +54,20 @@ public class AuthCookieManager {
         return clearCookie(ssoProperties.getTokenCookieName());
     }
 
+    public String clearRedirectUriCookie() {
+        return clearCookie(ssoProperties.getRedirectUriCookieName());
+    }
+
     public String resolveStateCookie(HttpServletRequest request) {
         return resolveCookie(request, ssoProperties.getStateCookieName());
     }
 
     public String resolveTokenCookie(HttpServletRequest request) {
         return resolveCookie(request, ssoProperties.getTokenCookieName());
+    }
+
+    public String resolveRedirectUriCookie(HttpServletRequest request) {
+        return resolveCookie(request, ssoProperties.getRedirectUriCookieName());
     }
 
     private String clearCookie(String cookieName) {

@@ -362,6 +362,113 @@
 <li>Flyway 마이그레이션은 기존 멤버 데이터 호환성 고려 (name, phone은 NOT NULL이므로 기존 데이터 처리 전략 필요)</li>
 <li><code>SsoAuthenticationFilter</code> 변경 시 <code>/auth/sso/**</code> shouldNotFilter 범위 재확인</li>
 </ul>
+<hr>
+<h2>12. Dynamic redirectUri Extension</h2>
+<h3>12.1 Goal</h3>
+<p>로그인 시작 시 프론트가 원하는 복귀 base URL을 넘길 수 있어야 한다.</p>
+<p>동일 서버가 여러 프론트(chcse.knu.ac.kr, comit-sso-smoke.vercel.app 등)를 지원할 수 있다.</p>
+<p>기존 <code>frontendSuccessUrl / frontendRegisterUrl / frontendErrorUrl</code> 설정값은</p>
+<p><code>redirectUri</code>가 없을 때 fallback으로 유지한다.</p>
+<h3>12.2 In Scope</h3>
+<ul>
+<li><code>GET /auth/sso/login?redirectUri=...</code> 선택적 파라미터</li>
+<li>redirectUri allowlist 검증 (origin exact match)</li>
+<li>redirectUri cookie 저장 및 삭제</li>
+<li>callback success / pendingRegistration / rejected 3분기 모두 동적 복귀 URL 반영</li>
+<li>stale cookie 처리</li>
+</ul>
+<h3>12.3 Out of Scope</h3>
+<ul>
+<li>여러 브라우저 탭 동시 로그인 완전 지원 (state/redirectUri 쿠키가 탭당 격리되지 않음)</li>
+<li>per-stage 별도 URI (<code>successUri</code>, <code>registerUri</code>, <code>errorUri</code>) 분리</li>
+<li>프론트 라우팅 정책 자체 설계</li>
+</ul>
+<h3>12.4 Assumptions</h3>
+<ul>
+<li><code>redirectUri</code>는 <strong>base URL</strong>이다. 서버가 <code>?stage=success|register|error</code> suffix를 붙인다.</li>
+<li>error 경로는 <code>?stage=error&reason=...</code> 형태로 reason을 추가한다.</li>
+<li>프론트는 한 URL에서 <code>stage</code> 파라미터를 읽어 분기 처리한다.</li>
+<li>이 확장에서는 <code>stage</code> 기반 단일 복귀 URL 계약을 고정한다.</li>
+<li>개발용 <code>http://localhost:*</code>는 http 예외를 허용한다. 그 외는 https만 허용한다.</li>
+<li>한 브라우저에서 동시에 여러 SSO 로그인 시도를 완전하게 지원하는 것은 이번 범위 밖이다.</li>
+</ul>
+<h3>12.5 Routing Contract</h3>
+<ul>
+<li><code>redirectUri</code>는 <code>?stage=...</code> 단일 페이지 모델을 전제로 한다.</li>
+<li><code>/register</code> 전용 경로 지원은 별도 프론트 구현 범위로 둔다.</li>
+<li><code>redirectUri</code>에 기존 query string이 있어도 서버는 <code>stage</code>와 <code>reason</code>을 URI builder로 병합한다.</li>
+</ul>
+<h3>12.6 Scenarios</h3>
+<p><strong>Scenario G. allowlist에 있는 redirectUri로 로그인 — 기가입 사용자</strong></p>
+<ul>
+<li><code>GET /auth/sso/login?redirectUri=https://comit-sso-smoke.vercel.app</code></li>
+<li>→ 콜백 후 <code>https://comit-sso-smoke.vercel.app?stage=success</code>로 302</li>
+</ul>
+<p><strong>Scenario H. allowlist에 있는 redirectUri로 로그인 — 미가입 사용자</strong></p>
+<ul>
+<li><code>GET /auth/sso/login?redirectUri=https://comit-sso-smoke.vercel.app</code></li>
+<li>→ 콜백 후 <code>https://comit-sso-smoke.vercel.app?stage=register</code>로 302</li>
+</ul>
+<p><strong>Scenario I. allowlist에 없는 redirectUri</strong></p>
+<ul>
+<li><code>GET /auth/sso/login?redirectUri=https://evil.com</code></li>
+<li>→ <code>400 INVALID_REQUEST</code></li>
+</ul>
+<p><strong>Scenario J. redirectUri 없이 로그인</strong></p>
+<ul>
+<li><code>GET /auth/sso/login</code></li>
+<li>→ 기존 설정 fallback (<code>frontendSuccessUrl</code> / <code>frontendRegisterUrl</code> / <code>frontendErrorUrl</code>)</li>
+<li>→ 이전 로그인에서 남은 redirectUri cookie가 있어도 재사용하지 않는다</li>
+</ul>
+<p><strong>Scenario K. stale cookie가 남아 있는 상태에서 redirectUri 없이 로그인</strong></p>
+<ul>
+<li>이전 로그인에서 <code>comit-redirect-uri</code> 쿠키가 브라우저에 남아 있음</li>
+<li><code>GET /auth/sso/login</code> (redirectUri 파라미터 없음)</li>
+<li>→ 서버가 <code>comit-redirect-uri</code> clear 쿠키를 Set-Cookie로 응답</li>
+<li>→ 콜백은 설정 fallback URL 사용</li>
+</ul>
+<h3>12.7 Functional Requirements</h3>
+<ul>
+<li>FR-D1: <code>GET /auth/sso/login</code>은 선택적 <code>redirectUri</code> 쿼리 파라미터를 받는다.</li>
+<li>FR-D2: <code>redirectUri</code>는 absolute URI여야 한다. 파싱 실패 시 <code>400 INVALID_REQUEST</code>.</li>
+<li>FR-D3: allowlist 검증은 <strong>origin(scheme + host + port) exact match</strong> 기준이다. <code>startsWith</code> 금지.</li>
+<li>FR-D4: <code>https</code>만 허용한다. 단 host가 <code>localhost</code>인 경우 <code>http</code> 예외 허용.</li>
+<li>FR-D5: 검증 실패 시 <code>400 INVALID_REQUEST</code>.</li>
+<li>FR-D6: 검증 통과 시 <code>comit-redirect-uri</code> 쿠키에 저장한다.</li>
+<li>FR-D7: <code>redirectUri</code>가 없으면 <code>comit-redirect-uri</code> clear 쿠키를 응답에 포함시킨다 (stale cookie 제거).</li>
+<li>FR-D8: callback success / pendingRegistration / rejected 모두 stored redirectUri를 우선 사용한다.</li>
+<li>FR-D9: stored redirectUri가 없으면 기존 설정 URL을 fallback으로 사용한다.</li>
+<li>FR-D10: callback 완료 후 <code>comit-redirect-uri</code> 쿠키는 항상 제거된다 (3분기 모두).</li>
+<li>FR-D11: stage suffix 조합은 문자열 연결이 아닌 <strong>URI builder</strong>로 한다.</li>
+</ul>
+<h3>12.8 Behavioral Rules</h3>
+<ul>
+<li><code>stage=success</code> — 기가입 INTERNAL 콜백</li>
+<li><code>stage=register</code> — 미가입 INTERNAL 콜백</li>
+<li><code>stage=error&reason=EXTERNAL_USER_NOT_ALLOWED</code> — EXTERNAL 콜백</li>
+<li><code>reason</code>은 error 경로에만 붙는다.</li>
+<li><code>redirectUri</code>에 기존 query가 있어도 서버는 기존 query를 보존하고 <code>stage</code>를 병합한다.</li>
+</ul>
+<h3>12.9 Security Constraints</h3>
+<ul>
+<li>allowlist는 origin exact match. <code>startsWith</code> 또는 <code>contains</code> 검증 금지.</li>
+<li><code>redirectUri</code>를 DB 저장하거나 서버 간 전달하지 않는다.</li>
+<li>open redirect 방지: allowlist 밖 URI는 반드시 400 응답.</li>
+</ul>
+<h3>12.10 Test Criteria</h3>
+<ul>
+<li>service test: allowlist 통과 / origin mismatch 실패 / scheme mismatch 실패 / fallback / stale cookie 제거</li>
+<li>web test: <code>GET /auth/sso/login?redirectUri=...</code> → Set-Cookie에 <code>comit-redirect-uri</code> 포함</li>
+<li>callback web test: success/register/error 모두 <code>comit-redirect-uri</code> clear + 올바른 Location</li>
+<li><code>./gradlew compileTestJava && ./gradlew test</code></li>
+</ul>
+<h3>12.11 Implementation Guardrails</h3>
+<ul>
+<li><code>startsWith</code> 기반 allowlist 검증 금지</li>
+<li><code>?stage=...</code> suffix는 <code>UriComponentsBuilder</code>로 조합</li>
+<li><code>ComitSsoProperties</code>에 <code>allowedRedirectUris: List<String></code> 및 <code>redirectUriCookieName</code> 추가</li>
+<li>계약 변경 시 <code>SsoAuthControllerApi.java</code>, <code>docs/guides/sso-auth-flow.md</code>, <code>docs/api/</code> 함께 갱신</li>
+</ul>
 </div>
     </div>
 </body>
