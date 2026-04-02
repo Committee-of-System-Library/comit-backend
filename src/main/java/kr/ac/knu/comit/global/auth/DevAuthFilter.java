@@ -53,22 +53,20 @@ public class DevAuthFilter extends OncePerRequestFilter {
                     ? parseRole(parts[1])
                     : MemberPrincipal.MemberRole.STUDENT;
 
-            Member member = memberRepository.findBySsoSubAndDeletedAtIsNull(ssoSub)
-                    .orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
-
-            MemberPrincipal principal = new MemberPrincipal(
-                    member.getId(),
-                    member.getSsoSub(),
-                    member.getName(),
-                    null,
-                    member.getStudentNumber(),
-                    MemberPrincipal.UserType.CSE_STUDENT,
-                    role
-            );
-            request.setAttribute(MemberArgumentResolver.PRINCIPAL_ATTRIBUTE, principal);
-        } catch (BusinessException e) {
-            handlerExceptionResolver.resolveException(request, response, null, e);
-            return;
+            memberRepository.findBySsoSubAndDeletedAtIsNull(ssoSub).ifPresent(member -> {
+                MemberPrincipal principal = new MemberPrincipal(
+                        member.getId(),
+                        member.getSsoSub(),
+                        member.getName(),
+                        null,
+                        member.getStudentNumber(),
+                        MemberPrincipal.UserType.CSE_STUDENT,
+                        role
+                );
+                request.setAttribute(MemberArgumentResolver.PRINCIPAL_ATTRIBUTE, principal);
+            });
+        } catch (Exception ignored) {
+            // 쿠키가 오염됐거나 DB 재시드 후 stale 상태인 경우 anonymous로 fallthrough
         }
 
         filterChain.doFilter(request, response);

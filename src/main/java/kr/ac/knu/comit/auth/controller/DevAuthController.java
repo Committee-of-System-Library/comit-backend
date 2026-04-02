@@ -2,6 +2,7 @@ package kr.ac.knu.comit.auth.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
+import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
@@ -32,13 +33,13 @@ public class DevAuthController {
     @PostMapping("/login")
     public ResponseEntity<Void> login(
             @RequestParam String nickname,
-            @RequestParam(defaultValue = "STUDENT") String role,
+            @RequestParam(defaultValue = "STUDENT") MemberPrincipal.MemberRole role,
             HttpServletResponse response
     ) {
         Member member = memberRepository.findByNicknameAndDeletedAtIsNull(nickname)
                 .orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        String cookieValue = member.getSsoSub() + "|" + role.toUpperCase();
+        String cookieValue = member.getSsoSub() + "|" + role.name();
         response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(cookieValue, Duration.ofDays(7)));
         return ResponseEntity.ok().build();
     }

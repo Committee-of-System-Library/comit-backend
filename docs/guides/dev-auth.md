@@ -25,12 +25,14 @@
 
 ## 로그인
 
+> **staging 경로 참고**: staging 환경은 리버스 프록시가 `/comit-staging/api` prefix를 제거한 뒤 서버로 전달합니다. 브라우저/curl에서 호출할 때는 `/comit-staging/api/auth/dev/login`으로 요청하세요. 로컬은 prefix 없이 `/auth/dev/login`을 사용합니다.
+
 ```bash
-# 일반 사용자로 로그인
+# 일반 사용자로 로그인 (staging)
 curl -c cookies.txt -X POST \
   "https://chcse.knu.ac.kr/comit-staging/api/auth/dev/login?nickname=일반유저"
 
-# 관리자로 로그인
+# 관리자로 로그인 (staging)
 curl -c cookies.txt -X POST \
   "https://chcse.knu.ac.kr/comit-staging/api/auth/dev/login?nickname=관리자&role=ADMIN"
 ```
