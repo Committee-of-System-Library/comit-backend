@@ -88,7 +88,9 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String servletPath = request.getServletPath();
-        return isAuthPath(servletPath, "/auth/sso") || isAuthPath(servletPath, "/auth/register");
+        return isAuthPath(servletPath, "/auth/sso")
+                || isAuthPath(servletPath, "/auth/register")
+                || isAuthPath(servletPath, "/auth/dev");
     }
 
     private boolean isAuthPath(String servletPath, String path) {

@@ -91,7 +91,9 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
-        return requestUri.contains("/auth/sso") || requestUri.contains("/auth/register");
+        return requestUri.contains("/auth/sso")
+                || requestUri.contains("/auth/register")
+                || requestUri.contains("/auth/dev");
     }
 
     private String defaultName(HttpServletRequest request) {

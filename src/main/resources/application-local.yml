@@ -18,7 +18,16 @@ logging:
   file:
     name: ./logs/app-local.log
 
+spring:
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/seed
+
 comit:
+  dev:
+    auth:
+      enabled: true
   auth:
     bridge:
       enabled: true

@@ -32,4 +32,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     );
 
     Optional<Member> findByIdAndDeletedAtIsNull(Long memberId);
+
+    Optional<Member> findByNicknameAndDeletedAtIsNull(String nickname);
 }
