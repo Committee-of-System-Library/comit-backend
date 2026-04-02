@@ -13,12 +13,19 @@ spring:
   threads:
     virtual:
       enabled: true
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/seed
 
 logging:
   file:
     name: ./logs/app-local.log
 
 comit:
+  dev:
+    auth:
+      enabled: true
   auth:
     bridge:
       enabled: true

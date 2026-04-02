@@ -5,12 +5,19 @@ spring:
   threads:
     virtual:
       enabled: ${VIRTUAL_THREADS_ENABLED:true}
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/seed
 
 logging:
   file:
     name: ${LOG_FILE_PATH:/app/logs/app-staging.log}
 
 comit:
+  dev:
+    auth:
+      enabled: ${COMIT_DEV_AUTH_ENABLED:true}
   auth:
     bridge:
       enabled: ${COMIT_AUTH_BRIDGE_ENABLED:true}
