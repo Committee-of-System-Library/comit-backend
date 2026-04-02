@@ -13,6 +13,8 @@ public record RegisterRequest(
         @Pattern(regexp = "^[0-9\\-]{10,15}$", message = "연락처는 숫자와 하이픈만 포함한 10~15자여야 합니다.")
         String phone,
 
+        String profileImageUrl,
+
         boolean agreedToTerms
 ) {
 }
