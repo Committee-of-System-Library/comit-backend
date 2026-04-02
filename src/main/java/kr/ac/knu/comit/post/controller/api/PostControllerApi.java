@@ -34,6 +34,7 @@ public interface PostControllerApi {
                     @FieldDesc(name = "likeCount", value = "현재 게시글의 좋아요 수입니다."),
                     @FieldDesc(name = "commentCount", value = "삭제되지 않은 댓글 수입니다."),
                     @FieldDesc(name = "tags", value = "게시글에 연결된 태그 목록입니다."),
+                    @FieldDesc(name = "imageUrls", value = "이미지 url이고, url 조회시 바로 이미지를 받을 수 있습니다."),
                     @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다."),
                     @FieldDesc(name = "nextCursorId", value = "다음 페이지 조회에 사용할 마지막 게시글 ID입니다. 마지막 페이지면 null입니다."),
                     @FieldDesc(name = "hasNext", value = "다음 페이지 존재 여부입니다.")
@@ -136,6 +137,7 @@ public interface PostControllerApi {
                     @FieldDesc(name = "viewCount", value = "상세 조회 성공이 반영된 최신 누적 조회수입니다."),
                     @FieldDesc(name = "likedByMe", value = "현재 로그인한 사용자의 좋아요 여부입니다."),
                     @FieldDesc(name = "tags", value = "게시글에 연결된 태그 목록입니다."),
+                    @FieldDesc(name = "imageUrls", value = "이미지 url이고, url 조회시 바로 이미지를 받을 수 있습니다."),
                     @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다."),
                     @FieldDesc(name = "updatedAt", value = "마지막 수정 시각입니다. 수정 이력이 없으면 null입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다.")
             },
@@ -179,7 +181,8 @@ public interface PostControllerApi {
                     @FieldDesc(name = "boardType", value = "게시글을 작성할 게시판 유형입니다."),
                     @FieldDesc(name = "title", value = "게시글 제목입니다. 최대 30자입니다."),
                     @FieldDesc(name = "content", value = "게시글 본문입니다. 최대 500자입니다."),
-                    @FieldDesc(name = "tags", value = "선택 항목입니다. 최대 5개, 각 20자 이하입니다.")
+                    @FieldDesc(name = "tags", value = "선택 항목입니다. 최대 5개, 각 20자 이하입니다."),
+                    @FieldDesc(name = "imageUrls", value = "이미지 url이고, url 조회시 바로 이미지를 받을 수 있습니다. 최대 5개까지 첨부할 수 있습니다.")
             },
             errors = {
                     @ApiError(code = "MEMBER_NOT_FOUND", when = "인증된 사용자의 로컬 회원 정보가 존재하지 않을 때"),
