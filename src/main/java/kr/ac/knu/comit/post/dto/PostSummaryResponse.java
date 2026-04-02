@@ -17,9 +17,10 @@ public record PostSummaryResponse(
         int likeCount,
         int commentCount,
         List<String> tags,
+        List<String> imageUrls,
         LocalDateTime createdAt
 ) {
-    public static PostSummaryResponse from(Post post, int commentCount) {
+    public static PostSummaryResponse from(Post post, int commentCount, List<String> imageUrls) {
         return new PostSummaryResponse(
                 post.getId(),
                 post.getBoardType(),
@@ -28,6 +29,7 @@ public record PostSummaryResponse(
                 post.getLikeCount(),
                 commentCount,
                 post.getTags().stream().map(t -> t.getName()).toList(),
+                imageUrls,
                 post.getCreatedAt()
         );
     }

@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -28,6 +29,7 @@ public class PostService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final PostRepository postRepository;
+    private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostDailyVisitorRepository postDailyVisitorRepository;
     private final MemberService memberService;
@@ -51,10 +53,13 @@ public class PostService {
                 ? postRepository.findFirstPage(boardType, pageable)
                 : postRepository.findByCursor(boardType, cursorId, pageable);
 
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+
         return PostCursorPageResponse.of(
                 posts,
                 pageSize,
-                commentQueryService.countActiveCommentsByPostIds(posts.stream().map(Post::getId).toList())
+                commentQueryService.countActiveCommentsByPostIds(postIds),
+                imageUrlsByPostId(postIds)
         );
     }
 
@@ -87,7 +92,9 @@ public class PostService {
         Post post = findPostOrThrow(postId);
         recordDailyVisitor(postId, memberId);
         boolean likedByMe = postLikeRepository.existsByPostIdAndMemberId(postId, memberId);
-        return PostDetailResponse.of(post, likedByMe);
+        List<String> imageUrls = postImageRepository.findByPost_IdOrderBySortOrderAsc(postId)
+                .stream().map(PostImage::getImageUrl).toList();
+        return PostDetailResponse.of(post, likedByMe, imageUrls);
     }
 
     @Transactional
@@ -145,6 +152,15 @@ public class PostService {
 
     public Post getActivePostOrThrow(Long postId) {
         return findPostOrThrow(postId);
+    }
+
+    private Map<Long, List<String>> imageUrlsByPostId(List<Long> postIds) {
+        return postImageRepository.findByPost_IdInOrderBySortOrderAsc(postIds)
+                .stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        PostImage::getPostId,
+                        java.util.stream.Collectors.mapping(PostImage::getImageUrl, java.util.stream.Collectors.toList())
+                ));
     }
 
     private void recordDailyVisitor(Long postId, Long memberId) {

@@ -35,6 +35,10 @@ public class PostImage {
         return id;
     }
 
+    public Long getPostId() {
+        return post.getId();
+    }
+
     public String getImageUrl() {
         return imageUrl;
     }
