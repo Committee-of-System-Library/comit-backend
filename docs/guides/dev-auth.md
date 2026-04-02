@@ -39,6 +39,10 @@ curl -c cookies.txt -X POST \
 
 로그인 성공 시 `comit-dev-auth` 쿠키가 발급됩니다. (`200 OK`)
 
+- `local` 기본값은 `SameSite=Lax`
+- `staging` 기본값은 `SameSite=None; Secure`
+- 즉 `http://localhost:5173 -> https://chcse.knu.ac.kr/comit-staging/api` 같은 cross-site 프론트 테스트도 staging에서는 바로 가능합니다.
+
 ---
 
 ## 인증이 필요한 API 호출
@@ -90,6 +94,19 @@ await fetch("http://localhost:53080/posts", {
 });
 ```
 
+staging 프론트를 로컬에서 띄워 테스트할 때도 동일하게 `credentials: "include"`를 유지해야 합니다.
+
+```ts
+await fetch("https://chcse.knu.ac.kr/comit-staging/api/auth/dev/login?nickname=관리자&role=ADMIN", {
+  method: "POST",
+  credentials: "include",
+});
+
+await fetch("https://chcse.knu.ac.kr/comit-staging/api/admin/members?page=0&size=20", {
+  credentials: "include",
+});
+```
+
 ---
 
 ## 주의사항
@@ -97,3 +114,4 @@ await fetch("http://localhost:53080/posts", {
 - **production 환경에서는 이 엔드포인트가 존재하지 않습니다.** (`COMIT_DEV_AUTH_ENABLED` 미설정 시 Bean 미등록)
 - 테스트 계정 추가가 필요하면 `db/seed/V100__dev_seed.sql`에 INSERT IGNORE로 추가하세요.
 - `role` 파라미터를 생략하면 기본값은 `STUDENT`입니다.
+- dev auth 쿠키 정책은 `COMIT_DEV_AUTH_COOKIE_SAME_SITE`로 별도 제어합니다.

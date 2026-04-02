@@ -18,6 +18,7 @@ comit:
   dev:
     auth:
       enabled: ${COMIT_DEV_AUTH_ENABLED:true}
+      cookie-same-site: ${COMIT_DEV_AUTH_COOKIE_SAME_SITE:None}
   auth:
     bridge:
       enabled: ${COMIT_AUTH_BRIDGE_ENABLED:true}
