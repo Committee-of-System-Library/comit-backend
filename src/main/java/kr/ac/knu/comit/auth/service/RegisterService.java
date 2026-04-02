@@ -49,7 +49,8 @@ public class RegisterService {
                 request.phone(),
                 request.nickname(),
                 identity.studentNumber(),
-                identity.major()
+                identity.major(),
+                request.profileImageUrl()
         );
     }
 

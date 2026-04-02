@@ -9,6 +9,7 @@ public final class PostConstraints {
     public static final int CONTENT_MAX_LENGTH = 500;
     public static final int TAG_MAX_COUNT = 5;
     public static final int TAG_NAME_MAX_LENGTH = 20;
+    public static final int IMAGE_MAX_COUNT = 5;
 
     private PostConstraints() {
     }

@@ -62,6 +62,10 @@ dependencies {
     testImplementation 'org.testcontainers:mysql:1.20.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // AWS SDK v2 - S3
+    implementation platform('software.amazon.awssdk:bom:2.29.0')
+    implementation 'software.amazon.awssdk:s3'
+
     if (enableSsoStarter) {
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'kr.ac.knu.cse:knu-cse-sso-spring-boot-starter:1.0.0'

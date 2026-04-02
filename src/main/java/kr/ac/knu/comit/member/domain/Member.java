@@ -26,6 +26,9 @@ public class Member {
     @Column(nullable = false)
     private String phone;
 
+    @Column(length = 500)
+    private String profileImageUrl;
+
     @Column(length = 20)
     private String studentNumber;
 
@@ -58,6 +61,7 @@ public class Member {
             String nickname,
             String studentNumber,
             String majorTrack,
+            String profileImageUrl,
             LocalDateTime agreedAt
     ) {
         Member member = new Member();
@@ -67,6 +71,7 @@ public class Member {
         member.nickname = normalizeNickname(nickname);
         member.studentNumber = normalizeStudentNumber(studentNumber);
         member.majorTrack = normalizeOptionalText(majorTrack);
+        member.profileImageUrl = normalizeOptionalText(profileImageUrl);
         member.studentNumberVisible = true;
         member.createdAt = LocalDateTime.now();
         member.agreedAt = requireAgreedAt(agreedAt);
@@ -111,6 +116,10 @@ public class Member {
 
     public String getPhone() {
         return phone;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
     }
 
     public String getStudentNumber() {

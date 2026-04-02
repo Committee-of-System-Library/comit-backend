@@ -28,6 +28,13 @@ window.API_DOCS = [
   sectionPath: "comment"
 },
 {
+  title: "ImageControllerApi",
+  summary: "이미지를 지정한 폴더에 업로드하고 public URL을 반환합니다. folder 값으로 저장 경로를 구분합니다. (예: members, posts)",
+  href: "./image/ImageControllerApi.html",
+  endpointCount: 1,
+  sectionPath: "image"
+},
+{
   title: "AdminMemberControllerApi",
   summary: "관리자가 회원 목록을 조회합니다. status로 필터링할 수 있습니다.",
   href: "./member/AdminMemberControllerApi.html",

@@ -26,6 +26,7 @@ public final class ErrorCodeRegistry {
         register(registry, PostErrorCode.values());
         register(registry, CommentErrorCode.values());
         register(registry, ReportErrorCode.values());
+        register(registry, StorageErrorCode.values());
         return Map.copyOf(registry);
     }
 

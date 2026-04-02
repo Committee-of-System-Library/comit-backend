@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RegisterControllerApi</title>
+    <title>ImageControllerApi</title>
     <style>
         :root {
             --bg: #f4f7fb;
@@ -250,24 +250,41 @@
     <main class="layout">
         <aside class="sidebar">
             <a class="back-link" href="../index.html">← API Index</a>
-            <h1>RegisterControllerApi</h1>
+            <h1>ImageControllerApi</h1>
             <p>인터페이스 기반으로 추출한 엔드포인트 문서입니다.</p>
-            <nav><a href="#getPrefill">
-    <strong>회원가입 prefill 조회</strong>
-    <span>GET /auth/register/prefill</span>
-</a>
-<a href="#register">
-    <strong>회원가입 완료</strong>
-    <span>POST /auth/register</span>
+            <nav><a href="#uploadImage">
+    <strong>이미지 업로드</strong>
+    <span>POST /images</span>
 </a>
 </nav>
         </aside>
-        <section class="content"><article class="endpoint" id="getPrefill">
-    <div class="eyebrow">GET</div>
-    <h2>회원가입 prefill 조회</h2>
-    <p>SSO 토큰 쿠키를 검증하고 회원가입 폼에 미리 채울 값을 반환합니다.</p>
-    <div class="path-box"><span class="method">GET</span>/auth/register/prefill</div>
+        <section class="content"><article class="endpoint" id="uploadImage">
+    <div class="eyebrow">POST</div>
+    <h2>이미지 업로드</h2>
+    <p>이미지를 지정한 폴더에 업로드하고 public URL을 반환합니다. folder 값으로 저장 경로를 구분합니다. (예: members, posts)</p>
+    <div class="path-box"><span class="method">POST</span>/images</div>
     <div class="section-grid"><section class="card">
+    <h3>쿼리 파라미터</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>folder</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>저장할 폴더명 (예: members, posts)</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
     <h3>응답 바디 필드</h3>
     <table>
     <thead>
@@ -279,22 +296,10 @@
         </tr>
     </thead>
     <tbody><tr>
-    <td><code>major</code></td>
+    <td><code>url</code></td>
     <td><span class="type-chip type-string">String</span></td>
     <td><span class="badge-optional">optional</span></td>
-    <td>SSO JWT에서 읽은 세부전공입니다. 없으면 null입니다.</td>
-</tr>
-<tr>
-    <td><code>name</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-optional">optional</span></td>
-    <td>SSO JWT에서 읽은 실명입니다.</td>
-</tr>
-<tr>
-    <td><code>studentNumber</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-optional">optional</span></td>
-    <td>SSO JWT에서 읽은 학번입니다. 없으면 null입니다.</td>
+    <td>업로드된 이미지의 public URL</td>
 </tr>
 </tbody>
 </table>
@@ -386,14 +391,28 @@
     <td>401</td>
     <td><code>/problems/common/unauthorized</code></td>
     <td>인증이 필요합니다.</td>
-    <td>SSO 토큰 쿠키가 없거나 유효하지 않을 때</td>
+    <td>인증 정보가 없거나 유효한 회원을 식별할 수 없을 때</td>
 </tr>
 <tr>
-    <td><code>MEMBER_ALREADY_EXISTS</code></td>
-    <td>409</td>
-    <td><code>/problems/member/already-exists</code></td>
-    <td>이미 가입된 회원입니다.</td>
-    <td>이미 가입된 회원이 다시 prefill을 조회할 때</td>
+    <td><code>FILE_SIZE_EXCEEDED</code></td>
+    <td>400</td>
+    <td><code>/problems/storage/file-size-exceeded</code></td>
+    <td>파일 크기는 5MB를 초과할 수 없습니다.</td>
+    <td>파일 크기가 5MB를 초과했을 때</td>
+</tr>
+<tr>
+    <td><code>UNSUPPORTED_FILE_TYPE</code></td>
+    <td>400</td>
+    <td><code>/problems/storage/unsupported-file-type</code></td>
+    <td>지원하지 않는 파일 형식입니다. (허용: jpg, jpeg, png, webp, gif)</td>
+    <td>jpg, jpeg, png, webp, gif 외 파일을 업로드할 때</td>
+</tr>
+<tr>
+    <td><code>FILE_UPLOAD_FAILED</code></td>
+    <td>500</td>
+    <td><code>/problems/storage/file-upload-failed</code></td>
+    <td>파일 업로드에 실패했습니다.</td>
+    <td>S3 업로드 중 오류가 발생했을 때</td>
 </tr>
 </tbody>
 </table>
@@ -404,9 +423,7 @@
     <pre><code>{
   &quot;result&quot; : &quot;SUCCESS&quot;,
   &quot;data&quot; : {
-    &quot;name&quot; : &quot;홍길동&quot;,
-    &quot;studentNumber&quot; : &quot;2023000001&quot;,
-    &quot;major&quot; : &quot;심화&quot;
+    &quot;url&quot; : &quot;https://bucket.s3.ap-northeast-2.amazonaws.com/posts/550e8400-e29b-41d4-a716-446655440000.png&quot;
   }
 }</code></pre>
 </section>
@@ -417,197 +434,8 @@
   &quot;title&quot; : &quot;Unauthorized&quot;,
   &quot;status&quot; : 401,
   &quot;detail&quot; : &quot;인증이 필요합니다.&quot;,
-  &quot;instance&quot; : &quot;/auth/register/prefill&quot;,
+  &quot;instance&quot; : &quot;/images&quot;,
   &quot;errorCode&quot; : &quot;UNAUTHORIZED&quot;,
-  &quot;timestamp&quot; : &quot;2026-03-24T03:10:00Z&quot;
-}</code></pre>
-</section>
-</div>
-</article>
-<article class="endpoint" id="register">
-    <div class="eyebrow">POST</div>
-    <h2>회원가입 완료</h2>
-    <p>SSO 토큰 쿠키와 사용자가 입력한 닉네임, 연락처, 약관 동의 여부로 회원가입을 완료합니다.</p>
-    <div class="path-box"><span class="method">POST</span>/auth/register</div>
-    <div class="section-grid"><section class="card">
-    <h3>요청 바디 필드</h3>
-    <table>
-    <thead>
-        <tr>
-            <th>필드명</th>
-            <th>타입</th>
-            <th>필수 여부</th>
-            <th>설명</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-    <td><code>agreedToTerms</code></td>
-    <td><span class="type-chip type-boolean">boolean</span></td>
-    <td><span class="badge-optional">optional</span></td>
-    <td>약관 동의 여부입니다. true여야만 회원가입이 완료됩니다.</td>
-</tr>
-<tr>
-    <td><code>nickname</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>1자 이상 15자 이하의 닉네임입니다.</td>
-</tr>
-<tr>
-    <td><code>phone</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>숫자와 하이픈만 포함한 10~15자 연락처입니다.</td>
-</tr>
-<tr>
-    <td><code>profileImageUrl</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-optional">optional</span></td>
-    <td>-</td>
-</tr>
-</tbody>
-</table>
-
-</section>
-<section class="card">
-    <h3>에러 응답 필드</h3>
-    <table>
-    <thead>
-        <tr>
-            <th>필드명</th>
-            <th>타입</th>
-            <th>필수 여부</th>
-            <th>설명</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-    <td><code>type</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>문제 유형을 식별하는 URI path입니다.</td>
-</tr>
-<tr>
-    <td><code>title</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>HTTP 상태를 요약한 제목입니다.</td>
-</tr>
-<tr>
-    <td><code>status</code></td>
-    <td><span class="type-chip type-number">Integer</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>HTTP 상태 코드입니다.</td>
-</tr>
-<tr>
-    <td><code>detail</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>클라이언트에 노출할 에러 설명입니다.</td>
-</tr>
-<tr>
-    <td><code>instance</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>에러가 발생한 요청 경로입니다.</td>
-</tr>
-<tr>
-    <td><code>errorCode</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>프론트엔드 분기에 사용하는 안정적인 에러 코드입니다.</td>
-</tr>
-<tr>
-    <td><code>invalidFields</code></td>
-    <td><span class="type-chip type-collection">List&lt;ProblemFieldViolation&gt;</span></td>
-    <td><span class="badge-optional">optional</span></td>
-    <td>validation 에러에서만 포함됩니다. 필드명과 검증 메시지 목록입니다.</td>
-</tr>
-<tr>
-    <td><code>errorTrackingId</code></td>
-    <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-optional">optional</span></td>
-    <td>서버 내부 오류에서만 포함됩니다. 로그 추적용 식별자입니다.</td>
-</tr>
-<tr>
-    <td><code>timestamp</code></td>
-    <td><span class="type-chip type-datetime">OffsetDateTime</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>에러 응답 생성 시각입니다.</td>
-</tr>
-</tbody>
-</table>
-
-</section>
-<section class="card">
-    <h3>에러 코드</h3>
-    <table>
-    <thead>
-        <tr>
-            <th>errorCode</th>
-            <th>HTTP 상태</th>
-            <th>type</th>
-            <th>detail</th>
-            <th>발생 조건</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-    <td><code>INVALID_REQUEST</code></td>
-    <td>400</td>
-    <td><code>/problems/common/invalid-request</code></td>
-    <td>입력값이 올바르지 않습니다.</td>
-    <td>약관 동의가 false이거나 요청 형식이 올바르지 않을 때</td>
-</tr>
-<tr>
-    <td><code>UNAUTHORIZED</code></td>
-    <td>401</td>
-    <td><code>/problems/common/unauthorized</code></td>
-    <td>인증이 필요합니다.</td>
-    <td>SSO 토큰 쿠키가 없거나 유효하지 않을 때</td>
-</tr>
-<tr>
-    <td><code>MEMBER_ALREADY_EXISTS</code></td>
-    <td>409</td>
-    <td><code>/problems/member/already-exists</code></td>
-    <td>이미 가입된 회원입니다.</td>
-    <td>이미 가입된 ssoSub로 다시 회원가입을 시도할 때</td>
-</tr>
-<tr>
-    <td><code>DUPLICATE_NICKNAME</code></td>
-    <td>409</td>
-    <td><code>/problems/member/duplicate-nickname</code></td>
-    <td>이미 사용 중인 닉네임입니다.</td>
-    <td>이미 사용 중인 닉네임으로 회원가입을 시도할 때</td>
-</tr>
-</tbody>
-</table>
-
-</section>
-<section class="card">
-    <h3>요청 예시</h3>
-    <pre><code>{
-  &quot;nickname&quot; : &quot;길동이&quot;,
-  &quot;phone&quot; : &quot;010-1234-5678&quot;,
-  &quot;agreedToTerms&quot; : true
-}</code></pre>
-</section>
-<section class="card">
-    <h3>응답 예시</h3>
-    <pre><code>{
-  &quot;result&quot; : &quot;SUCCESS&quot;
-}</code></pre>
-</section>
-<section class="card">
-    <h3>에러 예시</h3>
-    <pre><code>{
-  &quot;type&quot; : &quot;/problems/common/invalid-request&quot;,
-  &quot;title&quot; : &quot;Bad Request&quot;,
-  &quot;status&quot; : 400,
-  &quot;detail&quot; : &quot;입력값이 올바르지 않습니다.&quot;,
-  &quot;instance&quot; : &quot;/auth/register&quot;,
-  &quot;errorCode&quot; : &quot;INVALID_REQUEST&quot;,
-  &quot;invalidFields&quot; : [ {
-    &quot;field&quot; : &quot;fieldName&quot;,
-    &quot;message&quot; : &quot;유효하지 않은 입력값입니다.&quot;
-  } ],
   &quot;timestamp&quot; : &quot;2026-03-24T03:10:00Z&quot;
 }</code></pre>
 </section>

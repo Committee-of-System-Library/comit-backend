@@ -17,7 +17,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     /**
      * 작성자 정보와 함께 활성 게시글 하나를 조회한다.
      */
-    @Query("SELECT p FROM Post p JOIN FETCH p.member WHERE p.id = :id AND p.deletedAt IS NULL AND p.hiddenByAdmin = false")
+    @Query("SELECT p FROM Post p JOIN FETCH p.member LEFT JOIN FETCH p.tags WHERE p.id = :id AND p.deletedAt IS NULL AND p.hiddenByAdmin = false")
     Optional<Post> findActiveById(@Param("id") Long id);
 
     /**
