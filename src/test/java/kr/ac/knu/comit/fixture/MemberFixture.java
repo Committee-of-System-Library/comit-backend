@@ -22,6 +22,7 @@ public class MemberFixture {
                 nickname,
                 "20230001",
                 null,
+                null,
                 LocalDateTime.now()
         );
         ReflectionTestUtils.setField(member, "id", id);

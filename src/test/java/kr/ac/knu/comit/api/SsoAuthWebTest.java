@@ -3,6 +3,7 @@ package kr.ac.knu.comit.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -348,7 +349,8 @@ class SsoAuthWebTest {
                 eq("010-1234-5678"),
                 eq("길동이"),
                 eq("2023012780"),
-                eq("심화")
+                eq("심화"),
+                isNull()
         );
     }
 
@@ -425,6 +427,7 @@ class SsoAuthWebTest {
                 "010-0000-0000",
                 "comit-user",
                 "2023012780",
+                null,
                 null,
                 LocalDateTime.now()
         );
