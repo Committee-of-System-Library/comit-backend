@@ -94,7 +94,7 @@ public class PostService {
     public Long createPost(Long memberId, CreatePostRequest request) {
         Member author = memberService.findMemberOrThrow(memberId);
         Post post = Post.create(author, request.boardType(), request.title(),
-                request.content(), request.tags());
+                request.content(), request.tags(), request.imageUrls());
         return postRepository.save(post).getId();
     }
 
