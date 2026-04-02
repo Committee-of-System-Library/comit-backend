@@ -79,7 +79,7 @@ class RegisterServiceTest {
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
         given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
 
-        registerService.register("token-123", new RegisterRequest("길동이", "010-1234-5678", true));
+        registerService.register("token-123", new RegisterRequest("길동이", "010-1234-5678", null, true));
 
         then(memberRegistrationService).should().register(
                 "sso-sub-1",
@@ -87,7 +87,8 @@ class RegisterServiceTest {
                 "010-1234-5678",
                 "길동이",
                 "2023012780",
-                "심화"
+                "심화",
+                null
         );
     }
 
@@ -105,7 +106,7 @@ class RegisterServiceTest {
     void throwsWhenTermsAreNotAgreed() {
         assertThatThrownBy(() -> registerService.register(
                 "token-123",
-                new RegisterRequest("길동이", "010-1234-5678", false)
+                new RegisterRequest("길동이", "010-1234-5678", null, false)
         ))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
@@ -122,7 +123,7 @@ class RegisterServiceTest {
 
         assertThatThrownBy(() -> registerService.register(
                 "token-123",
-                new RegisterRequest("길동이", "010-1234-5678", true)
+                new RegisterRequest("길동이", "010-1234-5678", null, true)
         ))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")

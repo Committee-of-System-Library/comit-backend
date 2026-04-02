@@ -188,6 +188,7 @@ class MemberServiceTest {
                 nickname,
                 studentNumber,
                 null,
+                null,
                 LocalDateTime.parse("2026-03-31T12:00:00")
         );
     }

@@ -19,6 +19,7 @@ import kr.ac.knu.comit.global.exception.PostErrorCode;
 import kr.ac.knu.comit.member.service.MemberService;
 import kr.ac.knu.comit.post.domain.Post;
 import kr.ac.knu.comit.post.domain.PostDailyVisitorRepository;
+import kr.ac.knu.comit.post.domain.PostImageRepository;
 import kr.ac.knu.comit.post.domain.PostLikeRepository;
 import kr.ac.knu.comit.post.domain.PostRepository;
 import kr.ac.knu.comit.post.dto.HotPostListResponse;
@@ -53,6 +54,9 @@ class PostServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private PostImageRepository postImageRepository;
 
     @Mock
     private PostLikeRepository postLikeRepository;
@@ -192,7 +196,7 @@ class PostServiceTest {
 
             // when
             // 게시글 생성을 실행한다.
-            Long postId = postService.createPost(1L, new CreatePostRequest(BoardType.QNA, "제목", "본문", List.of()));
+            Long postId = postService.createPost(1L, new CreatePostRequest(BoardType.QNA, "제목", "본문", List.of(), List.of()));
 
             // then
             // 저장된 게시글 ID가 반환되어야 한다.

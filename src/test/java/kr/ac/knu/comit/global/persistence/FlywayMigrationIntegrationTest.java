@@ -24,7 +24,11 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "DDL_AUTO=none",
                 "MAX_FILE_SIZE=10MB",
                 "MAX_REQUEST_SIZE=10MB",
-                "COMIT_AUTH_BRIDGE_ENABLED=false"
+                "COMIT_AUTH_BRIDGE_ENABLED=false",
+                "S3_BUCKET_NAME=test-bucket",
+                "S3_REGION=ap-northeast-2",
+                "S3_ACCESS_KEY=test",
+                "S3_SECRET_KEY=test"
         }
 )
 @DisplayName("Flyway 마이그레이션")
@@ -92,7 +96,7 @@ class FlywayMigrationIntegrationTest {
         // then
         // Flyway 이력 테이블과 핵심 도메인 테이블이 모두 생성되어야 한다.
         assertThat(historyTableCount).isEqualTo(1);
-        assertThat(appliedMigrationCount).isEqualTo(11);
+        assertThat(appliedMigrationCount).isEqualTo(12);
         assertThat(tables).contains(
                 "flyway_schema_history",
                 "member",
@@ -102,6 +106,7 @@ class FlywayMigrationIntegrationTest {
                 "post_like",
                 "comment_like",
                 "post_daily_visitor",
+                "post_image",
                 "report"
         );
         assertThat(reportColumns).contains("deleted_at");

@@ -188,6 +188,7 @@ class AuthenticatedApiWebTest {
                         128,
                         true,
                         List.of("spring", "jpa"),
+                        List.of(),
                         LocalDateTime.parse("2026-03-24T10:00:00"),
                         LocalDateTime.parse("2026-03-24T10:30:00")
                 )
@@ -625,6 +626,7 @@ class AuthenticatedApiWebTest {
                 "010-0000-0000",
                 "comit-user",
                 "2020111111",
+                null,
                 null,
                 LocalDateTime.now()
         );

@@ -28,7 +28,8 @@ class PostCursorPageResponseTest {
         PostCursorPageResponse response = PostCursorPageResponse.of(
                 fetchedPosts,
                 2,
-                Map.of(30L, 3, 29L, 1)
+                Map.of(30L, 3, 29L, 1),
+                Map.of()
         );
 
         // then
@@ -55,6 +56,7 @@ class PostCursorPageResponseTest {
         PostCursorPageResponse response = PostCursorPageResponse.of(
                 fetchedPosts,
                 2,
+                Map.of(),
                 Map.of()
         );
 

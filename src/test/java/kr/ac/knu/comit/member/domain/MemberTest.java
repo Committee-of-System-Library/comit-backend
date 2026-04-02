@@ -55,6 +55,7 @@ class MemberTest {
                 "comit-user",
                 "20230001",
                 null,
+                null,
                 LocalDateTime.now()
         );
     }

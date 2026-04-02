@@ -17,7 +17,7 @@ public class PostFixture {
     }
 
     public static Post post(Long id, int viewCount) {
-        Post post = Post.create(MemberFixture.member(99L, "post-writer"), BoardType.QNA, "title-" + id, "content-" + id, List.of());
+        Post post = Post.create(MemberFixture.member(99L, "post-writer"), BoardType.QNA, "title-" + id, "content-" + id, List.of(), List.of());
         ReflectionTestUtils.setField(post, "id", id);
         ReflectionTestUtils.setField(post, "viewCount", viewCount);
         return post;
