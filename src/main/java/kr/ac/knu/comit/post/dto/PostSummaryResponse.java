@@ -39,6 +39,7 @@ public record PostSummaryResponse(
     }
 
     private static String toContentPreview(String content) {
+        // TODO: preview 로직 복잡화 시 ContentPreviewGenerator 분리 검토
         String normalized = content == null ? "" : content.replaceAll("\\s+", " ").trim();
         if (normalized.length() <= CONTENT_PREVIEW_MAX_LENGTH) {
             return normalized;
