@@ -42,7 +42,9 @@ import kr.ac.knu.comit.post.domain.PostConstraints;
 import kr.ac.knu.comit.post.service.AdminPostService;
 import kr.ac.knu.comit.post.dto.HotPostListResponse;
 import kr.ac.knu.comit.post.dto.HotPostResponse;
+import kr.ac.knu.comit.post.dto.PostCursorPageResponse;
 import kr.ac.knu.comit.post.dto.PostDetailResponse;
+import kr.ac.knu.comit.post.dto.PostSummaryResponse;
 import kr.ac.knu.comit.post.service.PostService;
 import kr.ac.knu.comit.report.controller.AdminReportController;
 import kr.ac.knu.comit.report.domain.ReportStatus;
@@ -206,6 +208,42 @@ class AuthenticatedApiWebTest {
                 .andExpect(jsonPath("$.data.viewCount").value(128))
                 .andExpect(jsonPath("$.data.likedByMe").value(true))
                 .andExpect(jsonPath("$.data.tags[0]").value("spring"));
+    }
+
+    @Test
+    void mapsPostListResponseIncludingContentPreviewUsingInterfaceAnnotationsAndAuthInjection() throws Exception {
+        // given
+        given(postService.getPosts(eq(BoardType.QNA), eq(null), eq(20))).willReturn(
+                new PostCursorPageResponse(
+                        List.of(new PostSummaryResponse(
+                                101L,
+                                BoardType.QNA,
+                                "JPA fetch join 질문",
+                                "join fetch와 entity graph 차이가 궁금합니다.",
+                                "backend-dev",
+                                3,
+                                2,
+                                List.of("spring", "jpa"),
+                                List.of("https://cdn.example.com/post-101/image-1.png"),
+                                LocalDateTime.parse("2026-03-24T10:00:00")
+                        )),
+                        100L,
+                        true
+                )
+        );
+
+        // when & then
+        mockMvc.perform(get("/posts")
+                        .param("boardType", "QNA")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "reader"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.posts[0].title").value("JPA fetch join 질문"))
+                .andExpect(jsonPath("$.data.posts[0].contentPreview").value("join fetch와 entity graph 차이가 궁금합니다."))
+                .andExpect(jsonPath("$.data.posts[0].imageUrls[0]").value("https://cdn.example.com/post-101/image-1.png"))
+                .andExpect(jsonPath("$.data.nextCursorId").value(100L))
+                .andExpect(jsonPath("$.data.hasNext").value(true));
     }
 
     @Test
