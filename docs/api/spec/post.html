@@ -213,7 +213,13 @@
 <li>태그명은 저장 시 소문자로 변환한다.</li>
 <li>수정 시 기존 태그를 전체 삭제 후 새 태그로 교체한다.</li>
 </ul>
-<h3>5.5 Forbidden Rules</h3>
+<h3>5.5 목록 본문 미리보기 규칙</h3>
+<ul>
+<li><code>GET /posts</code> 목록 응답은 전체 본문 대신 <code>contentPreview</code>를 반환한다.</li>
+<li><code>contentPreview</code>는 본문을 trim한 뒤 줄바꿈·탭·중복 공백을 하나의 공백으로 정리해 만든다.</li>
+<li><code>contentPreview</code>는 최대 80자까지만 제공하고, 초과 시 뒤에 <code>...</code>를 붙인다.</li>
+</ul>
+<h3>5.6 Forbidden Rules</h3>
 <ul>
 <li>삭제된 게시글을 수정하거나 좋아요하는 것</li>
 <li>타인의 게시글을 수정·삭제하는 것</li>
