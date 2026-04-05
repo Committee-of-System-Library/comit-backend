@@ -65,7 +65,7 @@ comit:
   dev:
     auth:
       enabled: ${COMIT_DEV_AUTH_ENABLED:false}
-      cookie-same-site: ${COMIT_DEV_AUTH_COOKIE_SAME_SITE:Lax}
+      cookie-same-site: ${COMIT_DEV_AUTH_COOKIE_SAME_SITE:None}
   auth:
     bridge:
       enabled: ${COMIT_AUTH_BRIDGE_ENABLED:false}
@@ -87,4 +87,4 @@ comit:
       token-max-age-seconds: ${COMIT_AUTH_SSO_TOKEN_MAX_AGE_SECONDS:3600}
       cookie-path: ${COMIT_AUTH_SSO_COOKIE_PATH:/}
       cookie-secure: ${COMIT_AUTH_SSO_COOKIE_SECURE:true}
-      cookie-same-site: ${COMIT_AUTH_SSO_COOKIE_SAME_SITE:Lax}
+      cookie-same-site: ${COMIT_AUTH_SSO_COOKIE_SAME_SITE:None}
