@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.post.controller.api;
 
+import jakarta.validation.Valid;
 import kr.ac.knu.comit.global.auth.AuthenticatedMember;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.docs.annotation.ApiContract;
@@ -9,6 +10,8 @@ import kr.ac.knu.comit.global.docs.annotation.Example;
 import kr.ac.knu.comit.global.docs.annotation.FieldDesc;
 import kr.ac.knu.comit.global.exception.ApiResponse;
 import kr.ac.knu.comit.post.domain.BoardType;
+import kr.ac.knu.comit.post.dto.AdminCreatePostRequest;
+import kr.ac.knu.comit.post.dto.AdminCreatePostResponse;
 import kr.ac.knu.comit.post.dto.AdminPostPageResponse;
 import kr.ac.knu.comit.post.dto.AdminVisibilityRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,6 +28,46 @@ import org.springframework.web.bind.annotation.RequestParam;
 @ApiContract
 @RequestMapping("/admin/posts")
 public interface AdminPostControllerApi {
+
+    @ApiDoc(
+            summary = "공지/이벤트/정보 게시글 작성 (관리자)",
+            description = "관리자가 NOTICE, EVENT, INFO 게시판에 게시글을 작성합니다. QNA, FREE 게시판에는 작성할 수 없습니다.",
+            descriptions = {
+                    @FieldDesc(name = "boardType", value = "게시판 유형입니다. NOTICE, EVENT, INFO 중 하나만 허용됩니다."),
+                    @FieldDesc(name = "title", value = "게시글 제목입니다."),
+                    @FieldDesc(name = "content", value = "게시글 내용입니다."),
+                    @FieldDesc(name = "tags", value = "태그 목록입니다. 생략 가능합니다."),
+                    @FieldDesc(name = "imageUrls", value = "첨부 이미지 URL 목록입니다. 생략 가능합니다."),
+                    @FieldDesc(name = "postId", value = "생성된 게시글 ID입니다.")
+            },
+            errors = {
+                    @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),
+                    @ApiError(code = "FORBIDDEN_BOARD_TYPE", when = "NOTICE, EVENT, INFO 외 boardType으로 요청할 때"),
+                    @ApiError(code = "INVALID_REQUEST", when = "요청 본문이 검증 규칙을 만족하지 않을 때")
+            },
+            example = @Example(
+                    request = """
+                            {
+                              "boardType": "NOTICE",
+                              "title": "2026년 1학기 정기 모집 공고",
+                              "content": "모집 내용입니다.",
+                              "tags": ["모집", "공지"],
+                              "imageUrls": []
+                            }
+                            """,
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": { "postId": 42 }
+                            }
+                            """
+            )
+    )
+    @PostMapping
+    ResponseEntity<ApiResponse<AdminCreatePostResponse>> createPost(
+            @Valid @RequestBody AdminCreatePostRequest request,
+            @AuthenticatedMember MemberPrincipal principal
+    );
 
     @ApiDoc(
             summary = "게시글 목록 조회 (관리자)",
