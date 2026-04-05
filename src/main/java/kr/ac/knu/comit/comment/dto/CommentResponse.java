@@ -8,20 +8,20 @@ public record CommentResponse(
         Long id,
         String content,
         String authorNickname,
-        int helpfulCount,
-        boolean helpfulByMe,
+        int likeCount,
+        boolean likedByMe,
         boolean mine,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         List<ReplyResponse> replies
 ) {
-    public static CommentResponse from(Comment comment, boolean helpfulByMe, boolean mine, List<ReplyResponse> replies) {
+    public static CommentResponse from(Comment comment, boolean likedByMe, boolean mine, List<ReplyResponse> replies) {
         return new CommentResponse(
                 comment.getId(),
                 comment.getContent(),
                 comment.getMember().getNickname(),
-                comment.getHelpfulCount(),
-                helpfulByMe,
+                comment.getLikeCount(),
+                likedByMe,
                 mine,
                 comment.getCreatedAt(),
                 comment.getUpdatedAt(),

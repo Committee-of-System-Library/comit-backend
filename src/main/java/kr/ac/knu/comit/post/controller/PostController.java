@@ -6,6 +6,7 @@ import kr.ac.knu.comit.post.controller.api.PostControllerApi;
 import kr.ac.knu.comit.post.domain.BoardType;
 import kr.ac.knu.comit.post.dto.*;
 import kr.ac.knu.comit.post.service.PostService;
+import java.util.List;
 import kr.ac.knu.comit.report.dto.CreateReportRequest;
 import kr.ac.knu.comit.report.dto.CreateReportResponse;
 import kr.ac.knu.comit.report.service.ReportService;
@@ -74,5 +75,12 @@ public class PostController implements PostControllerApi {
             Long postId, MemberPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
                 postService.toggleLike(principal.memberId(), postId)));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<List<PostSearchResult>>> searchPosts(
+            String keyword, BoardType boardType) {
+        return ResponseEntity.ok(ApiResponse.success(
+                postService.searchPosts(keyword, boardType)));
     }
 }

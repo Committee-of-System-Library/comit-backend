@@ -17,7 +17,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     /**
      * 작성자 정보와 함께 활성 게시글 하나를 조회한다.
      */
-    @Query("SELECT p FROM Post p JOIN FETCH p.member WHERE p.id = :id AND p.deletedAt IS NULL AND p.hiddenByAdmin = false")
+    @Query("SELECT p FROM Post p JOIN FETCH p.member LEFT JOIN FETCH p.tags WHERE p.id = :id AND p.deletedAt IS NULL AND p.hiddenByAdmin = false")
     Optional<Post> findActiveById(@Param("id") Long id);
 
     /**
@@ -153,6 +153,24 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId AND p.deletedAt IS NULL AND p.likeCount > 0")
     void decrementLikeCount(@Param("postId") Long postId);
+
+    /**
+     * 키워드로 제목 또는 본문을 검색한다. boardType이 null이면 전체 게시판을 대상으로 한다.
+     */
+    @Query("""
+            SELECT p FROM Post p
+            JOIN FETCH p.member
+            WHERE p.deletedAt IS NULL
+              AND p.hiddenByAdmin = false
+              AND (:boardType IS NULL OR p.boardType = :boardType)
+              AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%)
+            ORDER BY p.id DESC
+            """)
+    List<Post> searchByKeyword(
+            @Param("keyword") String keyword,
+            @Param("boardType") BoardType boardType,
+            Pageable pageable
+    );
 
     interface HotPostScoreView {
         Long getPostId();

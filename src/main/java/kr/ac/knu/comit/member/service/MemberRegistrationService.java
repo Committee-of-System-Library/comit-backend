@@ -25,7 +25,8 @@ public class MemberRegistrationService {
             String phone,
             String nickname,
             String studentNumber,
-            String majorTrack
+            String majorTrack,
+            String profileImageUrl
     ) {
         String normalizedNickname = nickname == null ? null : nickname.trim();
         if (normalizedNickname != null && !normalizedNickname.isBlank() && memberRepository.existsByNickname(normalizedNickname)) {
@@ -41,6 +42,7 @@ public class MemberRegistrationService {
                             nickname,
                             studentNumber,
                             majorTrack,
+                            profileImageUrl,
                             LocalDateTime.now()
                     )
             );

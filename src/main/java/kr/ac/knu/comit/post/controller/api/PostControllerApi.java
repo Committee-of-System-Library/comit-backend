@@ -15,6 +15,7 @@ import kr.ac.knu.comit.post.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @ApiContract
 @RequestMapping("/posts")
@@ -27,13 +28,15 @@ public interface PostControllerApi {
                     @FieldDesc(name = "boardType", value = "조회할 게시판 유형입니다. QNA 또는 FREE를 사용합니다."),
                     @FieldDesc(name = "cursor", value = "이전 응답의 nextCursorId. 첫 페이지는 생략합니다."),
                     @FieldDesc(name = "size", value = "조회할 게시글 수입니다. 기본값은 20이고 최대 20입니다."),
-                    @FieldDesc(name = "posts", value = "게시글 요약 목록입니다. 최신 게시글부터 최대 size개를 반환하며 각 항목은 게시글 ID, 제목, 작성자 닉네임, 좋아요 수, 댓글 수, 태그, 생성 시각을 포함합니다."),
+                    @FieldDesc(name = "posts", value = "게시글 요약 목록입니다. 최신 게시글부터 최대 size개를 반환하며 각 항목은 게시글 ID, 제목, 본문 미리보기, 작성자 닉네임, 좋아요 수, 댓글 수, 태그, 생성 시각을 포함합니다."),
                     @FieldDesc(name = "id", value = "게시글 ID입니다."),
                     @FieldDesc(name = "title", value = "게시글 제목입니다."),
+                    @FieldDesc(name = "contentPreview", value = "게시글 본문 미리보기입니다. 줄바꿈과 중복 공백을 정리한 뒤 최대 80자까지만 제공하며, 초과 시 ...이 붙습니다."),
                     @FieldDesc(name = "authorNickname", value = "게시글 작성자의 닉네임입니다."),
                     @FieldDesc(name = "likeCount", value = "현재 게시글의 좋아요 수입니다."),
                     @FieldDesc(name = "commentCount", value = "삭제되지 않은 댓글 수입니다."),
                     @FieldDesc(name = "tags", value = "게시글에 연결된 태그 목록입니다."),
+                    @FieldDesc(name = "imageUrls", value = "이미지 url이고, url 조회시 바로 이미지를 받을 수 있습니다."),
                     @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다."),
                     @FieldDesc(name = "nextCursorId", value = "다음 페이지 조회에 사용할 마지막 게시글 ID입니다. 마지막 페이지면 null입니다."),
                     @FieldDesc(name = "hasNext", value = "다음 페이지 존재 여부입니다.")
@@ -51,6 +54,7 @@ public interface PostControllerApi {
                                     "id": 101,
                                     "boardType": "QNA",
                                     "title": "JPA fetch join 질문",
+                                    "contentPreview": "join fetch와 entity graph 차이가 궁금합니다.",
                                     "authorNickname": "backend-dev",
                                     "likeCount": 3,
                                     "commentCount": 2,
@@ -74,6 +78,39 @@ public interface PostControllerApi {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "게시글 검색",
+            description = "키워드로 제목 또는 본문을 검색합니다. 최대 5개를 최신순으로 반환합니다.",
+            descriptions = {
+                    @FieldDesc(name = "keyword", value = "검색할 키워드입니다."),
+                    @FieldDesc(name = "boardType", value = "특정 게시판으로 범위를 한정할 경우 전달합니다. 생략하면 전체 게시판을 대상으로 검색합니다."),
+                    @FieldDesc(name = "id", value = "게시글 ID입니다."),
+                    @FieldDesc(name = "boardType", value = "게시글이 속한 게시판 유형입니다."),
+                    @FieldDesc(name = "title", value = "게시글 제목입니다."),
+                    @FieldDesc(name = "contentPreview", value = "본문 미리보기입니다. 최대 60자이며 초과 시 ...이 붙습니다.")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": [
+                                {
+                                  "id": 101,
+                                  "boardType": "QNA",
+                                  "title": "JPA fetch join 질문",
+                                  "contentPreview": "join fetch와 entity graph 차이가 궁금합니다."
+                                }
+                              ]
+                            }
+                            """
+            )
+    )
+    @GetMapping("/search")
+    ResponseEntity<ApiResponse<List<PostSearchResult>>> searchPosts(
+            @RequestParam String keyword,
+            @RequestParam(required = false) BoardType boardType
     );
 
     @ApiDoc(
@@ -136,6 +173,7 @@ public interface PostControllerApi {
                     @FieldDesc(name = "viewCount", value = "상세 조회 성공이 반영된 최신 누적 조회수입니다."),
                     @FieldDesc(name = "likedByMe", value = "현재 로그인한 사용자의 좋아요 여부입니다."),
                     @FieldDesc(name = "tags", value = "게시글에 연결된 태그 목록입니다."),
+                    @FieldDesc(name = "imageUrls", value = "이미지 url이고, url 조회시 바로 이미지를 받을 수 있습니다."),
                     @FieldDesc(name = "createdAt", value = "게시글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다."),
                     @FieldDesc(name = "updatedAt", value = "마지막 수정 시각입니다. 수정 이력이 없으면 null입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다.")
             },
@@ -179,7 +217,8 @@ public interface PostControllerApi {
                     @FieldDesc(name = "boardType", value = "게시글을 작성할 게시판 유형입니다."),
                     @FieldDesc(name = "title", value = "게시글 제목입니다. 최대 30자입니다."),
                     @FieldDesc(name = "content", value = "게시글 본문입니다. 최대 500자입니다."),
-                    @FieldDesc(name = "tags", value = "선택 항목입니다. 최대 5개, 각 20자 이하입니다.")
+                    @FieldDesc(name = "tags", value = "선택 항목입니다. 최대 5개, 각 20자 이하입니다."),
+                    @FieldDesc(name = "imageUrls", value = "이미지 url이고, url 조회시 바로 이미지를 받을 수 있습니다. 최대 5개까지 첨부할 수 있습니다.")
             },
             errors = {
                     @ApiError(code = "MEMBER_NOT_FOUND", when = "인증된 사용자의 로컬 회원 정보가 존재하지 않을 때"),

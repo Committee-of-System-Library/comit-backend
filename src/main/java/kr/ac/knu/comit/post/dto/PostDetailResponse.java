@@ -16,10 +16,11 @@ public record PostDetailResponse(
         int viewCount,
         boolean likedByMe,
         List<String> tags,
+        List<String> imageUrls,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static PostDetailResponse of(Post post, boolean likedByMe) {
+    public static PostDetailResponse of(Post post, boolean likedByMe, List<String> imageUrls) {
         return new PostDetailResponse(
                 post.getId(),
                 post.getBoardType(),
@@ -30,6 +31,7 @@ public record PostDetailResponse(
                 post.getViewCount(),
                 likedByMe,
                 post.getTags().stream().map(t -> t.getName()).toList(),
+                imageUrls,
                 post.getCreatedAt(),
                 post.getUpdatedAt()
         );

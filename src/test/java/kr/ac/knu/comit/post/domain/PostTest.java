@@ -29,6 +29,7 @@ class PostTest {
                     BoardType.QNA,
                     "가".repeat(PostConstraints.TITLE_MAX_LENGTH + 1),
                     "본문",
+                    List.of(),
                     List.of()
             ))
                     .isInstanceOf(BusinessException.class)
@@ -45,11 +46,12 @@ class PostTest {
         @DisplayName("내용이 500자를 초과하면 INVALID_CONTENT 예외를 던진다")
         void throwsWhenContentExceedsMaxLength() {
             Member author = author();
-            Post post = Post.create(author, BoardType.QNA, "제목", "본문", List.of());
+            Post post = Post.create(author, BoardType.QNA, "제목", "본문", List.of(), List.of());
 
             assertThatThrownBy(() -> post.update(
                     "수정 제목",
                     "나".repeat(PostConstraints.CONTENT_MAX_LENGTH + 1),
+                    List.of(),
                     List.of()
             ))
                     .isInstanceOf(BusinessException.class)
@@ -65,6 +67,7 @@ class PostTest {
                 "010-0000-0000",
                 "writer",
                 "20230001",
+                null,
                 null,
                 LocalDateTime.now()
         );

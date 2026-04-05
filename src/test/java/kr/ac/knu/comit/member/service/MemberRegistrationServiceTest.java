@@ -45,7 +45,8 @@ class MemberRegistrationServiceTest {
                 "010-1234-5678",
                 "길동이",
                 "2023012780",
-                "심화"
+                "심화",
+                null
         );
 
         // then
@@ -74,7 +75,8 @@ class MemberRegistrationServiceTest {
                 "010-1234-5678",
                 "길동이",
                 "2023012780",
-                "심화"
+                "심화",
+                null
         ))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
@@ -98,7 +100,8 @@ class MemberRegistrationServiceTest {
                 "010-1234-5678",
                 "길동이",
                 "2023012780",
-                "심화"
+                "심화",
+                null
         ))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
@@ -122,7 +125,8 @@ class MemberRegistrationServiceTest {
                 "010-1234-5678",
                 "길동이",
                 "2023012780",
-                "심화"
+                "심화",
+                null
         ))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")

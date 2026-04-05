@@ -33,7 +33,11 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "SPRING_PORT=0",
                 "DDL_AUTO=none",
                 "MAX_FILE_SIZE=10MB",
-                "MAX_REQUEST_SIZE=10MB"
+                "MAX_REQUEST_SIZE=10MB",
+                "S3_BUCKET_NAME=test-bucket",
+                "S3_REGION=ap-northeast-2",
+                "S3_ACCESS_KEY=test",
+                "S3_SECRET_KEY=test"
         }
 )
 @DisplayName("PostRepository 인기글 집계")
@@ -188,6 +192,7 @@ class PostRepositoryIntegrationTest {
                 nickname,
                 studentNumber,
                 null,
+                null,
                 LocalDateTime.now()
         ));
     }
@@ -202,13 +207,13 @@ class PostRepositoryIntegrationTest {
     }
 
     private Post savePost(Member author, String title, BoardType boardType, LocalDateTime createdAt) {
-        Post post = Post.create(author, boardType, title, "content-" + title, List.of("spring"));
+        Post post = Post.create(author, boardType, title, "content-" + title, List.of("spring"), List.of());
         ReflectionTestUtils.setField(post, "createdAt", createdAt);
         return postRepository.save(post);
     }
 
     private Post saveDeletedPost(Member author, String title, LocalDateTime createdAt) {
-        Post post = Post.create(author, BoardType.QNA, title, "content-" + title, List.of());
+        Post post = Post.create(author, BoardType.QNA, title, "content-" + title, List.of(), List.of());
         ReflectionTestUtils.setField(post, "createdAt", createdAt);
         post.delete();
         return postRepository.save(post);

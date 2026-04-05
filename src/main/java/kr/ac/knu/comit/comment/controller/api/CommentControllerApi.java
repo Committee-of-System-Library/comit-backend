@@ -3,7 +3,7 @@ package kr.ac.knu.comit.comment.controller.api;
 import jakarta.validation.Valid;
 import kr.ac.knu.comit.comment.dto.CommentListResponse;
 import kr.ac.knu.comit.comment.dto.CreateCommentRequest;
-import kr.ac.knu.comit.comment.dto.HelpfulToggleResponse;
+import kr.ac.knu.comit.comment.dto.LikeToggleResponse;
 import kr.ac.knu.comit.comment.dto.UpdateCommentRequest;
 import kr.ac.knu.comit.global.docs.annotation.ApiContract;
 import kr.ac.knu.comit.global.docs.annotation.ApiDoc;
@@ -28,15 +28,15 @@ public interface CommentControllerApi {
 
     @ApiDoc(
             summary = "댓글 목록 조회",
-            description = "게시글에 달린 댓글 목록을 조회합니다. 도움이 됐어요 수 내림차순, 동일하면 댓글 ID 오름차순으로 정렬됩니다.",
+            description = "게시글에 달린 댓글 목록을 조회합니다. 좋아요 수 내림차순, 동일하면 댓글 ID 오름차순으로 정렬됩니다.",
             descriptions = {
                     @FieldDesc(name = "postId", value = "댓글을 조회할 게시글 ID"),
-                    @FieldDesc(name = "comments", value = "최상위 댓글 목록입니다. 각 항목은 댓글 ID, 본문, 작성자 닉네임, 도움이 됐어요 수, 내 반응 여부, 내 작성 여부, 생성/수정 시각과 대댓글 목록을 포함합니다."),
+                    @FieldDesc(name = "comments", value = "최상위 댓글 목록입니다. 각 항목은 댓글 ID, 본문, 작성자 닉네임, 좋아요 수, 내 반응 여부, 내 작성 여부, 생성/수정 시각과 대댓글 목록을 포함합니다."),
                     @FieldDesc(name = "id", value = "댓글 ID입니다."),
                     @FieldDesc(name = "content", value = "댓글 본문입니다."),
                     @FieldDesc(name = "authorNickname", value = "댓글 작성자의 닉네임입니다."),
-                    @FieldDesc(name = "helpfulCount", value = "현재 댓글의 도움이 됐어요 수입니다."),
-                    @FieldDesc(name = "helpfulByMe", value = "현재 로그인한 사용자가 도움이 됐어요를 눌렀는지 여부입니다."),
+                    @FieldDesc(name = "likeCount", value = "현재 댓글의 좋아요 수입니다."),
+                    @FieldDesc(name = "likedByMe", value = "현재 로그인한 사용자가 좋아요를 눌렀는지 여부입니다."),
                     @FieldDesc(name = "mine", value = "현재 로그인한 사용자가 작성한 댓글인지 여부입니다."),
                     @FieldDesc(name = "replies", value = "현재 댓글에 달린 대댓글 목록입니다. 대댓글은 등록 순으로 반환됩니다."),
                     @FieldDesc(name = "createdAt", value = "댓글 생성 시각입니다. 응답 포맷은 yyyy-MM-dd'T'HH:mm:ss 입니다."),
@@ -55,8 +55,8 @@ public interface CommentControllerApi {
                                     "id": 201,
                                     "content": "entity graph도 같이 비교해보면 좋습니다.",
                                     "authorNickname": "orm-master",
-                                    "helpfulCount": 4,
-                                    "helpfulByMe": true,
+                                    "likeCount": 4,
+                                    "likedByMe": true,
                                     "mine": false,
                                     "createdAt": "2026-03-24T11:00:00",
                                     "updatedAt": null,
@@ -65,8 +65,8 @@ public interface CommentControllerApi {
                                         "id": 202,
                                         "content": "저도 같은 방식 추천합니다.",
                                         "authorNickname": "backend-dev",
-                                        "helpfulCount": 1,
-                                        "helpfulByMe": false,
+                                        "likeCount": 1,
+                                        "likedByMe": false,
                                         "mine": true,
                                         "createdAt": "2026-03-24T11:05:00",
                                         "updatedAt": null
@@ -214,28 +214,28 @@ public interface CommentControllerApi {
     );
 
     @ApiDoc(
-            summary = "댓글 도움 토글",
-            description = "댓글의 도움이 됐어요 상태를 토글합니다. 응답은 토글 후 내 반응 상태만 반환하며 helpfulCount는 목록 재조회 시 확인합니다.",
+            summary = "댓글 좋아요 토글",
+            description = "댓글의 좋아요 상태를 토글합니다. 응답은 토글 후 내 반응 상태만 반환하며 likeCount는 목록 재조회 시 확인합니다.",
             descriptions = {
-                    @FieldDesc(name = "commentId", value = "도움이 됐어요를 토글할 댓글 ID"),
-                    @FieldDesc(name = "helpful", value = "true면 도움이 됐어요가 추가되고 false면 취소됩니다.")
+                    @FieldDesc(name = "commentId", value = "좋아요를 토글할 댓글 ID"),
+                    @FieldDesc(name = "liked", value = "true면 좋아요가 추가되고 false면 취소됩니다.")
             },
             errors = {
-                    @ApiError(code = "COMMENT_NOT_FOUND", when = "도움이 됐어요를 누를 댓글이 없거나 삭제된 상태일 때")
+                    @ApiError(code = "COMMENT_NOT_FOUND", when = "좋아요를 누를 댓글이 없거나 삭제된 상태일 때")
             },
             example = @Example(
                     response = """
                             {
                               "result": "SUCCESS",
                               "data": {
-                                "helpful": true
+                                "liked": true
                               }
                             }
                             """
             )
     )
-    @PostMapping("/comments/{commentId}/helpful")
-    ResponseEntity<ApiResponse<HelpfulToggleResponse>> toggleHelpful(
+    @PostMapping("/comments/{commentId}/like")
+    ResponseEntity<ApiResponse<LikeToggleResponse>> toggleLike(
             @PathVariable Long commentId,
             @AuthenticatedMember MemberPrincipal principal
     );

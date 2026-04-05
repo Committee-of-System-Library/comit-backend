@@ -43,6 +43,13 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostTag> tags = new ArrayList<>();
 
+    /**
+     * 이미지는 게시글 생명주기를 따르며, 최대 5개까지 허용된다.
+     */
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    private List<PostImage> images = new ArrayList<>();
+
     @Column(nullable = false)
     private boolean hiddenByAdmin = false;
 
@@ -56,14 +63,16 @@ public class Post {
     }
 
     /**
-     * 초기 태그를 포함한 새 활성 게시글을 만든다.
+     * 초기 태그와 이미지를 포함한 새 활성 게시글을 만든다.
      */
     public static Post create(Member author, BoardType boardType, String title, String content,
-                              List<String> tagNames) {
+                              List<String> tagNames, List<String> imageUrls) {
         List<String> normalizedTagNames = normalizeTagNames(tagNames);
+        List<String> normalizedImageUrls = normalizeImageUrls(imageUrls);
         validateTitle(title);
         validateContent(content);
         validateTagNames(normalizedTagNames);
+        validateImageUrls(normalizedImageUrls);
 
         Post post = new Post();
         post.member = author;
@@ -73,6 +82,9 @@ public class Post {
         post.createdAt = LocalDateTime.now();
 
         normalizedTagNames.forEach(name -> post.tags.add(PostTag.of(post, name)));
+        for (int i = 0; i < normalizedImageUrls.size(); i++) {
+            post.images.add(PostImage.of(post, normalizedImageUrls.get(i), i));
+        }
         return post;
     }
 
@@ -81,17 +93,23 @@ public class Post {
      *
      * @implNote 태그는 통째로 교체한다. 기존 row 정리는 orphan removal에 맡긴다.
      */
-    public void update(String title, String content, List<String> tagNames) {
+    public void update(String title, String content, List<String> tagNames, List<String> imageUrls) {
         List<String> normalizedTagNames = normalizeTagNames(tagNames);
+        List<String> normalizedImageUrls = normalizeImageUrls(imageUrls);
         validateTitle(title);
         validateContent(content);
         validateTagNames(normalizedTagNames);
+        validateImageUrls(normalizedImageUrls);
 
         this.title = title;
         this.content = content;
         this.updatedAt = LocalDateTime.now();
         this.tags.clear();
         normalizedTagNames.forEach(name -> this.tags.add(PostTag.of(this, name)));
+        this.images.clear();
+        for (int i = 0; i < normalizedImageUrls.size(); i++) {
+            this.images.add(PostImage.of(this, normalizedImageUrls.get(i), i));
+        }
     }
 
     public void delete() {
@@ -141,6 +159,10 @@ public class Post {
         return tags;
     }
 
+    public List<PostImage> getImages() {
+        return images;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -181,7 +203,17 @@ public class Post {
         tagNames.forEach(PostTag::validateName);
     }
 
+    private static void validateImageUrls(List<String> imageUrls) {
+        if (imageUrls.size() > PostConstraints.IMAGE_MAX_COUNT) {
+            throw new BusinessException(PostErrorCode.IMAGE_LIMIT_EXCEEDED);
+        }
+    }
+
     private static List<String> normalizeTagNames(List<String> tagNames) {
         return tagNames == null ? List.of() : tagNames;
+    }
+
+    private static List<String> normalizeImageUrls(List<String> imageUrls) {
+        return imageUrls == null ? List.of() : imageUrls;
     }
 }

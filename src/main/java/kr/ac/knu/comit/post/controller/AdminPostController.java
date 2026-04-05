@@ -6,6 +6,8 @@ import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.post.controller.api.AdminPostControllerApi;
 import kr.ac.knu.comit.post.domain.BoardType;
+import kr.ac.knu.comit.post.dto.AdminCreatePostRequest;
+import kr.ac.knu.comit.post.dto.AdminCreatePostResponse;
 import kr.ac.knu.comit.post.dto.AdminPostPageResponse;
 import kr.ac.knu.comit.post.dto.AdminVisibilityRequest;
 import kr.ac.knu.comit.post.service.AdminPostService;
@@ -19,6 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminPostController implements AdminPostControllerApi {
 
     private final AdminPostService adminPostService;
+
+    @Override
+    public ResponseEntity<ApiResponse<AdminCreatePostResponse>> createPost(
+            AdminCreatePostRequest request, MemberPrincipal principal) {
+        validateAdmin(principal);
+        return ResponseEntity.ok(ApiResponse.success(
+                adminPostService.createPost(principal.memberId(), request)));
+    }
 
     @Override
     public ResponseEntity<ApiResponse<AdminPostPageResponse>> getPosts(

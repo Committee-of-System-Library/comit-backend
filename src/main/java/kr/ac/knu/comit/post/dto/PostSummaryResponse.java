@@ -13,21 +13,26 @@ public record PostSummaryResponse(
         Long id,
         BoardType boardType,
         String title,
+        String contentPreview,
         String authorNickname,
         int likeCount,
         int commentCount,
         List<String> tags,
+        List<String> imageUrls,
         LocalDateTime createdAt
 ) {
-    public static PostSummaryResponse from(Post post, int commentCount) {
+    public static PostSummaryResponse from(Post post, int commentCount, List<String> imageUrls,
+                                           String contentPreview) {
         return new PostSummaryResponse(
                 post.getId(),
                 post.getBoardType(),
                 post.getTitle(),
+                contentPreview,
                 post.getMember().getNickname(),
                 post.getLikeCount(),
                 commentCount,
                 post.getTags().stream().map(t -> t.getName()).toList(),
+                imageUrls,
                 post.getCreatedAt()
         );
     }

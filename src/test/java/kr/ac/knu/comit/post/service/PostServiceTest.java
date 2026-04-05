@@ -19,6 +19,7 @@ import kr.ac.knu.comit.global.exception.PostErrorCode;
 import kr.ac.knu.comit.member.service.MemberService;
 import kr.ac.knu.comit.post.domain.Post;
 import kr.ac.knu.comit.post.domain.PostDailyVisitorRepository;
+import kr.ac.knu.comit.post.domain.PostImageRepository;
 import kr.ac.knu.comit.post.domain.PostLikeRepository;
 import kr.ac.knu.comit.post.domain.PostRepository;
 import kr.ac.knu.comit.post.dto.HotPostListResponse;
@@ -55,6 +56,9 @@ class PostServiceTest {
     private PostRepository postRepository;
 
     @Mock
+    private PostImageRepository postImageRepository;
+
+    @Mock
     private PostLikeRepository postLikeRepository;
 
     @Mock
@@ -65,6 +69,9 @@ class PostServiceTest {
 
     @Mock
     private CommentQueryService commentQueryService;
+
+    @Mock
+    private ContentPreviewGenerator contentPreviewGenerator;
 
     @InjectMocks
     private PostService postService;
@@ -192,7 +199,7 @@ class PostServiceTest {
 
             // when
             // 게시글 생성을 실행한다.
-            Long postId = postService.createPost(1L, new CreatePostRequest(BoardType.QNA, "제목", "본문", List.of()));
+            Long postId = postService.createPost(1L, new CreatePostRequest(BoardType.QNA, "제목", "본문", List.of(), List.of()));
 
             // then
             // 저장된 게시글 ID가 반환되어야 한다.
@@ -214,7 +221,7 @@ class PostServiceTest {
 
             // when
             // 게시글 수정을 실행한다.
-            postService.updatePost(99L, 10L, new UpdatePostRequest("새 제목", "새 본문", List.of()));
+            postService.updatePost(99L, 10L, new UpdatePostRequest("새 제목", "새 본문", List.of(), List.of()));
 
             // then
             // 제목과 본문이 새 값으로 바뀌어야 한다.
@@ -232,7 +239,7 @@ class PostServiceTest {
 
             // when & then
             // 소유권 검사에서 FORBIDDEN 예외가 발생해야 한다.
-            assertThatThrownBy(() -> postService.updatePost(1L, 10L, new UpdatePostRequest("새 제목", "새 본문", List.of())))
+            assertThatThrownBy(() -> postService.updatePost(1L, 10L, new UpdatePostRequest("새 제목", "새 본문", List.of(), List.of())))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(CommonErrorCode.FORBIDDEN);

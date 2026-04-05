@@ -7,7 +7,9 @@ public enum PostErrorCode implements ErrorCode {
     INVALID_TITLE(HttpStatus.BAD_REQUEST, "/problems/post/invalid-title", "제목은 1~30자이어야 합니다."),
     INVALID_CONTENT(HttpStatus.BAD_REQUEST, "/problems/post/invalid-content", "내용은 1~500자이어야 합니다."),
     TAG_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "/problems/post/tag-limit-exceeded", "태그는 최대 5개까지 입력할 수 있습니다."),
-    INVALID_TAG(HttpStatus.BAD_REQUEST, "/problems/post/invalid-tag", "태그는 1~20자이어야 합니다.");
+    INVALID_TAG(HttpStatus.BAD_REQUEST, "/problems/post/invalid-tag", "태그는 1~20자이어야 합니다."),
+    IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "/problems/post/image-limit-exceeded", "이미지는 최대 5개까지 첨부할 수 있습니다."),
+    FORBIDDEN_BOARD_TYPE(HttpStatus.BAD_REQUEST, "/problems/post/forbidden-board-type", "해당 게시판 유형은 관리자만 작성할 수 있습니다.");
 
     private final HttpStatus status;
     private final String type;
