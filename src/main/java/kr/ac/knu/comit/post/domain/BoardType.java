@@ -9,5 +9,20 @@ public enum BoardType {
     /**
      * 일반 자유 게시판.
      */
-    FREE
+    FREE,
+
+    /**
+     * 정보 공유 게시판.
+     */
+    INFO,
+
+    /**
+     * 공지사항 게시판.
+     */
+    NOTICE,
+
+    /**
+     * 이벤트 게시판.
+     */
+    EVENT
 }
