@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.auth.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
+import kr.ac.knu.comit.auth.config.ComitDevAuthProperties;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
@@ -28,6 +29,7 @@ public class DevAuthController {
     public static final String DEV_AUTH_COOKIE = "comit-dev-auth";
 
     private final MemberRepository memberRepository;
+    private final ComitDevAuthProperties devAuthProperties;
     private final ComitSsoProperties ssoProperties;
 
     @PostMapping("/login")
@@ -54,7 +56,7 @@ public class DevAuthController {
         return ResponseCookie.from(DEV_AUTH_COOKIE, value)
                 .httpOnly(true)
                 .secure(ssoProperties.isCookieSecure())
-                .sameSite(ssoProperties.getCookieSameSite())
+                .sameSite(devAuthProperties.getCookieSameSite())
                 .path(cookiePath())
                 .maxAge(maxAge)
                 .build()
