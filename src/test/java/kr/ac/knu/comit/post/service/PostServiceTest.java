@@ -70,6 +70,9 @@ class PostServiceTest {
     @Mock
     private CommentQueryService commentQueryService;
 
+    @Mock
+    private ContentPreviewGenerator contentPreviewGenerator;
+
     @InjectMocks
     private PostService postService;
 
