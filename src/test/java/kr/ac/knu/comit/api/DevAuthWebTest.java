@@ -52,6 +52,7 @@ class DevAuthWebTest {
                         "관리자",
                         "2022000001",
                         null,
+                        null,
                         LocalDateTime.now()
                 )));
 
