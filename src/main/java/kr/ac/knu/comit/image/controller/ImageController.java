@@ -3,6 +3,8 @@ package kr.ac.knu.comit.image.controller;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.ApiResponse;
 import kr.ac.knu.comit.image.controller.api.ImageControllerApi;
+import kr.ac.knu.comit.image.dto.PresignedUploadRequest;
+import kr.ac.knu.comit.image.dto.PresignedUploadResponse;
 import kr.ac.knu.comit.image.dto.UploadImageResponse;
 import kr.ac.knu.comit.image.service.ImageService;
 import lombok.RequiredArgsConstructor;
@@ -23,5 +25,13 @@ public class ImageController implements ImageControllerApi {
             MemberPrincipal principal
     ) {
         return ResponseEntity.ok(ApiResponse.success(imageService.upload(file, folder)));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<PresignedUploadResponse>> generatePresignedUrl(
+            PresignedUploadRequest request,
+            MemberPrincipal principal
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(imageService.generatePresignedUrl(request)));
     }
 }

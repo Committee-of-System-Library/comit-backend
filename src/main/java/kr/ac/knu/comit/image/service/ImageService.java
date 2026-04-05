@@ -2,7 +2,10 @@ package kr.ac.knu.comit.image.service;
 
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.StorageErrorCode;
+import kr.ac.knu.comit.global.storage.S3StorageUploader;
 import kr.ac.knu.comit.global.storage.StorageUploader;
+import kr.ac.knu.comit.image.dto.PresignedUploadRequest;
+import kr.ac.knu.comit.image.dto.PresignedUploadResponse;
 import kr.ac.knu.comit.image.dto.UploadImageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,7 @@ public class ImageService {
     );
 
     private final StorageUploader storageUploader;
+    private final S3StorageUploader s3StorageUploader;
 
     public UploadImageResponse upload(MultipartFile file, String folder) {
         if (file.getSize() > MAX_FILE_SIZE) {
@@ -30,5 +34,15 @@ public class ImageService {
         }
         String url = storageUploader.upload(file, folder);
         return new UploadImageResponse(url);
+    }
+
+    public PresignedUploadResponse generatePresignedUrl(PresignedUploadRequest request) {
+        if (!ALLOWED_CONTENT_TYPES.contains(request.contentType())) {
+            throw new BusinessException(StorageErrorCode.UNSUPPORTED_FILE_TYPE);
+        }
+        S3StorageUploader.PresignedUploadUrls urls = s3StorageUploader.generatePresignedUploadUrl(
+                request.folder(), request.fileName(), request.contentType()
+        );
+        return new PresignedUploadResponse(urls.presignedUrl(), urls.imageUrl());
     }
 }
