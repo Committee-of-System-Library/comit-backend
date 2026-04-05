@@ -29,9 +29,9 @@ window.API_DOCS = [
 },
 {
   title: "ImageControllerApi",
-  summary: "이미지를 지정한 폴더에 업로드하고 public URL을 반환합니다. folder 값으로 저장 경로를 구분합니다. (예: members, posts)",
+  summary: "클라이언트가 S3에 직접 업로드할 수 있는 presigned URL을 발급합니다. 발급된 presignedUrl로 PUT 요청을 보내 파일을 업로드하고, imageUrl을 게시글/프로필 등록에 사용하세요. URL 유효시간은 10분입니다.",
   href: "./image/ImageControllerApi.html",
-  endpointCount: 1,
+  endpointCount: 2,
   sectionPath: "image"
 },
 {
@@ -50,16 +50,16 @@ window.API_DOCS = [
 },
 {
   title: "AdminPostControllerApi",
-  summary: "관리자가 게시글을 소프트 삭제합니다.",
+  summary: "관리자가 NOTICE, EVENT, INFO 게시판에 게시글을 작성합니다. QNA, FREE 게시판에는 작성할 수 없습니다.",
   href: "./post/AdminPostControllerApi.html",
-  endpointCount: 3,
+  endpointCount: 4,
   sectionPath: "post"
 },
 {
   title: "PostControllerApi",
   summary: "새 게시글을 작성합니다. 제목은 최대 30자, 본문은 최대 500자까지 허용합니다.",
   href: "./post/PostControllerApi.html",
-  endpointCount: 8,
+  endpointCount: 9,
   sectionPath: "post"
 },
 {

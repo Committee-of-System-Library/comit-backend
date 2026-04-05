@@ -51,6 +51,7 @@ class PostTest {
             assertThatThrownBy(() -> post.update(
                     "수정 제목",
                     "나".repeat(PostConstraints.CONTENT_MAX_LENGTH + 1),
+                    List.of(),
                     List.of()
             ))
                     .isInstanceOf(BusinessException.class)

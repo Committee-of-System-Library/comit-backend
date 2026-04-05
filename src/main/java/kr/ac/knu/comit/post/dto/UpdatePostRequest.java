@@ -23,9 +23,17 @@ public record UpdatePostRequest(
                 @NotBlank(message = "태그는 비어 있을 수 없습니다.")
                 @Size(max = PostConstraints.TAG_NAME_MAX_LENGTH,
                         message = "태그는 " + PostConstraints.TAG_NAME_MAX_LENGTH + "자 이하이어야 합니다.")
-                String> tags
+                String> tags,
+
+        @Size(max = PostConstraints.IMAGE_MAX_COUNT,
+                message = "이미지는 최대 " + PostConstraints.IMAGE_MAX_COUNT + "개까지 첨부할 수 있습니다.")
+        List<String> imageUrls
 ) {
     public List<String> tags() {
         return tags == null ? List.of() : tags;
+    }
+
+    public List<String> imageUrls() {
+        return imageUrls == null ? List.of() : imageUrls;
     }
 }

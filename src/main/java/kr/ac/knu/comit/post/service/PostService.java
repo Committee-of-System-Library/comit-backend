@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -26,6 +27,7 @@ public class PostService {
 
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final int HOT_POST_WINDOW_DAYS = 7;
+    private static final int SEARCH_RESULT_LIMIT = 5;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final PostRepository postRepository;
@@ -87,6 +89,15 @@ public class PostService {
         );
     }
 
+    public List<PostSearchResult> searchPosts(String keyword, BoardType boardType) {
+        List<Post> posts = postRepository.searchByKeyword(
+                keyword, boardType, PageRequest.of(0, SEARCH_RESULT_LIMIT)
+        );
+        return posts.stream()
+                .map(PostSearchResult::from)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public PostDetailResponse getPost(Long postId, Long memberId) {
         findPostOrThrow(postId);
@@ -111,7 +122,7 @@ public class PostService {
     public void updatePost(Long memberId, Long postId, UpdatePostRequest request) {
         Post post = findPostOrThrow(postId);
         checkOwnership(post, memberId);
-        post.update(request.title(), request.content(), request.tags());
+        post.update(request.title(), request.content(), request.tags(), request.imageUrls());
     }
 
     @Transactional

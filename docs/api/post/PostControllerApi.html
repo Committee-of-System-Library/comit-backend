@@ -276,6 +276,10 @@
     <strong>게시글 신고</strong>
     <span>POST /posts/{postId}/reports</span>
 </a>
+<a href="#searchPosts">
+    <strong>게시글 검색</strong>
+    <span>GET /posts/search</span>
+</a>
 <a href="#toggleLike">
     <strong>게시글 좋아요 토글</strong>
     <span>POST /posts/{postId}/like</span>
@@ -1442,6 +1446,52 @@
 </section>
 </div>
 </article>
+<article class="endpoint" id="searchPosts">
+    <div class="eyebrow">GET</div>
+    <h2>게시글 검색</h2>
+    <p>키워드로 제목 또는 본문을 검색합니다. 최대 5개를 최신순으로 반환합니다.</p>
+    <div class="path-box"><span class="method">GET</span>/posts/search</div>
+    <div class="section-grid"><section class="card">
+    <h3>쿼리 파라미터</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>keyword</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>검색할 키워드입니다.</td>
+</tr>
+<tr>
+    <td><code>boardType</code></td>
+    <td><span class="type-chip type-custom">BoardType</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>게시글이 속한 게시판 유형입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>응답 예시</h3>
+    <pre><code>{
+  &quot;result&quot; : &quot;SUCCESS&quot;,
+  &quot;data&quot; : [ {
+    &quot;id&quot; : 101,
+    &quot;boardType&quot; : &quot;QNA&quot;,
+    &quot;title&quot; : &quot;JPA fetch join 질문&quot;,
+    &quot;contentPreview&quot; : &quot;join fetch와 entity graph 차이가 궁금합니다.&quot;
+  } ]
+}</code></pre>
+</section>
+</div>
+</article>
 <article class="endpoint" id="toggleLike">
     <div class="eyebrow">POST</div>
     <h2>게시글 좋아요 토글</h2>
@@ -1653,6 +1703,12 @@
     <td><span class="type-chip type-string">String</span></td>
     <td><span class="badge-required">required</span></td>
     <td>수정할 게시글 본문입니다. 최대 500자입니다.</td>
+</tr>
+<tr>
+    <td><code>imageUrls</code></td>
+    <td><span class="type-chip type-collection">List&lt;String&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>-</td>
 </tr>
 <tr>
     <td><code>tags</code></td>

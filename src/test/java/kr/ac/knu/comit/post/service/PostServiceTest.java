@@ -221,7 +221,7 @@ class PostServiceTest {
 
             // when
             // 게시글 수정을 실행한다.
-            postService.updatePost(99L, 10L, new UpdatePostRequest("새 제목", "새 본문", List.of()));
+            postService.updatePost(99L, 10L, new UpdatePostRequest("새 제목", "새 본문", List.of(), List.of()));
 
             // then
             // 제목과 본문이 새 값으로 바뀌어야 한다.
@@ -239,7 +239,7 @@ class PostServiceTest {
 
             // when & then
             // 소유권 검사에서 FORBIDDEN 예외가 발생해야 한다.
-            assertThatThrownBy(() -> postService.updatePost(1L, 10L, new UpdatePostRequest("새 제목", "새 본문", List.of())))
+            assertThatThrownBy(() -> postService.updatePost(1L, 10L, new UpdatePostRequest("새 제목", "새 본문", List.of(), List.of())))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(CommonErrorCode.FORBIDDEN);

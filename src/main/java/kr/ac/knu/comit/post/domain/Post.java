@@ -93,17 +93,23 @@ public class Post {
      *
      * @implNote 태그는 통째로 교체한다. 기존 row 정리는 orphan removal에 맡긴다.
      */
-    public void update(String title, String content, List<String> tagNames) {
+    public void update(String title, String content, List<String> tagNames, List<String> imageUrls) {
         List<String> normalizedTagNames = normalizeTagNames(tagNames);
+        List<String> normalizedImageUrls = normalizeImageUrls(imageUrls);
         validateTitle(title);
         validateContent(content);
         validateTagNames(normalizedTagNames);
+        validateImageUrls(normalizedImageUrls);
 
         this.title = title;
         this.content = content;
         this.updatedAt = LocalDateTime.now();
         this.tags.clear();
         normalizedTagNames.forEach(name -> this.tags.add(PostTag.of(this, name)));
+        this.images.clear();
+        for (int i = 0; i < normalizedImageUrls.size(); i++) {
+            this.images.add(PostImage.of(this, normalizedImageUrls.get(i), i));
+        }
     }
 
     public void delete() {
