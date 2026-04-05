@@ -34,6 +34,7 @@ public class PostService {
     private final PostDailyVisitorRepository postDailyVisitorRepository;
     private final MemberService memberService;
     private final CommentQueryService commentQueryService;
+    private final ContentPreviewGenerator contentPreviewGenerator;
 
     /**
      * cursor 기반으로 게시글 목록을 조회한다.
@@ -59,7 +60,8 @@ public class PostService {
                 posts,
                 pageSize,
                 commentQueryService.countActiveCommentsByPostIds(postIds),
-                imageUrlsByPostId(postIds)
+                imageUrlsByPostId(postIds),
+                contentPreviewGenerator::generate
         );
     }
 

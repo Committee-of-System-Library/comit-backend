@@ -84,6 +84,9 @@ comit:
       cookie-path: ${COMIT_AUTH_SSO_COOKIE_PATH:/}
       cookie-secure: ${COMIT_AUTH_SSO_COOKIE_SECURE:true}
       cookie-same-site: ${COMIT_AUTH_SSO_COOKIE_SAME_SITE:Lax}
+  post:
+    preview:
+      max-lines: ${COMIT_POST_PREVIEW_MAX_LINES:2}
   storage:
     s3:
       bucket-name: ${S3_BUCKET_NAME:}

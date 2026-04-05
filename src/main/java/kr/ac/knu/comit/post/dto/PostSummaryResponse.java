@@ -21,14 +21,13 @@ public record PostSummaryResponse(
         List<String> imageUrls,
         LocalDateTime createdAt
 ) {
-    private static final int CONTENT_PREVIEW_MAX_LENGTH = 80;
-
-    public static PostSummaryResponse from(Post post, int commentCount, List<String> imageUrls) {
+    public static PostSummaryResponse from(Post post, int commentCount, List<String> imageUrls,
+                                           String contentPreview) {
         return new PostSummaryResponse(
                 post.getId(),
                 post.getBoardType(),
                 post.getTitle(),
-                toContentPreview(post.getContent()),
+                contentPreview,
                 post.getMember().getNickname(),
                 post.getLikeCount(),
                 commentCount,
@@ -36,14 +35,5 @@ public record PostSummaryResponse(
                 imageUrls,
                 post.getCreatedAt()
         );
-    }
-
-    private static String toContentPreview(String content) {
-        // TODO: preview 로직 복잡화 시 ContentPreviewGenerator 분리 검토
-        String normalized = content == null ? "" : content.replaceAll("\\s+", " ").trim();
-        if (normalized.length() <= CONTENT_PREVIEW_MAX_LENGTH) {
-            return normalized;
-        }
-        return normalized.substring(0, CONTENT_PREVIEW_MAX_LENGTH) + "...";
     }
 }
