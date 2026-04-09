@@ -2,6 +2,7 @@ package kr.ac.knu.comit.member.service;
 
 import kr.ac.knu.comit.comment.domain.Comment;
 import kr.ac.knu.comit.comment.domain.CommentRepository;
+import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.member.dto.MyActivitySummaryResponse;
@@ -11,9 +12,12 @@ import kr.ac.knu.comit.member.dto.MyLikedPostCursorPageResponse;
 import kr.ac.knu.comit.member.dto.MyLikedPostSummary;
 import kr.ac.knu.comit.member.dto.MyPostSummary;
 import kr.ac.knu.comit.post.domain.Post;
+import kr.ac.knu.comit.post.domain.PostImage;
+import kr.ac.knu.comit.post.domain.PostImageRepository;
 import kr.ac.knu.comit.post.domain.PostLike;
 import kr.ac.knu.comit.post.domain.PostLikeRepository;
 import kr.ac.knu.comit.post.domain.PostRepository;
+import kr.ac.knu.comit.post.dto.PostCursorPageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +36,25 @@ public class MemberActivityService {
     private static final int RECENT_ITEM_COUNT = 3;
 
     private final PostRepository postRepository;
+    private final PostImageRepository postImageRepository;
     private final CommentRepository commentRepository;
+    private final CommentQueryService commentQueryService;
     private final PostLikeRepository postLikeRepository;
+
+    public PostCursorPageResponse getMyPosts(Long memberId, Long cursorId, int size) {
+        if (size <= 0) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+        int pageSize = Math.min(size, DEFAULT_PAGE_SIZE);
+        List<Post> posts = postRepository.findMyPosts(memberId, cursorId, pageSize + 1);
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+        return PostCursorPageResponse.of(
+                posts,
+                pageSize,
+                commentQueryService.countActiveCommentsByPostIds(postIds),
+                imageUrlsByPostId(postIds)
+        );
+    }
 
     public MyActivitySummaryResponse getActivitySummary(Long memberId) {
         long postCount    = postRepository.countMyPosts(memberId);
@@ -89,5 +110,14 @@ public class MemberActivityService {
                 .filter(like -> postById.containsKey(like.getPostId()))
                 .map(like -> MyLikedPostSummary.from(like, postById.get(like.getPostId())))
                 .toList();
+    }
+
+    private Map<Long, List<String>> imageUrlsByPostId(List<Long> postIds) {
+        return postImageRepository.findByPost_IdInOrderBySortOrderAsc(postIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        PostImage::getPostId,
+                        Collectors.mapping(PostImage::getImageUrl, Collectors.toList())
+                ));
     }
 }
