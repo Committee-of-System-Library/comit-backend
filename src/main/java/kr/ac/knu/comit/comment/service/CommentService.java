@@ -107,6 +107,16 @@ public class CommentService {
         return LikeToggleResponse.unlikedState();
     }
 
+    /**
+     * 회원 삭제 시 댓글 좋아요 이력과 집계를 정리한다.
+     */
+    @Transactional
+    public void removeMemberLikes(Long memberId) {
+        List<Long> likedCommentIds = commentLikeRepository.findCommentIdsByMemberId(memberId);
+        likedCommentIds.forEach(commentRepository::decrementLikeCount);
+        commentLikeRepository.deleteAllByMemberId(memberId);
+    }
+
     private Comment findCommentOrThrow(Long commentId) {
         return commentRepository.findActiveById(commentId)
                 .orElseThrow(() -> new BusinessException(CommentErrorCode.COMMENT_NOT_FOUND));

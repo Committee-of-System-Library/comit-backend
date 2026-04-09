@@ -19,7 +19,7 @@ public record CommentResponse(
         return new CommentResponse(
                 comment.getId(),
                 comment.getContent(),
-                comment.getMember().getNickname(),
+                comment.getMember().getDisplayNickname(),
                 comment.getLikeCount(),
                 likedByMe,
                 mine,

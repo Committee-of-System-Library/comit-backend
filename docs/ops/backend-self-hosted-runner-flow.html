@@ -1,0 +1,1010 @@
+<!--
+  Comit backend push 이후 GitHub Actions, GHCR, self-hosted runner, sidowi compose가
+  어떻게 이어지는지 설명하는 문서형 시각화 HTML.
+-->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comit Backend Self-Hosted Runner Flow</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --text: #162133;
+        --muted: #61718a;
+        --line: #d8e1ec;
+        --shadow: 0 18px 42px rgba(22, 33, 51, 0.08);
+        --github: #24292f;
+        --purple: #7f56d9;
+        --runner: #0f8f88;
+        --blue: #234a7a;
+        --server: #234a7a;
+        --cloud: #1f2937;
+        --ok: #0f8c4f;
+        --warn: #b7791f;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(35, 74, 122, 0.08), transparent 26%),
+          radial-gradient(circle at top right, rgba(127, 86, 217, 0.1), transparent 24%),
+          var(--bg);
+        font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      }
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        background: #f2f5f9;
+        border: 1px solid #e1e8f0;
+        border-radius: 8px;
+        padding: 0.16rem 0.38rem;
+        font-size: 0.92em;
+      }
+      a { color: inherit; }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr) 340px;
+        min-height: 100vh;
+      }
+
+      .sidebar,
+      .detail-pane {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: auto;
+        background: rgba(255, 255, 255, 0.86);
+        backdrop-filter: blur(12px);
+      }
+
+      .sidebar {
+        padding: 28px 22px;
+        border-right: 1px solid var(--line);
+      }
+
+      .detail-pane {
+        padding: 28px 22px;
+        border-left: 1px solid var(--line);
+      }
+
+      .content { padding: 34px 34px 48px; }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #24497a;
+        background: #eaf2ff;
+      }
+
+      .sidebar h1,
+      .detail-pane h2 {
+        margin: 0 0 10px;
+        font-size: 1.35rem;
+        line-height: 1.25;
+      }
+
+      .sidebar p,
+      .detail-pane p,
+      .section-lead,
+      .hero p,
+      .card p,
+      .detail-section li,
+      .callout p { color: var(--muted); line-height: 1.72; }
+
+      .nav {
+        display: grid;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .nav a,
+      .tab-button {
+        display: block;
+        text-decoration: none;
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        background: #f8fafc;
+        font-weight: 600;
+        transition: 160ms ease;
+      }
+
+      .nav a:hover,
+      .tab-button:hover,
+      .tab-button[aria-selected="true"] {
+        background: white;
+        border-color: #cad6e5;
+      }
+
+      .legend {
+        margin-top: 24px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+
+      .swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+      }
+
+      .hero,
+      .map-panel,
+      .card,
+      .flow-step,
+      .source-box,
+      .risk-box,
+      .note-card,
+      .detail-callout,
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+      }
+
+      .hero { padding: 28px; margin-bottom: 18px; }
+      .hero h2 { margin: 0 0 12px; font-size: 2rem; line-height: 1.2; }
+
+      .callout-grid,
+      .overview-grid,
+      .card-callout-grid,
+      .lane-grid,
+      .source-grid,
+      .risk-grid,
+      .detail-callouts {
+        display: grid;
+        gap: 14px;
+      }
+
+      .callout-grid,
+      .detail-callouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .lane-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .source-grid,
+      .risk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card-callout-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 12px; }
+
+      .callout {
+        padding: 12px 12px 13px;
+        border-radius: 14px;
+        border: 1px solid #d8e2ee;
+        background: #f9fbfe;
+      }
+      .callout strong {
+        display: inline-flex;
+        margin-bottom: 6px;
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      .callout.why { background: #f4f7ff; border-color: rgba(35, 74, 122, 0.15); }
+      .callout.why strong { color: var(--server); }
+      .callout.inspect { background: #eef8f6; border-color: rgba(15, 143, 136, 0.18); }
+      .callout.inspect strong { color: var(--runner); }
+
+      .metric {
+        padding: 18px 20px;
+        background: #f9fbfd;
+        border: 1px solid #e0e8f2;
+        border-radius: 18px;
+      }
+      .metric strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      .metric span { font-size: 1.06rem; font-weight: 800; }
+
+      .section-title { margin: 0 0 10px; font-size: 1.38rem; }
+      .section-lead, .section-kicker { margin: 0 0 14px; }
+
+      .map-panel {
+        padding: 22px 22px 18px;
+        margin-bottom: 18px;
+        border-left: 6px solid var(--server);
+      }
+      .map-note { margin-top: 10px; color: var(--muted); line-height: 1.65; }
+      .mini-hint { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.9rem; margin-top: 10px; }
+      .mermaid { overflow-x: auto; }
+
+      .pill-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .layer-card {
+        position: relative;
+        padding: 18px 18px 20px;
+        text-align: left;
+        color: var(--text);
+        min-height: 250px;
+        border-left: 8px solid var(--accent, var(--line));
+        background: linear-gradient(180deg, #ffffff, #f9fbff);
+      }
+      .layer-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, var(--accent-soft, rgba(0, 0, 0, 0.04)), transparent 44%);
+        pointer-events: none;
+        border-radius: 22px;
+      }
+      .layer-card > * { position: relative; z-index: 1; }
+      .layer-card.is-active { outline: 2px solid rgba(35, 74, 122, 0.18); transform: translateY(-1px); }
+      .layer-card p, .layer-card li { color: var(--muted); }
+
+      .layer-local { --accent: #1f2937; --accent-soft: rgba(31, 41, 55, 0.07); }
+      .layer-github { --accent: var(--github); --accent-soft: rgba(36, 41, 47, 0.08); }
+      .layer-ghcr { --accent: var(--purple); --accent-soft: rgba(127, 86, 217, 0.09); }
+      .layer-runner { --accent: var(--runner); --accent-soft: rgba(15, 143, 136, 0.1); }
+      .layer-server { --accent: var(--server); --accent-soft: rgba(35, 74, 122, 0.09); }
+
+      .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #36506f;
+        background: #f7fbff;
+        border: 1px solid #d6e2ef;
+      }
+      .tag.strong { color: var(--text); background: #eef4ff; border-color: #cfdcf1; }
+      .tag.ghost { background: #f7f9fc; color: #73839b; }
+      .role-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 800;
+      }
+      .role-chip.dev { background: #1f2937; }
+      .role-chip.github { background: var(--github); }
+      .role-chip.ghcr { background: var(--purple); }
+      .role-chip.runner { background: var(--runner); }
+      .role-chip.server { background: var(--server); }
+
+      .note-card,
+      .source-box,
+      .risk-box,
+      .detail-card {
+        padding: 18px 18px 20px;
+      }
+      .source-box, .risk-box { border-left: 6px solid var(--server); }
+      .risk-box { border-left-color: var(--warn); }
+      .source-box ul, .risk-box ul, .detail-section ul { margin: 10px 0 0; padding-left: 18px; }
+      .source-box li, .risk-box li, .detail-section li { margin-bottom: 6px; color: var(--muted); }
+
+      .flow { display: grid; gap: 16px; }
+      .flow-step { position: relative; padding: 20px 22px; }
+      .flow-step::before {
+        content: "";
+        position: absolute;
+        left: 30px;
+        top: -16px;
+        width: 2px;
+        height: 16px;
+        background: #cad7e7;
+      }
+      .flow-step:first-child::before { display: none; }
+      .flow-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+      .step-badge {
+        width: 34px; height: 34px; border-radius: 999px;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: white; font-weight: 800;
+      }
+      .flow-step h3, .card h3, .source-box h3, .risk-box h3, .note-card h3 { margin: 0 0 8px; font-size: 1rem; }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .source-box { border-left-color: var(--server); }
+      .risk-box { border-left-color: var(--warn); }
+      .status-stack { display: grid; gap: 12px; }
+      .status-item {
+        display: grid;
+        grid-template-columns: 130px 1fr;
+        gap: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+      .status-item:first-child { padding-top: 0; border-top: none; }
+      .status-item strong { font-size: 0.92rem; }
+
+      .detail-pane h2 { margin-bottom: 12px; }
+      .detail-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+      .detail-chip {
+        padding: 6px 10px; border-radius: 999px;
+        background: #f7fafc; border: 1px solid #dce5ef;
+        font-size: 0.82rem; color: #4e627e; font-weight: 700;
+      }
+      .detail-callout {
+        padding: 14px 14px 15px;
+        border-radius: 16px;
+        background: #f8fbff;
+        border: 1px solid #dbe6f2;
+      }
+      .detail-callout.inspect { background: #eef8f6; border-color: rgba(15, 143, 136, 0.18); }
+      .detail-callout h3 { margin: 0 0 8px; font-size: 0.96rem; }
+      .detail-callout p { margin: 0; line-height: 1.68; color: var(--muted); }
+      .detail-callout.why h3 { color: var(--server); }
+      .detail-callout.inspect h3 { color: var(--runner); }
+      .detail-muted { margin-top: 8px; color: var(--muted); font-size: 0.92rem; }
+      .detail-section + .detail-section { margin-top: 18px; }
+      .detail-section h3 { margin: 0 0 8px; font-size: 0.98rem; }
+      .detail-section.deps { border-top: 1px dashed #d5dde8; padding-top: 14px; opacity: 0.84; }
+      .detail-empty { color: var(--muted); }
+
+      .small { font-size: 0.9rem; }
+
+      @media (max-width: 1400px) {
+        .layout { grid-template-columns: 260px minmax(0, 1fr); }
+        .detail-pane { display: none; }
+      }
+      @media (max-width: 1120px) {
+        .overview-grid,
+        .callout-grid,
+        .lane-grid,
+        .source-grid,
+        .risk-grid,
+        .pill-grid,
+        .card-callout-grid,
+        .detail-callouts { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .sidebar {
+          position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line);
+        }
+        .content { padding: 24px 18px 40px; }
+        .status-item { grid-template-columns: 1fr; gap: 8px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="eyebrow">Comit 운영 시각화</div>
+        <h1>Backend Push → Runner → Deploy</h1>
+        <p>
+          `main` push 이후 GitHub Actions, GHCR, self-hosted runner, `sidowi` compose가
+          어떤 순서로 이어지는지 설명하는 운영 문서입니다.
+        </p>
+
+        <nav class="nav">
+          <a href="#summary">개요</a>
+          <a href="#map">미니 맵</a>
+          <a href="#architecture">구성 요소</a>
+          <a href="#sequence">실행 순서</a>
+          <a href="#truth">소스 오브 트루스</a>
+          <a href="#failure">실패 지점</a>
+          <a href="#status">현재 상태</a>
+        </nav>
+
+        <div class="legend">
+          <div class="legend-item"><span class="swatch" style="background:#1f2937"></span>Developer / Git push</div>
+          <div class="legend-item"><span class="swatch" style="background:#24292f"></span>GitHub Actions / Cloud</div>
+          <div class="legend-item"><span class="swatch" style="background:#7f56d9"></span>GHCR</div>
+          <div class="legend-item"><span class="swatch" style="background:#0f8f88"></span>Self-hosted runner</div>
+          <div class="legend-item"><span class="swatch" style="background:#234a7a"></span>Production server</div>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section id="summary" class="hero">
+          <div class="eyebrow">요약</div>
+          <h2>GitHub가 이미지를 만들고, `sidowi`의 runner가 실제 서버를 다시 올립니다.</h2>
+          <p>
+            이 배포 구조의 핵심은 역할 분리입니다. GitHub hosted runner는
+            <strong>검증과 이미지 빌드/GHCR push</strong>까지만 담당하고, 마지막 서버 반영은
+            <strong>`sidowi`에 붙어 있는 self-hosted runner</strong>가 담당합니다.
+          </p>
+
+          <div class="callout-grid">
+            <div class="callout why">
+              <strong>Why</strong>
+              <p>배포 책임을 클라우드와 서버로 나누면, 테스트 실패와 실제 운영 반영을 분리할 수 있습니다.</p>
+            </div>
+            <div class="callout inspect">
+              <strong>Inspect</strong>
+              <p><code>workflow → runner → GHCR → compose → env → endpoint</code> 순서로 좁히면 됩니다.</p>
+            </div>
+          </div>
+
+          <div class="overview-grid">
+            <div class="metric">
+              <strong>Trigger</strong>
+              <span><code>main</code> push / <code>workflow_dispatch</code></span>
+            </div>
+            <div class="metric">
+              <strong>Deploy Target</strong>
+              <span><code>ghcr.io/.../knu-cse-comit-server:latest</code></span>
+            </div>
+            <div class="metric">
+              <strong>Runner Match</strong>
+              <span><code>self-hosted</code> + <code>backend</code></span>
+            </div>
+          </div>
+        </section>
+
+        <section id="map">
+          <h2 class="section-title">미니 맵</h2>
+          <p class="section-kicker">페이지의 스파인입니다. 노드를 누르면 아래 카드와 오른쪽 상세 패널이 같은 대상으로 맞춰집니다.</p>
+
+          <div class="map-panel">
+            <div class="mermaid">
+graph LR
+  local["Developer<br/>push / merge"]:::dev --> github["GitHub Actions<br/>test + build"]:::github
+  github --> ghcr["GHCR<br/>latest image"]:::ghcr
+  ghcr --> runner["Self-hosted runner<br/>Comit_BE"]:::runner
+  runner --> server["Production server<br/>sidowi / Docker"]:::server
+  click local focusLocal "Focus developer card"
+  click github focusGithub "Focus GitHub Actions card"
+  click ghcr focusGhcr "Focus GHCR card"
+  click runner focusRunner "Focus runner card"
+  click server focusServer "Focus production server card"
+  classDef dev fill:#eef3f8,stroke:#1f2937,color:#162133,stroke-width:1.6px;
+  classDef github fill:#24292f,stroke:#24292f,color:#ffffff,stroke-width:1.8px;
+  classDef ghcr fill:#7f56d9,stroke:#7f56d9,color:#ffffff,stroke-width:1.8px;
+  classDef runner fill:#0f8f88,stroke:#0f8f88,color:#ffffff,stroke-width:1.8px;
+  classDef server fill:#234a7a,stroke:#234a7a,color:#ffffff,stroke-width:1.8px;
+            </div>
+            <div class="map-note">
+              이 맵은 장식이 아니라 탐색용입니다. 각 노드는 아래 카드의 상세 설명으로 연결되고,
+              카드의 <code>Why</code>와 <code>Inspect</code>가 먼저 보이도록 설계했습니다.
+            </div>
+            <div class="mini-hint">Hint: map node click → card focus + right panel sync</div>
+          </div>
+        </section>
+
+        <section id="architecture">
+          <h2 class="section-title">구성 요소</h2>
+          <p class="section-lead">
+            운영 기준 전체 흐름은 다섯 층으로 나뉩니다. 아래 카드는 흰색 문서 카드로 두고,
+            오른쪽 패널은 `Why`와 `Inspect`를 먼저 보여줍니다.
+          </p>
+
+          <div class="pill-grid">
+            <button id="card-local" class="layer-card layer-local node-button" type="button" data-node="local">
+              <span class="role-chip dev">Developer / Git</span>
+              <strong>1. 개발자 / Git push</strong>
+              <p>코드를 merge하거나 `main`에 push해서 workflow를 시작합니다.</p>
+              <div class="card-callout-grid">
+                <div class="callout why">
+                  <strong>Why</strong>
+                  <p>배포는 결국 코드 변경에서 시작됩니다.</p>
+                </div>
+                <div class="callout inspect">
+                  <strong>Inspect</strong>
+                  <p>최근 `main` push, commit SHA, workflow run 제목.</p>
+                </div>
+              </div>
+              <div class="tag-row">
+                <span class="tag ghost">push</span>
+                <span class="tag ghost">merge</span>
+              </div>
+            </button>
+
+            <button id="card-github" class="layer-card layer-github node-button" type="button" data-node="github">
+              <span class="role-chip github">GitHub / Cloud</span>
+              <strong>2. GitHub Actions</strong>
+              <p><code>test</code>와 <code>build-and-push</code>를 hosted runner에서 처리합니다.</p>
+              <div class="card-callout-grid">
+                <div class="callout why">
+                  <strong>Why</strong>
+                  <p>검증과 artifact 생성은 서버와 분리해야 안전합니다.</p>
+                </div>
+                <div class="callout inspect">
+                  <strong>Inspect</strong>
+                  <p>`deploy.yml`, hosted runner 로그, test/build 단계 실패.</p>
+                </div>
+              </div>
+              <div class="tag-row">
+                <span class="tag ghost">ubuntu-latest</span>
+                <span class="tag ghost">JDK 21</span>
+              </div>
+            </button>
+
+            <button id="card-ghcr" class="layer-card layer-ghcr node-button" type="button" data-node="ghcr">
+              <span class="role-chip ghcr">GHCR</span>
+              <strong>3. GHCR</strong>
+              <p>최신 backend 이미지가 올라가는 registry입니다. runner는 여기서 이미지를 pull합니다.</p>
+              <div class="card-callout-grid">
+                <div class="callout why">
+                  <strong>Why</strong>
+                  <p>배포 artifact를 서버가 직접 빌드하지 않게 하기 위해 필요합니다.</p>
+                </div>
+                <div class="callout inspect">
+                  <strong>Inspect</strong>
+                  <p>최근 push된 tag, digest, runner가 pull한 image.</p>
+                </div>
+              </div>
+              <div class="tag-row">
+                <span class="tag ghost">latest</span>
+                <span class="tag ghost">timestamp</span>
+              </div>
+            </button>
+
+            <button id="card-runner" class="layer-card layer-runner node-button" type="button" data-node="runner">
+              <span class="role-chip runner">Self-Hosted Runner</span>
+              <strong>4. Self-Hosted Runner</strong>
+              <p>현재 `sidowi`에서 직접 `deploy` job을 수행하는 실행 주체입니다.</p>
+              <div class="card-callout-grid">
+                <div class="callout why">
+                  <strong>Why</strong>
+                  <p>GitHub deploy job을 실제 서버 명령으로 바꾸는 다리 역할입니다.</p>
+                </div>
+                <div class="callout inspect">
+                  <strong>Inspect</strong>
+                  <p>Runner online 여부, `Comit_BE`, label `backend`.</p>
+                </div>
+              </div>
+              <div class="tag-row">
+                <span class="tag ghost">Comit_BE</span>
+                <span class="tag ghost">backend</span>
+              </div>
+            </button>
+
+            <button id="card-server" class="layer-card layer-server node-button" type="button" data-node="server">
+              <span class="role-chip server">Production Server</span>
+              <strong>5. sidowi / Docker</strong>
+              <p>최종적으로 `knu-cse-comit-server` 컨테이너가 다시 떠서 live 반영이 되는 환경입니다.</p>
+              <div class="card-callout-grid">
+                <div class="callout why">
+                  <strong>Why</strong>
+                  <p>사용자가 실제로 접속하는 live runtime이기 때문입니다.</p>
+                </div>
+                <div class="callout inspect">
+                  <strong>Inspect</strong>
+                  <p>`docker ps`, `docker inspect env`, `/comit-staging/api/docs`.</p>
+                </div>
+              </div>
+              <div class="tag-row">
+                <span class="tag ghost">compose</span>
+                <span class="tag ghost">comit.env</span>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <section id="sequence">
+          <h2 class="section-title">실행 순서</h2>
+          <p class="section-lead">
+            아래 탭은 같은 흐름을 두 가지 관점으로 보여줍니다. 먼저 순차 흐름을 읽고, 그다음
+            runtime 관점으로 보면 이해가 더 빠릅니다.
+          </p>
+
+          <div class="tabs" role="tablist" aria-label="배포 흐름 탭">
+            <button class="tab-button" type="button" role="tab" aria-selected="true" data-tab="timeline">순차 흐름</button>
+            <button class="tab-button" type="button" role="tab" aria-selected="false" data-tab="runtime">runtime 관점</button>
+          </div>
+
+          <div class="tab-panel active" id="tab-timeline">
+            <div class="flow">
+              <div class="flow-step">
+                <div class="flow-header">
+                  <span class="step-badge" style="background:#1f2937">1</span>
+                  <h3><code>main</code> push 또는 merge 발생</h3>
+                </div>
+                <p>workflow trigger는 <code>push: branches: [ "main" ]</code> 입니다. feature 브랜치 push만으로는 운영 배포가 일어나지 않습니다.</p>
+                <div class="tag-row"><span class="tag">workflow trigger</span><span class="tag">confirmed</span></div>
+              </div>
+
+              <div class="flow-step">
+                <div class="flow-header">
+                  <span class="step-badge" style="background:#24292f">2</span>
+                  <h3><code>test</code> job 실행</h3>
+                </div>
+                <p>GitHub hosted runner에서 <code>./gradlew test</code>가 먼저 돌고, 여기서 실패하면 이후 배포 단계는 시작되지 않습니다.</p>
+                <div class="tag-row"><span class="tag">Gate 1</span><span class="tag">ubuntu-latest</span></div>
+              </div>
+
+              <div class="flow-step">
+                <div class="flow-header">
+                  <span class="step-badge" style="background:#7f56d9">3</span>
+                  <h3><code>build-and-push</code> job 실행</h3>
+                </div>
+                <p>이어 <code>./gradlew clean build</code> 후 Docker 이미지를 build하고, GHCR에 <code>latest</code>와 타임스탬프 태그를 push합니다.</p>
+                <div class="tag-row"><span class="tag">Gate 2</span><span class="tag">GHCR push</span></div>
+              </div>
+
+              <div class="flow-step">
+                <div class="flow-header">
+                  <span class="step-badge" style="background:#0f8f88">4</span>
+                  <h3><code>deploy</code> job이 runner를 찾음</h3>
+                </div>
+                <p><code>runs-on: [ 'self-hosted', 'backend' ]</code> 를 만족하는 runner가 online이어야만 queue를 빠져나옵니다. runner가 없으면 GHCR push까지만 되고 실제 서버는 바뀌지 않습니다.</p>
+                <div class="tag-row"><span class="tag">label match</span><span class="tag">queue 탈출 조건</span></div>
+              </div>
+
+              <div class="flow-step">
+                <div class="flow-header">
+                  <span class="step-badge" style="background:#234a7a">5</span>
+                  <h3>runner가 `sidowi`에서 pull + compose 재기동</h3>
+                </div>
+                <p>여기부터는 GitHub 클라우드가 아니라 `sidowi` 안에서 명령이 실행됩니다. runner는 GHCR 로그인 후 최신 이미지를 pull하고, compose를 다시 올립니다.</p>
+                <div class="tag-row"><span class="tag">docker pull</span><span class="tag">compose up -d</span></div>
+              </div>
+
+              <div class="flow-step">
+                <div class="flow-header">
+                  <span class="step-badge" style="background:#0f8c4f">6</span>
+                  <h3>새 컨테이너가 <code>comit.env</code> 기준으로 기동</h3>
+                </div>
+                <p>최종 runtime source of truth는 <code>/opt/docker/env/comit.env</code> 입니다. deploy job은 base compose만 사용하기 때문에, 임시 smoke override는 여기서 다시 사라질 수 있습니다.</p>
+                <div class="tag-row"><span class="tag">confirmed</span><span class="tag">important runtime note</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="tab-runtime">
+            <div class="lane-grid">
+              <div class="card"><h3>GitHub가 맡는 일</h3><p>코드 checkout, 테스트, jar build, Docker image build, GHCR push까지입니다.</p><ul><li><code>test</code> job</li><li><code>build-and-push</code> job</li><li>아직 서버 접속은 하지 않음</li></ul></div>
+              <div class="card"><h3>GHCR의 역할</h3><p>최신 backend 이미지를 저장하는 중간 저장소입니다.</p><ul><li><code>latest</code> 기준 pull</li><li>runner가 참조하는 단일 artifact</li></ul></div>
+              <div class="card"><h3>Runner가 맡는 일</h3><p>GitHub deploy job을 `sidowi` 내부 명령으로 바꾸는 실행 주체입니다.</p><ul><li>현재 이름: <code>Comit_BE</code></li><li>labels: <code>self-hosted</code>, <code>backend</code></li><li>실행 위치: <code>/home/yujihun20251/actions-runner/comit-backend</code></li></ul></div>
+              <div class="card"><h3>sidowi가 맡는 일</h3><p>실제 컨테이너 runtime과 env 파일이 있는 최종 실행 환경입니다.</p><ul><li>compose: <code>/opt/docker/compose/docker-compose.services.yml</code></li><li>env: <code>/opt/docker/env/comit.env</code></li><li>container: <code>knu-cse-comit-server</code></li></ul></div>
+              <div class="card"><h3>운영자가 봐야 하는 것</h3><p>배포가 어긋나면 항상 “어디 층에서 멈췄는지”부터 좁혀야 합니다.</p><ul><li>run 상태</li><li>runner online 여부</li><li>pull 성공 여부</li><li>container env / endpoint 확인</li></ul></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="truth">
+          <h2 class="section-title">소스 오브 트루스</h2>
+          <p class="section-lead">이 페이지는 코드와 운영 문서를 섞어서 설명합니다. 아래 상자들은 무엇이 어디의 진실인지 구분해 줍니다.</p>
+          <div class="source-grid">
+            <div class="source-box"><h3>Workflow truth</h3><p class="small">배포 단계와 job 순서는 workflow 파일이 결정합니다.</p><ul><li><code>.github/workflows/deploy.yml</code></li><li><code>test → build-and-push → deploy</code></li><li><code>runs-on: [ 'self-hosted', 'backend' ]</code></li></ul></div>
+            <div class="source-box"><h3>Runtime truth</h3><p class="small">컨테이너가 어떤 값으로 뜨는지는 서버 env와 compose가 결정합니다.</p><ul><li><code>/opt/docker/compose/docker-compose.services.yml</code></li><li><code>/opt/docker/env/comit.env</code></li><li>임시값은 <code>comit.compose.override.yml</code></li></ul></div>
+            <div class="source-box"><h3>Runner truth</h3><p class="small">현재 runner가 online인지, 어떤 label을 갖는지는 GitHub runner 등록 상태가 결정합니다.</p><ul><li>name: <code>Comit_BE</code></li><li>labels: <code>self-hosted</code>, <code>Linux</code>, <code>X64</code>, <code>backend</code></li><li>현재는 user-level process로 기동</li></ul></div>
+            <div class="source-box"><h3>Ops narrative truth</h3><p class="small">왜 이렇게 운영하는지, 어떤 문제를 겪었는지는 ops 문서가 설명합니다.</p><ul><li><code>docs/ops/comit-staging-verification.md</code></li><li><code>docs/ops/comit-prod-like-backend-rollout.md</code></li></ul></div>
+          </div>
+        </section>
+
+        <section id="failure">
+          <div class="eyebrow" style="background: #fff5df; color: #8a5b00;">Failure Map</div>
+          <h2 class="section-title">실패 지점과 1차 점검 포인트</h2>
+          <p class="section-lead">
+            운영에서 제일 빨리 문제를 좁히려면 실패를 층별로 나눠서 봐야 합니다. 아래 보드는 “어디서 멈췄는지”와 “무엇을 먼저 의심할지”를 같이 보여줍니다.
+          </p>
+
+          <div class="panel" style="padding: 24px;">
+            <div class="status-stack">
+              <div class="status-item" style="border-left: 4px solid var(--warn); padding-left: 16px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="step-badge" style="background: var(--warn); width: 24px; height: 24px; font-size: 0.8rem;">1</span>
+                  <strong style="font-size: 1.05rem;">deploy job이 queue에만 남음</strong>
+                </div>
+                <div>
+                  <p style="margin-top: 8px;">
+                    배포가 GHCR push 이후로 진행되지 않는 가장 흔한 패턴입니다. 이 단계는 대개 runner 매칭이나 online 상태 문제입니다.
+                  </p>
+                  <div class="tag-row">
+                    <span class="tag">runner offline</span>
+                    <span class="tag">label mismatch</span>
+                    <span class="tag">repo에 runner 없음</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="status-item" style="border-left: 4px solid var(--purple); padding-left: 16px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="step-badge" style="background: var(--purple); width: 24px; height: 24px; font-size: 0.8rem;">2</span>
+                  <strong style="font-size: 1.05rem;">GHCR push는 됐는데 서버가 안 바뀜</strong>
+                </div>
+                <div>
+                  <p style="margin-top: 8px;">
+                    artifact는 만들어졌지만 실제 서버 반영 단계가 실패한 경우입니다. runner가 deploy job을 잡았는지와 서버 안에서 pull이 됐는지를 먼저 확인합니다.
+                  </p>
+                  <div class="tag-row">
+                    <span class="tag">runner가 deploy 못 잡음</span>
+                    <span class="tag"><code>docker pull</code> 실패</span>
+                    <span class="tag">compose 재기동 실패</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="status-item" style="border-left: 4px solid var(--runner); padding-left: 16px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="step-badge" style="background: var(--runner); width: 24px; height: 24px; font-size: 0.8rem;">3</span>
+                  <strong style="font-size: 1.05rem;">컨테이너는 떴는데 동작이 다름</strong>
+                </div>
+                <div>
+                  <p style="margin-top: 8px;">
+                    컨테이너 재기동은 성공했지만, 실제 런타임 값이 기대와 다른 경우입니다. 이 단계는 대개 env precedence나 override 중복 문제입니다.
+                  </p>
+                  <div class="tag-row">
+                    <span class="tag"><code>comit.env</code> 값 누락</span>
+                    <span class="tag">override 중복 키</span>
+                    <span class="tag">base compose만 사용</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="status-item" style="border-left: 4px solid var(--blue); padding-left: 16px; background: #f8fafc; border-radius: 0 8px 8px 0; padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="step-badge" style="background: var(--blue); width: 24px; height: 24px; font-size: 0.8rem;">4</span>
+                  <strong style="font-size: 1.05rem;">smoke 테스트가 갑자기 회귀</strong>
+                </div>
+                <div>
+                  <p style="margin-top: 8px;">
+                    개인 smoke 테스트나 임시 cross-site 설정은 deploy 이후 기본값으로 돌아가기 쉽습니다. staging 상시값과 임시 override를 분리해서 봐야 합니다.
+                  </p>
+                  <div class="tag-row">
+                    <span class="tag">success/error URL 기본값 복귀</span>
+                    <span class="tag">CORS origin 누락</span>
+                    <span class="tag"><code>SameSite=None</code> 실험값 소실</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="status">
+          <div class="eyebrow" style="background: #eaf8f0; color: #0a6c42;">Status Update</div>
+          <h2 class="section-title">현재 상태 및 남은 과제</h2>
+          <p class="section-lead">
+            배포 병목은 해결되었으며, Self-Hosted Runner 영구 서비스화만 남았습니다. 아래 상태 보드를 통해 핵심 진행률을 확인하세요.
+          </p>
+
+          <div class="panel" style="padding: 24px;">
+            <div class="status-stack">
+              <div class="status-item" style="border-left: 4px solid var(--ok); padding-left: 16px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="step-badge" style="background: var(--ok); width: 24px; height: 24px; font-size: 0.8rem;">✓</span>
+                  <strong style="font-size: 1.05rem;">지금 완료된 것 (Pipeline Connected)</strong>
+                </div>
+                <div>
+                  <p style="margin-top: 8px;">
+                    backend self-hosted runner가 online으로 전환되었고, 대기 중이던 <code>deploy</code> job을 성공적으로 수행하여 서버 반영까지 완료했습니다.
+                  </p>
+                  <div class="tag-row">
+                    <span class="tag" style="background: #eaf8f0; color: #0a6c42; border-color: #b7e4c7;">CI/CD Flow 연결 완료</span>
+                    <span class="tag">수동 jar 교체 불필요</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="status-item" style="border-left: 4px solid var(--warn); padding-left: 16px; margin-bottom: 8px;">
+                 <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="step-badge" style="background: var(--warn); width: 24px; height: 24px; font-size: 0.8rem;">!</span>
+                  <strong style="font-size: 1.05rem;">남은 과제 (Service Registration)</strong>
+                </div>
+                <div>
+                  <p style="margin-top: 8px;">
+                    현재 runner는 <code>yujihun20251</code> 사용자 권한의 백그라운드 프로세스로 동작 중입니다. 서버 재부팅 후 자동 복구를 위해 <strong>systemd 데몬 서비스화</strong>가 필요합니다.
+                  </p>
+                  <div class="tag-row">
+                    <span class="tag" style="background: #fff5df; color: #8a5b00; border-color: #fce1a9;">root 권한 systemd 등록 대기</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="status-item" style="border-left: 4px solid var(--blue); padding-left: 16px; background: #f8fafc; border-radius: 0 8px 8px 0; padding: 16px;">
+                 <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="step-badge" style="background: var(--blue); width: 24px; height: 24px; font-size: 0.8rem;">i</span>
+                  <strong style="font-size: 1.05rem;">운영 팁: 배포 트러블슈팅 순서</strong>
+                </div>
+                <div>
+                  <p style="margin-top: 8px; font-size: 0.95rem;">
+                    배포 이슈 발생 시 아래의 순서로 로그를 좁혀가면 원인 파악이 빠릅니다.
+                  </p>
+                  <code style="display: inline-block; margin-top: 8px; font-weight: bold; color: var(--blue);">
+                    workflow → runner 로그 → GHCR → compose logs → docker inspect env → endpoint 검증
+                  </code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="detail-pane">
+        <h2>상세 설명</h2>
+        <p class="detail-empty" id="detail-empty">왼쪽 구성 요소 카드를 누르면 왜 필요한지, 무엇을 소유하는지, 어디를 먼저 봐야 하는지 설명이 여기 열립니다.</p>
+        <div id="detail-content" hidden>
+          <h2 id="detail-title"></h2>
+          <div class="detail-meta" id="detail-meta"></div>
+
+          <div class="detail-callouts">
+            <div class="detail-callout why">
+              <h3>Why</h3>
+              <p id="detail-why"></p>
+            </div>
+            <div class="detail-callout inspect">
+              <h3>Inspect</h3>
+              <p id="detail-inspect"></p>
+              <div class="detail-muted" id="detail-inspect-hint"></div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>무엇을 소유하는가</h3>
+            <ul id="detail-owns"></ul>
+          </div>
+
+          <div class="detail-section deps">
+            <h3>무엇에 의존하는가</h3>
+            <ul id="detail-deps"></ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+      const tabs = document.querySelectorAll(".tab-button");
+      const panels = {
+        timeline: document.getElementById("tab-timeline"),
+        runtime: document.getElementById("tab-runtime"),
+      };
+
+      tabs.forEach((button) => {
+        button.addEventListener("click", () => {
+          tabs.forEach((item) => item.setAttribute("aria-selected", "false"));
+          Object.values(panels).forEach((panel) => panel.classList.remove("active"));
+          button.setAttribute("aria-selected", "true");
+          panels[button.dataset.tab].classList.add("active");
+        });
+      });
+
+      const detailData = {
+        local: {
+          title: "개발자 / Git push",
+          meta: ["Developer", "trigger layer"],
+          why: "모든 배포의 시작점입니다. workflow 자체를 시작시키는 이벤트는 결국 사람이 만드는 코드 변경과 main 반영입니다.",
+          owns: ["merge 또는 main push", "workflow_dispatch 수동 실행", "배포 대상이 되는 코드 상태"],
+          deps: ["GitHub repository", "main branch 정책"],
+          inspect: "최근 main push 여부와 run title, commit SHA를 먼저 봅니다.",
+          inspectHint: "주로 workflow가 시작됐는지부터 확인합니다.",
+        },
+        github: {
+          title: "GitHub Actions",
+          meta: ["GitHub / Cloud", "build-test owner"],
+          why: "테스트와 이미지 빌드를 서버와 분리해서 수행하기 위해 필요합니다.",
+          owns: ["test job", "build-and-push job", "GHCR 로그인 및 push"],
+          deps: [".github/workflows/deploy.yml", "GitHub hosted runner", "repository secrets / GITHUB_TOKEN"],
+          inspect: "Actions run 상태, test 실패 여부, build-and-push 로그를 봅니다.",
+          inspectHint: "여기서 막히면 runner보다 먼저 workflow 쪽을 의심합니다.",
+        },
+        ghcr: {
+          title: "GHCR",
+          meta: ["GitHub / Cloud", "artifact store"],
+          why: "GitHub에서 만든 배포 artifact를 sidowi가 가져갈 수 있게 하는 중간 저장소입니다.",
+          owns: ["latest tag", "timestamp tag", "deploy가 참조하는 image artifact"],
+          deps: ["docker build result", "GitHub package permissions"],
+          inspect: "최근 push된 image tag와 runner가 pull한 digest를 봅니다.",
+          inspectHint: "이미지 자체가 없으면 deploy는 성공할 수 없습니다.",
+        },
+        runner: {
+          title: "Self-Hosted Runner",
+          meta: ["Self-hosted runner", "deploy owner"],
+          why: "GitHub deploy job을 실제 sidowi 명령으로 바꾸는 실행 주체입니다.",
+          owns: ["deploy job 실행", "docker pull", "docker compose 재기동"],
+          deps: ["repo label match: self-hosted + backend", "sidowi의 docker 사용 권한", "runner online 상태"],
+          inspect: "Runner online 여부, `Comit_BE`, label `backend`를 봅니다.",
+          inspectHint: "대기열에서 안 빠지면 label 매칭과 online 상태부터 확인합니다.",
+        },
+        server: {
+          title: "sidowi / Docker Runtime",
+          meta: ["Production server", "runtime owner"],
+          why: "최종적으로 사용자가 실제로 접속하는 live runtime이기 때문입니다.",
+          owns: ["knu-cse-comit-server container", "compose file", "staging env source of truth"],
+          deps: ["/opt/docker/compose/docker-compose.services.yml", "/opt/docker/env/comit.env"],
+          inspect: "docker ps, docker inspect env, /comit-staging/api/docs, /comit-staging/api/auth/sso/login.",
+          inspectHint: "배포가 성공해도 endpoint가 안 열리면 여기부터 다시 봅니다.",
+        },
+      };
+
+      const empty = document.getElementById("detail-empty");
+      const content = document.getElementById("detail-content");
+      const title = document.getElementById("detail-title");
+      const meta = document.getElementById("detail-meta");
+      const why = document.getElementById("detail-why");
+      const owns = document.getElementById("detail-owns");
+      const deps = document.getElementById("detail-deps");
+      const inspect = document.getElementById("detail-inspect");
+      const inspectHint = document.getElementById("detail-inspect-hint");
+      const nodeButtons = Array.from(document.querySelectorAll(".node-button"));
+
+      const renderList = (element, items) => {
+        element.innerHTML = "";
+        items.forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = item;
+          element.appendChild(li);
+        });
+      };
+
+      const setActiveCard = (key) => {
+        nodeButtons.forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.node === key);
+        });
+      };
+
+      const showDetail = (key) => {
+        const data = detailData[key];
+        if (!data) return;
+        empty.hidden = true;
+        content.hidden = false;
+        title.textContent = data.title;
+        why.textContent = data.why;
+        inspect.textContent = data.inspect;
+        inspectHint.textContent = data.inspectHint;
+        meta.innerHTML = "";
+        data.meta.forEach((item) => {
+          const span = document.createElement("span");
+          span.className = "detail-chip";
+          span.textContent = item;
+          meta.appendChild(span);
+        });
+        renderList(owns, data.owns);
+        renderList(deps, data.deps);
+        setActiveCard(key);
+      };
+
+      const focusNode = (key) => {
+        const card = document.getElementById(`card-${key}`);
+        if (card) {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          card.focus({ preventScroll: true });
+        }
+        showDetail(key);
+      };
+
+      window.focusLocal = () => focusNode("local");
+      window.focusGithub = () => focusNode("github");
+      window.focusGhcr = () => focusNode("ghcr");
+      window.focusRunner = () => focusNode("runner");
+      window.focusServer = () => focusNode("server");
+
+      nodeButtons.forEach((button) => {
+        button.addEventListener("click", () => focusNode(button.dataset.node));
+      });
+
+      if (window.mermaid) {
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "loose",
+          theme: "base",
+          themeVariables: {
+            fontFamily: '"Pretendard","Noto Sans KR","Apple SD Gothic Neo",sans-serif',
+            primaryColor: "#f4f7fb",
+            primaryBorderColor: "#d8e1ec",
+            primaryTextColor: "#162133",
+          },
+        });
+        mermaid.run({ querySelector: ".mermaid" }).catch(() => {});
+      }
+    </script>
+  </body>
+</html>

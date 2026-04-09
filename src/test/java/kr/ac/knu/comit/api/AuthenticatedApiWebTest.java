@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -24,6 +25,7 @@ import kr.ac.knu.comit.comment.service.AdminCommentService;
 import kr.ac.knu.comit.comment.service.CommentService;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
+import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.global.auth.MemberArgumentResolver;
 import kr.ac.knu.comit.global.auth.MemberAuthenticationFilter;
 import kr.ac.knu.comit.global.config.WebMvcConfig;
@@ -406,6 +408,19 @@ class AuthenticatedApiWebTest {
     }
 
     @Test
+    void returnsForbiddenWhenNonAdminRequestsAdminMemberDelete() throws Exception {
+        // when & then
+        // 관리자 권한이 아니면 회원 삭제 관리자 API 접근이 거부되어야 한다.
+        mockMvc.perform(delete("/admin/members/1")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "student")
+                        .header("X-Member-Role", "STUDENT"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("/problems/common/forbidden"))
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
+    }
+
+    @Test
     void returnsForbiddenWhenNonAdminRequestsAdminPostList() throws Exception {
         // when & then
         // 관리자 권한이 아니면 게시글 관리자 API 접근이 거부되어야 한다.
@@ -453,6 +468,40 @@ class AuthenticatedApiWebTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.type").value("/problems/common/invalid-request"))
                 .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST"));
+    }
+
+    @Test
+    void deletesMemberWhenAdminRequestsAdminMemberDelete() throws Exception {
+        // given
+        // 실제 회원 조회까지 도달하도록 관리자 대상 회원을 준비한다.
+        given(memberRepository.findByIdAndDeletedAtIsNull(1L))
+                .willReturn(Optional.of(authenticatedMember()));
+
+        // when & then
+        // 관리자 회원 삭제 요청은 성공 응답을 반환해야 한다.
+        mockMvc.perform(delete("/admin/members/1")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "admin")
+                        .header("X-Member-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"));
+    }
+
+    @Test
+    void returnsNotFoundWhenAdminRequestsMissingAdminMemberDelete() throws Exception {
+        // given
+        // 삭제 대상 회원이 존재하지 않는 상황을 준비한다.
+        given(memberRepository.findByIdAndDeletedAtIsNull(99L)).willReturn(Optional.empty());
+
+        // when & then
+        // 존재하지 않는 회원 삭제 요청은 MEMBER_NOT_FOUND ProblemDetail로 변환되어야 한다.
+        mockMvc.perform(delete("/admin/members/99")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "admin")
+                        .header("X-Member-Role", "ADMIN"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type").value("/problems/member/not-found"))
+                .andExpect(jsonPath("$.errorCode").value("MEMBER_NOT_FOUND"));
     }
 
     @Test

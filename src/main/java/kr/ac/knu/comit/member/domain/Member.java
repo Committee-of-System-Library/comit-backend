@@ -10,6 +10,10 @@ import kr.ac.knu.comit.global.exception.MemberErrorCode;
 @Table(name = "member")
 public class Member {
 
+    private static final String DELETED_MEMBER_DISPLAY_NICKNAME = "탈퇴한 사용자";
+    private static final String DELETED_MEMBER_INTERNAL_NICKNAME_PREFIX = "deleted-member-";
+    private static final String DELETED_MEMBER_PHONE_PREFIX = "deleted-phone-";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -91,7 +95,18 @@ public class Member {
     }
 
     public void delete() {
+        if (isDeleted()) {
+            return;
+        }
         this.deletedAt = LocalDateTime.now();
+        this.nickname = deletedMemberInternalNickname();
+        this.name = DELETED_MEMBER_DISPLAY_NICKNAME;
+        this.phone = deletedMemberPhone();
+        this.profileImageUrl = null;
+        this.studentNumber = null;
+        this.majorTrack = null;
+        this.studentNumberVisible = false;
+        this.suspendedUntil = null;
     }
 
     public boolean isDeleted() {
@@ -108,6 +123,10 @@ public class Member {
 
     public String getNickname() {
         return nickname;
+    }
+
+    public String getDisplayNickname() {
+        return isDeleted() ? DELETED_MEMBER_DISPLAY_NICKNAME : nickname;
     }
 
     public String getName() {
@@ -215,5 +234,17 @@ public class Member {
         if (suspendedUntil != null && !suspendedUntil.isAfter(LocalDateTime.now())) {
             throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
         }
+    }
+
+    private String deletedMemberInternalNickname() {
+        return DELETED_MEMBER_INTERNAL_NICKNAME_PREFIX + deletionSuffix();
+    }
+
+    private String deletedMemberPhone() {
+        return DELETED_MEMBER_PHONE_PREFIX + deletionSuffix();
+    }
+
+    private String deletionSuffix() {
+        return id != null ? String.valueOf(id) : String.valueOf(System.currentTimeMillis());
     }
 }

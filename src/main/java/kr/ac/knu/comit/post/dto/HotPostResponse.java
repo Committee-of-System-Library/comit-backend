@@ -23,7 +23,7 @@ public record HotPostResponse(
                 post.getId(),
                 post.getBoardType(),
                 post.getTitle(),
-                post.getMember().getNickname(),
+                post.getMember().getDisplayNickname(),
                 post.getLikeCount(),
                 commentCount,
                 post.getTags().stream().map(tag -> tag.getName()).toList(),

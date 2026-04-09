@@ -22,4 +22,11 @@ public interface PostDailyVisitorRepository extends JpaRepository<PostDailyVisit
             @Param("memberId") Long memberId,
             @Param("viewedOn") LocalDate viewedOn
     );
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            DELETE FROM PostDailyVisitor pdv
+            WHERE pdv.memberId = :memberId
+            """)
+    void deleteAllByMemberId(@Param("memberId") Long memberId);
 }

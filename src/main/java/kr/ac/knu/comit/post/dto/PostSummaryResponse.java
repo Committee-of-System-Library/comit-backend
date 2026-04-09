@@ -28,7 +28,7 @@ public record PostSummaryResponse(
                 post.getBoardType(),
                 post.getTitle(),
                 contentPreview,
-                post.getMember().getNickname(),
+                post.getMember().getDisplayNickname(),
                 post.getLikeCount(),
                 commentCount,
                 post.getTags().stream().map(t -> t.getName()).toList(),

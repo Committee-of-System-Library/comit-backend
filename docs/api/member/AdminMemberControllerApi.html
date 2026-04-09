@@ -252,7 +252,11 @@
             <a class="back-link" href="../index.html">← API Index</a>
             <h1>AdminMemberControllerApi</h1>
             <p>인터페이스 기반으로 추출한 엔드포인트 문서입니다.</p>
-            <nav><a href="#getMembers">
+            <nav><a href="#deleteMember">
+    <strong>회원 삭제 (관리자)</strong>
+    <span>DELETE /admin/members/{memberId}</span>
+</a>
+<a href="#getMembers">
     <strong>회원 목록 조회 (관리자)</strong>
     <span>GET /admin/members</span>
 </a>
@@ -262,7 +266,159 @@
 </a>
 </nav>
         </aside>
-        <section class="content"><article class="endpoint" id="getMembers">
+        <section class="content"><article class="endpoint" id="deleteMember">
+    <div class="eyebrow">DELETE</div>
+    <h2>회원 삭제 (관리자)</h2>
+    <p>관리자가 회원 계정을 소프트 삭제하고 개인정보를 비식별화합니다. 작성한 게시글·댓글은 유지되며 작성자 표시는 &#39;탈퇴한 사용자&#39;로 노출됩니다.</p>
+    <div class="path-box"><span class="method">DELETE</span>/admin/members/{memberId}</div>
+    <div class="section-grid"><section class="card">
+    <h3>경로 변수</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>memberId</code></td>
+    <td><span class="type-chip type-number">Long</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>삭제할 회원 ID입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>에러 응답 필드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>type</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>문제 유형을 식별하는 URI path입니다.</td>
+</tr>
+<tr>
+    <td><code>title</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>HTTP 상태를 요약한 제목입니다.</td>
+</tr>
+<tr>
+    <td><code>status</code></td>
+    <td><span class="type-chip type-number">Integer</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>HTTP 상태 코드입니다.</td>
+</tr>
+<tr>
+    <td><code>detail</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>클라이언트에 노출할 에러 설명입니다.</td>
+</tr>
+<tr>
+    <td><code>instance</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>에러가 발생한 요청 경로입니다.</td>
+</tr>
+<tr>
+    <td><code>errorCode</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>프론트엔드 분기에 사용하는 안정적인 에러 코드입니다.</td>
+</tr>
+<tr>
+    <td><code>invalidFields</code></td>
+    <td><span class="type-chip type-collection">List&lt;ProblemFieldViolation&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>validation 에러에서만 포함됩니다. 필드명과 검증 메시지 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>errorTrackingId</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>서버 내부 오류에서만 포함됩니다. 로그 추적용 식별자입니다.</td>
+</tr>
+<tr>
+    <td><code>timestamp</code></td>
+    <td><span class="type-chip type-datetime">OffsetDateTime</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>에러 응답 생성 시각입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>에러 코드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>errorCode</th>
+            <th>HTTP 상태</th>
+            <th>type</th>
+            <th>detail</th>
+            <th>발생 조건</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>UNAUTHORIZED</code></td>
+    <td>401</td>
+    <td><code>/problems/common/unauthorized</code></td>
+    <td>인증이 필요합니다.</td>
+    <td>인증 정보가 없거나 유효한 회원을 식별할 수 없을 때</td>
+</tr>
+<tr>
+    <td><code>FORBIDDEN</code></td>
+    <td>403</td>
+    <td><code>/problems/common/forbidden</code></td>
+    <td>접근 권한이 없습니다.</td>
+    <td>관리자 권한이 없는 사용자가 요청할 때</td>
+</tr>
+<tr>
+    <td><code>MEMBER_NOT_FOUND</code></td>
+    <td>404</td>
+    <td><code>/problems/member/not-found</code></td>
+    <td>존재하지 않는 회원입니다.</td>
+    <td>존재하지 않거나 이미 삭제된 회원 ID로 요청할 때</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>응답 예시</h3>
+    <pre><code>{
+  &quot;result&quot; : &quot;SUCCESS&quot;
+}</code></pre>
+</section>
+<section class="card">
+    <h3>에러 예시</h3>
+    <pre><code>{
+  &quot;type&quot; : &quot;/problems/common/unauthorized&quot;,
+  &quot;title&quot; : &quot;Unauthorized&quot;,
+  &quot;status&quot; : 401,
+  &quot;detail&quot; : &quot;인증이 필요합니다.&quot;,
+  &quot;instance&quot; : &quot;/admin/members/{memberId}&quot;,
+  &quot;errorCode&quot; : &quot;UNAUTHORIZED&quot;,
+  &quot;timestamp&quot; : &quot;2026-03-24T03:10:00Z&quot;
+}</code></pre>
+</section>
+</div>
+</article>
+<article class="endpoint" id="getMembers">
     <div class="eyebrow">GET</div>
     <h2>회원 목록 조회 (관리자)</h2>
     <p>관리자가 회원 목록을 조회합니다. status로 필터링할 수 있습니다.</p>

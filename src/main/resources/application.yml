@@ -91,6 +91,13 @@ comit:
   post:
     preview:
       max-lines: ${COMIT_POST_PREVIEW_MAX_LINES:2}
+    hot:
+      window-days: ${COMIT_POST_HOT_WINDOW_DAYS:7}
+      like-weight: ${COMIT_POST_HOT_LIKE_WEIGHT:5}
+      comment-weight: ${COMIT_POST_HOT_COMMENT_WEIGHT:3}
+      visitor-weight: ${COMIT_POST_HOT_VISITOR_WEIGHT:2}
+      limit: ${COMIT_POST_HOT_LIMIT:5}
+      excluded-board-types: ${COMIT_POST_HOT_EXCLUDED_BOARD_TYPES:NOTICE,EVENT}
   storage:
     s3:
       bucket-name: ${S3_BUCKET_NAME:}

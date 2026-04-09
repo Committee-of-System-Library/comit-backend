@@ -21,7 +21,7 @@ public record AdminReportSummaryResponse(
                 report.getTargetType(),
                 report.getTargetId(),
                 report.getMessage(),
-                report.getReporter().getNickname(),
+                report.getReporter().getDisplayNickname(),
                 report.getStatus(),
                 report.getCreatedAt()
         );

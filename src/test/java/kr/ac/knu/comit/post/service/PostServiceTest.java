@@ -45,8 +45,13 @@ import kr.ac.knu.comit.post.dto.LikeToggleResponse;
 import kr.ac.knu.comit.post.dto.PostCursorPageResponse;
 import kr.ac.knu.comit.post.dto.UpdatePostRequest;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 
+import kr.ac.knu.comit.post.config.HotPostPolicyProperties;
+
+import java.util.Collections;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PostService")
@@ -72,6 +77,9 @@ class PostServiceTest {
 
     @Mock
     private ContentPreviewGenerator contentPreviewGenerator;
+
+    @Mock
+    private HotPostPolicyProperties hotPostPolicy;
 
     @InjectMocks
     private PostService postService;
@@ -138,7 +146,13 @@ class PostServiceTest {
         Post olderPost = PostFixture.post(10L, 7);
         Post newerPost = PostFixture.post(20L, 3);
 
-        given(postRepository.findHotPostScores(any(), any()))
+        given(hotPostPolicy.getWindowDays()).willReturn(7);
+        given(hotPostPolicy.getExcludedBoardTypes()).willReturn(List.of());
+        given(hotPostPolicy.getLikeWeight()).willReturn(5);
+        given(hotPostPolicy.getCommentWeight()).willReturn(3);
+        given(hotPostPolicy.getVisitorWeight()).willReturn(2);
+        given(hotPostPolicy.getLimit()).willReturn(5);
+        given(postRepository.findHotPostScores(any(), any(), anyInt(), anyInt(), anyInt(), anyBoolean(), any(), anyInt()))
                 .willReturn(List.of(
                         hotPostScore(20L, 15),
                         hotPostScore(10L, 9)
@@ -168,7 +182,13 @@ class PostServiceTest {
     void returnsEmptyHotPostsWhenNoCandidateExists() {
         // given
         // 인기글 후보가 하나도 없는 집계 결과를 준비한다.
-        given(postRepository.findHotPostScores(any(), any())).willReturn(List.of());
+        given(hotPostPolicy.getWindowDays()).willReturn(7);
+        given(hotPostPolicy.getExcludedBoardTypes()).willReturn(List.of());
+        given(hotPostPolicy.getLikeWeight()).willReturn(5);
+        given(hotPostPolicy.getCommentWeight()).willReturn(3);
+        given(hotPostPolicy.getVisitorWeight()).willReturn(2);
+        given(hotPostPolicy.getLimit()).willReturn(5);
+        given(postRepository.findHotPostScores(any(), any(), anyInt(), anyInt(), anyInt(), anyBoolean(), any(), anyInt())).willReturn(List.of());
 
         // when
         // 인기글 목록 조회를 실행한다.
@@ -179,6 +199,26 @@ class PostServiceTest {
         assertThat(response.posts()).isEmpty();
         then(postRepository).should(never()).findActiveWithMemberAndTagsByIds(any());
         then(commentQueryService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("회원 삭제 정리 시 게시글 좋아요 수와 방문 기록을 함께 정리한다")
+    void removesMemberInteractions() {
+        // given
+        // 삭제 대상 회원이 남긴 게시글 좋아요와 방문 기록을 준비한다.
+        given(postLikeRepository.findPostIdsByMemberId(1L)).willReturn(List.of(10L, 20L));
+
+        // when
+        // 회원 연관 게시글 활동 정리를 실행한다.
+        postService.removeMemberInteractions(1L);
+
+        // then
+        // 좋아요 집계를 먼저 보정하고 row 및 방문 기록을 제거해야 한다.
+        then(postLikeRepository).should().findPostIdsByMemberId(1L);
+        then(postRepository).should().decrementLikeCount(10L);
+        then(postRepository).should().decrementLikeCount(20L);
+        then(postLikeRepository).should().deleteAllByMemberId(1L);
+        then(postDailyVisitorRepository).should().deleteAllByMemberId(1L);
     }
 
     @Nested

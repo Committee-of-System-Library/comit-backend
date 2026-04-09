@@ -10,6 +10,11 @@ window.SPEC_DOCS = [
   href: "./spec/comment-reply.html"
 },
 {
+  title: "회원 삭제 정책",
+  summary: "- 관리자 회원 삭제 시 계정은 비활성화하되, 커뮤니티의 게시글·댓글 맥락은 유지한다.",
+  href: "./spec/member-deletion-policy.html"
+},
+{
   title: "마이페이지 (My Page)",
   summary: "- 로그인한 사용자가 자신의 프로필을 조회·편집하고, 활동 내역을 한눈에 볼 수 있어야 한다.",
   href: "./spec/mypage.html"

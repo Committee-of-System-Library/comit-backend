@@ -23,6 +23,8 @@
   댓글·대댓글 2단계 스레드 구조, 좋아요 토글, 설계 결정 및 트레이드오프
 - [feature-spec-template.md](./feature-spec-template.md)
   새 기능 설계를 시작할 때 복사해서 사용하는 기능 명세 템플릿
+- [member-deletion-policy.md](./member-deletion-policy.md)
+  관리자 회원 삭제 시 비식별화, 작성자 표시, 좋아요/방문 기록 정리 정책
 - [post-comment-report.md](./post-comment-report.md)
   게시글·댓글 신고 접수, 자유 입력 사유, 중복 신고 방지, v1 범위 정의
 - [sso-registration-flow.md](./sso-registration-flow.md)

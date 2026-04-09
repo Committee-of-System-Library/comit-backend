@@ -69,5 +69,9 @@ class ApiDocGeneratorTest {
         assertThat(authHtml).contains("SSO 로그인 시작");
         assertThat(authHtml).contains("/auth/sso/login");
         assertThat(authHtml).contains("/auth/sso/callback");
+
+        String adminMemberHtml = Files.readString(tempDir.resolve("member/AdminMemberControllerApi.html"));
+        assertThat(adminMemberHtml).contains("회원 삭제 (관리자)");
+        assertThat(adminMemberHtml).contains("탈퇴한 사용자");
     }
 }

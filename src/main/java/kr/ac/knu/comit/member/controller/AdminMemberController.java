@@ -36,6 +36,14 @@ public class AdminMemberController implements AdminMemberControllerApi {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
+    @Override
+    public ResponseEntity<ApiResponse<Void>> deleteMember(
+            Long memberId, MemberPrincipal principal) {
+        validateAdmin(principal);
+        adminMemberService.deleteMember(memberId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
     private void validateAdmin(MemberPrincipal principal) {
         if (!principal.isAdmin()) {
             throw new BusinessException(CommonErrorCode.FORBIDDEN);

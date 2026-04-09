@@ -36,9 +36,9 @@ window.API_DOCS = [
 },
 {
   title: "AdminMemberControllerApi",
-  summary: "관리자가 회원 목록을 조회합니다. status로 필터링할 수 있습니다.",
+  summary: "관리자가 회원 계정을 소프트 삭제하고 개인정보를 비식별화합니다. 작성한 게시글·댓글은 유지되며 작성자 표시는 '탈퇴한 사용자'로 노출됩니다.",
   href: "./member/AdminMemberControllerApi.html",
-  endpointCount: 2,
+  endpointCount: 3,
   sectionPath: "member"
 },
 {

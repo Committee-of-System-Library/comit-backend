@@ -26,7 +26,7 @@ public record PostDetailResponse(
                 post.getBoardType(),
                 post.getTitle(),
                 post.getContent(),
-                post.getMember().getNickname(),
+                post.getMember().getDisplayNickname(),
                 post.getLikeCount(),
                 post.getViewCount(),
                 likedByMe,

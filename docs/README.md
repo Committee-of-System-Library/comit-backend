@@ -17,6 +17,7 @@
 - [Comit prod-like 백엔드 롤아웃 계획](./ops/comit-prod-like-backend-rollout.md)
 - [Comit SSO 연동 롤아웃 계획](./ops/comit-sso-integration-rollout.md)
 - [Comit staging 검증 기록](./ops/comit-staging-verification.md)
+- [Sidowi Pinpoint 롤아웃 계획](./ops/sidowi-pinpoint-rollout.md)
 - [Backend self-hosted runner 배포 흐름 HTML](./ops/backend-self-hosted-runner-flow.html) - 상단 Mermaid 미니맵과 카드형 상세 설명으로 push -> runner -> server 흐름을 설명
 - [ADR-002 ProblemDetail 기반 에러 응답 표준 채택](./adr/002-problem-detail-error-response.md)
 

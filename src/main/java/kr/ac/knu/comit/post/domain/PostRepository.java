@@ -88,9 +88,9 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             value = """
                     SELECT p.id AS postId,
                            (
-                               COALESCE(pl.recent_like_count, 0) * 5
-                               + COALESCE(c.recent_comment_count, 0) * 3
-                               + COALESCE(pdv.recent_unique_visitor_count, 0) * 2
+                               COALESCE(pl.recent_like_count, 0) * :likeWeight
+                               + COALESCE(c.recent_comment_count, 0) * :commentWeight
+                               + COALESCE(pdv.recent_unique_visitor_count, 0) * :visitorWeight
                            ) AS score
                     FROM post p
                     LEFT JOIN (
@@ -113,19 +113,26 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
                         GROUP BY post_id
                     ) pdv ON pdv.post_id = p.id
                     WHERE p.deleted_at IS NULL
+                      AND (:excludedBoardTypesEmpty = true OR p.board_type NOT IN (:excludedBoardTypes))
                       AND (
-                          COALESCE(pl.recent_like_count, 0) * 5
-                          + COALESCE(c.recent_comment_count, 0) * 3
-                          + COALESCE(pdv.recent_unique_visitor_count, 0) * 2
+                          COALESCE(pl.recent_like_count, 0) * :likeWeight
+                          + COALESCE(c.recent_comment_count, 0) * :commentWeight
+                          + COALESCE(pdv.recent_unique_visitor_count, 0) * :visitorWeight
                       ) > 0
                     ORDER BY score DESC, p.created_at DESC, p.id DESC
-                    LIMIT 5
+                    LIMIT :limit
                     """,
             nativeQuery = true
     )
     List<HotPostScoreView> findHotPostScores(
             @Param("startDateTime") LocalDateTime startDateTime,
-            @Param("startDate") LocalDate startDate
+            @Param("startDate") LocalDate startDate,
+            @Param("likeWeight") int likeWeight,
+            @Param("commentWeight") int commentWeight,
+            @Param("visitorWeight") int visitorWeight,
+            @Param("excludedBoardTypesEmpty") boolean excludedBoardTypesEmpty,
+            @Param("excludedBoardTypes") List<String> excludedBoardTypes,
+            @Param("limit") int limit
     );
 
     /**

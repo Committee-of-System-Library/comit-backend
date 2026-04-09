@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.post.domain;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +25,20 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long>, PostL
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM PostLike pl WHERE pl.postId = :postId AND pl.memberId = :memberId")
     void deleteByPostIdAndMemberId(@Param("postId") Long postId, @Param("memberId") Long memberId);
+
+    @Query("""
+            SELECT pl.postId
+            FROM PostLike pl
+            WHERE pl.memberId = :memberId
+            """)
+    List<Long> findPostIdsByMemberId(@Param("memberId") Long memberId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            DELETE FROM PostLike pl
+            WHERE pl.memberId = :memberId
+            """)
+    void deleteAllByMemberId(@Param("memberId") Long memberId);
 
     boolean existsByPostIdAndMemberId(Long postId, Long memberId);
 }

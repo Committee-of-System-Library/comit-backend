@@ -19,7 +19,7 @@ public record AdminCommentSummaryResponse(
                 comment.getPost().getId(),
                 comment.getParentCommentId(),
                 comment.getContent(),
-                comment.getMember().getNickname(),
+                comment.getMember().getDisplayNickname(),
                 comment.getLikeCount(),
                 comment.isHiddenByAdmin(),
                 comment.getCreatedAt()

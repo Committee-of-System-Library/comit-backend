@@ -23,11 +23,11 @@ public record AdminReportDetailResponse(
                 report.getTargetType(),
                 report.getTargetId(),
                 report.getMessage(),
-                report.getReporter().getNickname(),
+                report.getReporter().getDisplayNickname(),
                 report.getStatus(),
                 report.getCreatedAt(),
                 report.getReviewedAt(),
-                report.getReviewedBy() != null ? report.getReviewedBy().getNickname() : null
+                report.getReviewedBy() != null ? report.getReviewedBy().getDisplayNickname() : null
         );
     }
 }

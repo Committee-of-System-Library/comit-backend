@@ -212,6 +212,25 @@ class CommentServiceTest {
         }
     }
 
+    @Test
+    @DisplayName("회원 삭제 정리 시 댓글 좋아요 수와 좋아요 이력을 함께 정리한다")
+    void removesMemberLikes() {
+        // given
+        // 삭제 대상 회원이 남긴 댓글 좋아요 이력을 준비한다.
+        given(commentLikeRepository.findCommentIdsByMemberId(1L)).willReturn(List.of(201L, 202L));
+
+        // when
+        // 회원 연관 댓글 좋아요 정리를 실행한다.
+        commentService.removeMemberLikes(1L);
+
+        // then
+        // 좋아요 수 보정 후 좋아요 이력을 제거해야 한다.
+        then(commentLikeRepository).should().findCommentIdsByMemberId(1L);
+        then(commentRepository).should().decrementLikeCount(201L);
+        then(commentRepository).should().decrementLikeCount(202L);
+        then(commentLikeRepository).should().deleteAllByMemberId(1L);
+    }
+
     @Nested
     @DisplayName("updateComment")
     class UpdateComment {

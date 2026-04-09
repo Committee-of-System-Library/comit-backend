@@ -19,7 +19,7 @@ public record AdminPostSummaryResponse(
                 post.getId(),
                 post.getBoardType(),
                 post.getTitle(),
-                post.getMember().getNickname(),
+                post.getMember().getDisplayNickname(),
                 post.getLikeCount(),
                 post.getViewCount(),
                 post.isHiddenByAdmin(),

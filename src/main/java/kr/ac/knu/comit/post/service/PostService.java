@@ -6,9 +6,11 @@ import kr.ac.knu.comit.global.exception.PostErrorCode;
 import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberService;
+import kr.ac.knu.comit.post.config.HotPostPolicyProperties;
 import kr.ac.knu.comit.post.domain.*;
 import kr.ac.knu.comit.post.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +28,6 @@ import java.util.stream.Collectors;
 public class PostService {
 
     private static final int DEFAULT_PAGE_SIZE = 20;
-    private static final int HOT_POST_WINDOW_DAYS = 7;
     private static final int SEARCH_RESULT_LIMIT = 5;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -37,6 +38,7 @@ public class PostService {
     private final MemberService memberService;
     private final CommentQueryService commentQueryService;
     private final ContentPreviewGenerator contentPreviewGenerator;
+    private final HotPostPolicyProperties hotPostPolicy;
 
     /**
      * cursor 기반으로 게시글 목록을 조회한다.
@@ -67,11 +69,25 @@ public class PostService {
         );
     }
 
+    @Cacheable("hotPosts")
     public HotPostListResponse getHotPosts() {
-        LocalDate startDate = LocalDate.now(KST).minusDays(HOT_POST_WINDOW_DAYS - 1L);
+        LocalDate startDate = LocalDate.now(KST).minusDays(hotPostPolicy.getWindowDays() - 1L);
         LocalDateTime startDateTime = startDate.atStartOfDay();
 
-        List<Long> orderedPostIds = postRepository.findHotPostScores(startDateTime, startDate).stream()
+        List<String> excludedBoardTypeNames = hotPostPolicy.getExcludedBoardTypes().stream()
+                .map(Enum::name)
+                .toList();
+
+        List<Long> orderedPostIds = postRepository.findHotPostScores(
+                startDateTime,
+                startDate,
+                hotPostPolicy.getLikeWeight(),
+                hotPostPolicy.getCommentWeight(),
+                hotPostPolicy.getVisitorWeight(),
+                excludedBoardTypeNames.isEmpty(),
+                excludedBoardTypeNames,
+                hotPostPolicy.getLimit()
+        ).stream()
                 .map(PostRepository.HotPostScoreView::getPostId)
                 .toList();
 
@@ -165,6 +181,19 @@ public class PostService {
 
     public Post getActivePostOrThrow(Long postId) {
         return findPostOrThrow(postId);
+    }
+
+    /**
+     * 회원 삭제 시 게시글 좋아요와 방문 기록을 정리한다.
+     *
+     * @implNote 좋아요 row를 먼저 조회해 likeCount를 맞춘 뒤, 좋아요/방문 기록을 제거한다.
+     */
+    @Transactional
+    public void removeMemberInteractions(Long memberId) {
+        List<Long> likedPostIds = postLikeRepository.findPostIdsByMemberId(memberId);
+        likedPostIds.forEach(postRepository::decrementLikeCount);
+        postLikeRepository.deleteAllByMemberId(memberId);
+        postDailyVisitorRepository.deleteAllByMemberId(memberId);
     }
 
     private Map<Long, List<String>> imageUrlsByPostId(List<Long> postIds) {

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.LocalDateTime;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +46,31 @@ class MemberTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(CommonErrorCode.INVALID_REQUEST);
+    }
+
+    @Test
+    @DisplayName("회원 삭제 시 개인정보를 비식별화하고 표시 닉네임은 탈퇴한 사용자로 바꾼다")
+    void anonymizesPersonalFieldsWhenDeleted() {
+        // given
+        // 삭제 대상 회원을 준비하고 영속 ID를 부여한다.
+        Member member = member();
+        ReflectionTestUtils.setField(member, "id", 1L);
+
+        // when
+        // 회원 삭제를 수행한다.
+        member.delete();
+
+        // then
+        // 계정은 soft delete 되고 표시 닉네임과 개인정보가 정책에 맞게 정리되어야 한다.
+        assertThat(member.isDeleted()).isTrue();
+        assertThat(member.getDisplayNickname()).isEqualTo("탈퇴한 사용자");
+        assertThat(member.getNickname()).startsWith("deleted-member-");
+        assertThat(member.getName()).isEqualTo("탈퇴한 사용자");
+        assertThat(member.getPhone()).startsWith("deleted-phone-");
+        assertThat(member.getStudentNumber()).isNull();
+        assertThat(member.getProfileImageUrl()).isNull();
+        assertThat(member.getMajorTrack()).isNull();
+        assertThat(member.isStudentNumberVisible()).isFalse();
     }
 
     private Member member() {

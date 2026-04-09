@@ -36,4 +36,18 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> 
             @Param("memberId") Long memberId,
             @Param("commentIds") List<Long> commentIds
     );
+
+    @Query("""
+            SELECT cl.commentId
+            FROM CommentLike cl
+            WHERE cl.memberId = :memberId
+            """)
+    List<Long> findCommentIdsByMemberId(@Param("memberId") Long memberId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            DELETE FROM CommentLike cl
+            WHERE cl.memberId = :memberId
+            """)
+    void deleteAllByMemberId(@Param("memberId") Long memberId);
 }
