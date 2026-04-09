@@ -16,6 +16,7 @@ public class PostLikeRepositoryCustomImpl implements PostLikeRepositoryCustom {
     @Override
     public List<PostLike> findMyLikes(Long memberId, Long cursorId, int limit) {
         QPostLike postLike = QPostLike.postLike;
+        QPost post = QPost.post;
 
         BooleanBuilder where = new BooleanBuilder();
         where.and(postLike.memberId.eq(memberId));
@@ -25,6 +26,11 @@ public class PostLikeRepositoryCustomImpl implements PostLikeRepositoryCustom {
 
         return queryFactory
                 .selectFrom(postLike)
+                .join(post).on(
+                        post.id.eq(postLike.postId),
+                        post.deletedAt.isNull(),
+                        post.hiddenByAdmin.isFalse()
+                )
                 .where(where)
                 .orderBy(postLike.id.desc())
                 .limit(limit)

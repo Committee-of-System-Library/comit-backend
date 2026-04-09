@@ -23,6 +23,8 @@ public class CommentRepositoryCustomImpl implements CommentRepositoryCustom {
         where.and(comment.member.id.eq(memberId));
         where.and(comment.deletedAt.isNull());
         where.and(comment.hiddenByAdmin.isFalse());
+        where.and(post.deletedAt.isNull());
+        where.and(post.hiddenByAdmin.isFalse());
         if (cursorId != null) {
             where.and(comment.id.lt(cursorId));
         }
@@ -39,13 +41,17 @@ public class CommentRepositoryCustomImpl implements CommentRepositoryCustom {
     @Override
     public long countMyComments(Long memberId) {
         QComment comment = QComment.comment;
+        QPost post = QPost.post;
         Long result = queryFactory
                 .select(comment.count())
                 .from(comment)
+                .join(comment.post, post)
                 .where(
                         comment.member.id.eq(memberId),
                         comment.deletedAt.isNull(),
-                        comment.hiddenByAdmin.isFalse()
+                        comment.hiddenByAdmin.isFalse(),
+                        post.deletedAt.isNull(),
+                        post.hiddenByAdmin.isFalse()
                 )
                 .fetchOne();
         return result != null ? result : 0L;
