@@ -49,6 +49,13 @@ window.API_DOCS = [
   sectionPath: "member"
 },
 {
+  title: "MyMemberControllerApi",
+  summary: "내가 쓴 글/댓글/좋아요 수와 최근 3개 미리보기를 한 번에 반환합니다.",
+  href: "./member/MyMemberControllerApi.html",
+  endpointCount: 4,
+  sectionPath: "member"
+},
+{
   title: "AdminPostControllerApi",
   summary: "관리자가 NOTICE, EVENT, INFO 게시판에 게시글을 작성합니다. QNA, FREE 게시판에는 작성할 수 없습니다.",
   href: "./post/AdminPostControllerApi.html",

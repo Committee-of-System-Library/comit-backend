@@ -54,6 +54,7 @@ public interface RegisterControllerApi {
             descriptions = {
                     @FieldDesc(name = "nickname", value = "1자 이상 15자 이하의 닉네임입니다."),
                     @FieldDesc(name = "phone", value = "숫자와 하이픈만 포함한 10~15자 연락처입니다."),
+                    @FieldDesc(name = "profileImageUrl", value = "프로필 이미지 URL입니다. 생략하거나 null로 보내면 프로필 이미지 없이 가입됩니다."),
                     @FieldDesc(name = "agreedToTerms", value = "약관 동의 여부입니다. true여야만 회원가입이 완료됩니다.")
             },
             errors = {
@@ -67,6 +68,7 @@ public interface RegisterControllerApi {
                             {
                               "nickname": "길동이",
                               "phone": "010-1234-5678",
+                              "profileImageUrl": "https://bucket.s3.ap-northeast-2.amazonaws.com/members/uuid.png",
                               "agreedToTerms": true
                             }
                             """,

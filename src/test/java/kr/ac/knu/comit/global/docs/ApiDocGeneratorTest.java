@@ -27,6 +27,7 @@ class ApiDocGeneratorTest {
         assertThat(Files.exists(tempDir.resolve("comment/AdminCommentControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("comment/CommentControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("member/AdminMemberControllerApi.html"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("member/MyMemberControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("post/PostControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("post/AdminPostControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("report/AdminReportControllerApi.html"))).isTrue();
@@ -42,6 +43,16 @@ class ApiDocGeneratorTest {
         assertThat(html).contains("/members/me/student-number-visibility");
         assertThat(html).contains("type-chip type-string");
         assertThat(html).contains("type-chip type-boolean");
+
+        String myMemberHtml = Files.readString(tempDir.resolve("member/MyMemberControllerApi.html"));
+        assertThat(myMemberHtml).contains("내 활동 요약 조회");
+        assertThat(myMemberHtml).contains("내가 쓴 게시글 목록 조회");
+        assertThat(myMemberHtml).contains("내가 쓴 댓글 목록 조회");
+        assertThat(myMemberHtml).contains("내가 좋아요한 게시글 목록 조회");
+        assertThat(myMemberHtml).contains("/members/me/activity");
+        assertThat(myMemberHtml).contains("/members/me/posts");
+        assertThat(myMemberHtml).contains("/members/me/comments");
+        assertThat(myMemberHtml).contains("/members/me/likes");
 
         String postHtml = Files.readString(tempDir.resolve("post/PostControllerApi.html"));
         assertThat(postHtml).contains("에러 응답 필드");
