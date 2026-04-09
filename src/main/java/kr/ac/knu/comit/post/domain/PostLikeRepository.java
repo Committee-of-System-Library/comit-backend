@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
+public interface PostLikeRepository extends JpaRepository<PostLike, Long>, PostLikeRepositoryCustom {
 
     /**
      * 중복 예외를 던지지 않고 좋아요 레코드 생성을 시도한다.
