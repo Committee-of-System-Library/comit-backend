@@ -23,6 +23,8 @@
   댓글·대댓글 2단계 스레드 구조, 좋아요 토글, 설계 결정 및 트레이드오프
 - [feature-spec-template.md](./feature-spec-template.md)
   새 기능 설계를 시작할 때 복사해서 사용하는 기능 명세 템플릿
+- [main-page.md](./main-page.md)
+  비로그인 포함 메인 페이지 단일 API — QNA/INFO/FREE 5개, NOTICE/EVENT 3개, 인기글 5개 반환
 - [member-deletion-policy.md](./member-deletion-policy.md)
   관리자 회원 삭제 시 비식별화, 작성자 표시, 좋아요/방문 기록 정리 정책
 - [post-comment-report.md](./post-comment-report.md)

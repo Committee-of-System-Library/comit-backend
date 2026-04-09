@@ -27,6 +27,7 @@ class ApiDocGeneratorTest {
         assertThat(Files.exists(tempDir.resolve("comment/AdminCommentControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("comment/CommentControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("member/AdminMemberControllerApi.html"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("main/MainControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("member/MyMemberControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("post/PostControllerApi.html"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("post/AdminPostControllerApi.html"))).isTrue();
@@ -69,6 +70,13 @@ class ApiDocGeneratorTest {
         assertThat(authHtml).contains("SSO 로그인 시작");
         assertThat(authHtml).contains("/auth/sso/login");
         assertThat(authHtml).contains("/auth/sso/callback");
+
+        String mainHtml = Files.readString(tempDir.resolve("main/MainControllerApi.html"));
+        assertThat(mainHtml).contains("/main");
+        assertThat(mainHtml).contains("qna");
+        assertThat(mainHtml).contains("hotPosts");
+        assertThat(mainHtml).contains("NOTICE 게시판의 최신 3개 게시글 요약 목록입니다.");
+        assertThat(mainHtml).contains("EVENT 게시판의 최신 3개 게시글 요약 목록입니다.");
 
         String adminMemberHtml = Files.readString(tempDir.resolve("member/AdminMemberControllerApi.html"));
         assertThat(adminMemberHtml).contains("회원 삭제 (관리자)");

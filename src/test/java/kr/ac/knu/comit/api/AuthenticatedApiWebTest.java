@@ -30,6 +30,9 @@ import kr.ac.knu.comit.global.auth.MemberArgumentResolver;
 import kr.ac.knu.comit.global.auth.MemberAuthenticationFilter;
 import kr.ac.knu.comit.global.config.WebMvcConfig;
 import kr.ac.knu.comit.global.exception.GlobalExceptionHandler;
+import kr.ac.knu.comit.main.controller.MainController;
+import kr.ac.knu.comit.main.dto.MainPageResponse;
+import kr.ac.knu.comit.main.service.MainService;
 import kr.ac.knu.comit.member.controller.AdminMemberController;
 import kr.ac.knu.comit.member.controller.MemberController;
 import kr.ac.knu.comit.member.domain.Member;
@@ -75,6 +78,7 @@ import java.util.Optional;
         MemberController.class,
         PostController.class,
         CommentController.class,
+        MainController.class,
         AdminMemberController.class,
         AdminPostController.class,
         AdminCommentController.class,
@@ -101,6 +105,9 @@ class AuthenticatedApiWebTest {
 
     @MockitoBean
     private CommentService commentService;
+
+    @MockitoBean
+    private MainService mainService;
 
     @MockitoBean
     private ReportService reportService;
@@ -277,6 +284,100 @@ class AuthenticatedApiWebTest {
                 .andExpect(jsonPath("$.data.posts[0].id").value(101L))
                 .andExpect(jsonPath("$.data.posts[0].boardType").value("QNA"))
                 .andExpect(jsonPath("$.data.posts[0].commentCount").value(4));
+    }
+
+    @Test
+    void returnsMainPageWithoutAuthentication() throws Exception {
+        // given
+        // 메인 페이지 응답을 준비한다.
+        given(mainService.getMainPage()).willReturn(new MainPageResponse(
+                List.of(new PostSummaryResponse(
+                        101L,
+                        BoardType.QNA,
+                        "QNA 최신글",
+                        "본문 미리보기",
+                        "writer",
+                        3,
+                        2,
+                        List.of("spring"),
+                        List.of("https://cdn.example.com/post-101.png"),
+                        LocalDateTime.parse("2026-04-01T12:00:00")
+                )),
+                List.of(new PostSummaryResponse(
+                        201L,
+                        BoardType.INFO,
+                        "INFO 최신글",
+                        "본문 미리보기",
+                        "writer",
+                        3,
+                        2,
+                        List.of("info"),
+                        List.of("https://cdn.example.com/post-201.png"),
+                        LocalDateTime.parse("2026-04-01T12:00:00")
+                )),
+                List.of(new PostSummaryResponse(
+                        301L,
+                        BoardType.FREE,
+                        "FREE 최신글",
+                        "본문 미리보기",
+                        "writer",
+                        3,
+                        2,
+                        List.of("free"),
+                        List.of("https://cdn.example.com/post-301.png"),
+                        LocalDateTime.parse("2026-04-01T12:00:00")
+                )),
+                List.of(new PostSummaryResponse(
+                        401L,
+                        BoardType.NOTICE,
+                        "NOTICE 최신글",
+                        "본문 미리보기",
+                        "writer",
+                        3,
+                        2,
+                        List.of("notice"),
+                        List.of("https://cdn.example.com/post-401.png"),
+                        LocalDateTime.parse("2026-04-01T12:00:00")
+                )),
+                List.of(new PostSummaryResponse(
+                        501L,
+                        BoardType.EVENT,
+                        "EVENT 최신글",
+                        "본문 미리보기",
+                        "writer",
+                        3,
+                        2,
+                        List.of("event"),
+                        List.of("https://cdn.example.com/post-501.png"),
+                        LocalDateTime.parse("2026-04-01T12:00:00")
+                )),
+                List.of(new HotPostResponse(
+                        1,
+                        901L,
+                        BoardType.QNA,
+                        "인기글",
+                        "writer",
+                        11,
+                        4,
+                        List.of("spring"),
+                        LocalDateTime.parse("2026-04-01T12:00:00")
+                ))
+        ));
+
+        // when & then
+        // 인증 헤더 없이 호출해도 200과 배열 형태의 섹션이 내려가야 한다.
+        mockMvc.perform(get("/main"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.qna").isArray())
+                .andExpect(jsonPath("$.data.info").isArray())
+                .andExpect(jsonPath("$.data.free").isArray())
+                .andExpect(jsonPath("$.data.notice").isArray())
+                .andExpect(jsonPath("$.data.event").isArray())
+                .andExpect(jsonPath("$.data.hotPosts").isArray())
+                .andExpect(jsonPath("$.data.qna[0].title").value("QNA 최신글"))
+                .andExpect(jsonPath("$.data.hotPosts[0].rank").value(1))
+                .andExpect(jsonPath("$.data.hotPosts[0].id").value(901L));
     }
 
     @Test

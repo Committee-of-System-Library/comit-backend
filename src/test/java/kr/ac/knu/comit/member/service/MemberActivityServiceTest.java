@@ -234,7 +234,7 @@ class MemberActivityServiceTest {
 
             Post post1 = PostFixture.post(10L);
             Post post2 = PostFixture.post(20L);
-            given(postRepository.findActiveWithMemberAndTagsByIds(List.of(20L, 10L)))
+            given(postRepository.findActiveWithMemberAndTagsByIds(List.of(10L, 20L)))
                     .willReturn(List.of(post1, post2));
 
             // when

@@ -3,6 +3,10 @@ package kr.ac.knu.comit;
 import kr.ac.knu.comit.comment.service.AdminCommentService;
 import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.comment.service.CommentService;
+import kr.ac.knu.comit.main.service.MainPageQueryService;
+import kr.ac.knu.comit.main.service.MainService;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import kr.ac.knu.comit.member.service.MemberActivityService;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.service.AdminMemberService;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
@@ -65,6 +69,18 @@ class ComitApplicationTests {
 
     @MockitoBean
     AdminMemberService adminMemberService;
+
+    @MockitoBean
+    MainService mainService;
+
+    @MockitoBean
+    MemberActivityService memberActivityService;
+
+    @MockitoBean
+    JPAQueryFactory jpaQueryFactory;
+
+    @MockitoBean
+    MainPageQueryService mainPageQueryService;
 
     @Test
     void contextLoads() {

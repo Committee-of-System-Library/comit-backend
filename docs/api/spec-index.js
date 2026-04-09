@@ -10,6 +10,11 @@ window.SPEC_DOCS = [
   href: "./spec/comment-reply.html"
 },
 {
+  title: "메인 페이지 (Main Page)",
+  summary: "- 비로그인 사용자를 포함한 모든 방문자가 메인 페이지에서 서비스 핵심 콘텐츠를 한눈에 볼 수 있어야 한다.",
+  href: "./spec/main-page.html"
+},
+{
   title: "회원 삭제 정책",
   summary: "- 관리자 회원 삭제 시 계정은 비활성화하되, 커뮤니티의 게시글·댓글 맥락은 유지한다.",
   href: "./spec/member-deletion-policy.html"

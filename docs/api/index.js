@@ -35,6 +35,13 @@ window.API_DOCS = [
   sectionPath: "image"
 },
 {
+  title: "MainControllerApi",
+  summary: "비로그인 사용자를 포함한 모든 방문자가 메인 페이지에서 QNA, INFO, FREE 최신 게시글 5개와 NOTICE, EVENT 최신 게시글 3개, 인기글을 한 번에 조회합니다.",
+  href: "./main/MainControllerApi.html",
+  endpointCount: 1,
+  sectionPath: "main"
+},
+{
   title: "AdminMemberControllerApi",
   summary: "관리자가 회원 계정을 소프트 삭제하고 개인정보를 비식별화합니다. 작성한 게시글·댓글은 유지되며 작성자 표시는 '탈퇴한 사용자'로 노출됩니다.",
   href: "./member/AdminMemberControllerApi.html",
