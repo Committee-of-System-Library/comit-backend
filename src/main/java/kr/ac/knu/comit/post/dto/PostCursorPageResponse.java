@@ -20,6 +20,12 @@ public record PostCursorPageResponse(
 ) {
     public static PostCursorPageResponse of(List<Post> posts, int requestedSize,
                                             Map<Long, Integer> commentCounts,
+                                            Map<Long, List<String>> imageUrlsByPostId) {
+        return of(posts, requestedSize, commentCounts, imageUrlsByPostId, content -> "");
+    }
+
+    public static PostCursorPageResponse of(List<Post> posts, int requestedSize,
+                                            Map<Long, Integer> commentCounts,
                                             Map<Long, List<String>> imageUrlsByPostId,
                                             Function<String, String> previewFn) {
         boolean hasNext = posts.size() > requestedSize;
