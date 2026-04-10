@@ -256,8 +256,8 @@
     <strong>내 프로필 조회</strong>
     <span>GET /members/me</span>
 </a>
-<a href="#updateNickname">
-    <strong>닉네임 수정</strong>
+<a href="#updateProfile">
+    <strong>프로필 수정</strong>
     <span>PATCH /members/me</span>
 </a>
 <a href="#updateStudentNumberVisibility">
@@ -435,10 +435,10 @@
 </section>
 </div>
 </article>
-<article class="endpoint" id="updateNickname">
+<article class="endpoint" id="updateProfile">
     <div class="eyebrow">PATCH</div>
-    <h2>닉네임 수정</h2>
-    <p>현재 로그인한 회원의 닉네임을 수정합니다.</p>
+    <h2>프로필 수정</h2>
+    <p>현재 로그인한 회원의 프로필을 수정합니다. 전송한 필드만 반영되며 null이면 해당 필드는 변경되지 않습니다.</p>
     <div class="path-box"><span class="method">PATCH</span>/members/me</div>
     <div class="section-grid"><section class="card">
     <h3>요청 바디 필드</h3>
@@ -454,8 +454,20 @@
     <tbody><tr>
     <td><code>nickname</code></td>
     <td><span class="type-chip type-string">String</span></td>
-    <td><span class="badge-required">required</span></td>
-    <td>1자 이상 15자 이하의 새 닉네임</td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>1자 이상 15자 이하의 새 닉네임. 생략하면 변경되지 않습니다.</td>
+</tr>
+<tr>
+    <td><code>phone</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>숫자와 하이픈만 포함한 10~15자 연락처. 생략하면 변경되지 않습니다.</td>
+</tr>
+<tr>
+    <td><code>profileImageUrl</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>프로필 이미지 URL. 생략하면 변경되지 않습니다.</td>
 </tr>
 </tbody>
 </table>
@@ -554,7 +566,7 @@
     <td>400</td>
     <td><code>/problems/common/invalid-request</code></td>
     <td>입력값이 올바르지 않습니다.</td>
-    <td>요청 파라미터 또는 본문이 검증 규칙을 만족하지 않을 때</td>
+    <td>닉네임 또는 연락처 형식이 올바르지 않을 때</td>
 </tr>
 <tr>
     <td><code>MEMBER_NOT_FOUND</code></td>
@@ -577,7 +589,9 @@
 <section class="card">
     <h3>요청 예시</h3>
     <pre><code>{
-  &quot;nickname&quot; : &quot;backend-dev&quot;
+  &quot;nickname&quot; : &quot;backend-dev&quot;,
+  &quot;phone&quot; : &quot;010-1234-5678&quot;,
+  &quot;profileImageUrl&quot; : &quot;https://bucket.s3.ap-northeast-2.amazonaws.com/members/uuid.png&quot;
 }</code></pre>
 </section>
 <section class="card">
