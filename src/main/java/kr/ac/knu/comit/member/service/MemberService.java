@@ -7,6 +7,7 @@ import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.dto.UpdateNicknameRequest;
+import kr.ac.knu.comit.member.dto.UpdateProfileRequest;
 import kr.ac.knu.comit.member.dto.UpdateStudentNumberVisibilityRequest;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,28 @@ public class MemberService {
             throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
         }
         member.updateNickname(request.nickname());
+    }
+
+    @Transactional
+    public void updateProfile(Long memberId, UpdateProfileRequest request) {
+        Member member = findMemberOrThrow(memberId);
+
+        if (request.nickname() != null) {
+            String trimmed = request.nickname().trim();
+            if (!trimmed.equals(member.getNickname()) &&
+                    memberRepository.existsByNicknameAndIdNot(trimmed, memberId)) {
+                throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
+            }
+            member.updateNickname(request.nickname());
+        }
+
+        if (request.phone() != null) {
+            member.updatePhone(request.phone());
+        }
+
+        if (request.profileImageUrl() != null) {
+            member.updateProfileImage(request.profileImageUrl());
+        }
     }
 
     @Transactional

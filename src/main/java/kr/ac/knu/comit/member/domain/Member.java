@@ -2,6 +2,7 @@ package kr.ac.knu.comit.member.domain;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.regex.Pattern;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
@@ -13,6 +14,8 @@ public class Member {
     private static final String DELETED_MEMBER_DISPLAY_NICKNAME = "탈퇴한 사용자";
     private static final String DELETED_MEMBER_INTERNAL_NICKNAME_PREFIX = "deleted-member-";
     private static final String DELETED_MEMBER_PHONE_PREFIX = "deleted-phone-";
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9\\-]{10,15}$");
+    private static final int MAX_PROFILE_IMAGE_URL_LENGTH = 500;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -88,6 +91,22 @@ public class Member {
 
     public void updateStudentNumberVisibility(boolean visible) {
         this.studentNumberVisible = visible;
+    }
+
+    public void updatePhone(String phone) {
+        String normalized = requireText(phone);
+        if (!PHONE_PATTERN.matcher(normalized).matches()) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+        this.phone = normalized;
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        String normalized = normalizeOptionalText(profileImageUrl);
+        if (normalized != null && normalized.length() > MAX_PROFILE_IMAGE_URL_LENGTH) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+        this.profileImageUrl = normalized;
     }
 
     public void syncStudentNumber(String studentNumber) {
