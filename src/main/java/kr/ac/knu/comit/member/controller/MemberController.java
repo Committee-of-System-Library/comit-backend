@@ -4,7 +4,7 @@ import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.ApiResponse;
 import kr.ac.knu.comit.member.controller.api.MemberControllerApi;
 import kr.ac.knu.comit.member.dto.MemberProfileResponse;
-import kr.ac.knu.comit.member.dto.UpdateNicknameRequest;
+import kr.ac.knu.comit.member.dto.UpdateProfileRequest;
 import kr.ac.knu.comit.member.dto.UpdateStudentNumberVisibilityRequest;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +23,11 @@ public class MemberController implements MemberControllerApi {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Void>> updateNickname(
-            UpdateNicknameRequest request,
+    public ResponseEntity<ApiResponse<Void>> updateProfile(
+            UpdateProfileRequest request,
             MemberPrincipal principal
     ) {
-        memberService.updateNickname(principal.memberId(), request);
+        memberService.updateProfile(principal.memberId(), request);
         return ResponseEntity.ok(ApiResponse.success());
     }
 

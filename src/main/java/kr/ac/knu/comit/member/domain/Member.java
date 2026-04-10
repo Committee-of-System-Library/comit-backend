@@ -90,6 +90,14 @@ public class Member {
         this.studentNumberVisible = visible;
     }
 
+    public void updatePhone(String phone) {
+        this.phone = requireText(phone);
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = normalizeOptionalText(profileImageUrl);
+    }
+
     public void syncStudentNumber(String studentNumber) {
         this.studentNumber = normalizeStudentNumber(studentNumber);
     }

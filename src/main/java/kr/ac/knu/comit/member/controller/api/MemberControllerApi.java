@@ -10,7 +10,7 @@ import kr.ac.knu.comit.global.auth.AuthenticatedMember;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.ApiResponse;
 import kr.ac.knu.comit.member.dto.MemberProfileResponse;
-import kr.ac.knu.comit.member.dto.UpdateNicknameRequest;
+import kr.ac.knu.comit.member.dto.UpdateProfileRequest;
 import kr.ac.knu.comit.member.dto.UpdateStudentNumberVisibilityRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,19 +54,24 @@ public interface MemberControllerApi {
     );
 
     @ApiDoc(
-            summary = "닉네임 수정",
-            description = "현재 로그인한 회원의 닉네임을 수정합니다.",
+            summary = "프로필 수정",
+            description = "현재 로그인한 회원의 프로필을 수정합니다. 전송한 필드만 반영되며 null이면 해당 필드는 변경되지 않습니다.",
             descriptions = {
-                    @FieldDesc(name = "nickname", value = "1자 이상 15자 이하의 새 닉네임")
+                    @FieldDesc(name = "nickname", value = "1자 이상 15자 이하의 새 닉네임. 생략하면 변경되지 않습니다."),
+                    @FieldDesc(name = "phone", value = "숫자와 하이픈만 포함한 10~15자 연락처. 생략하면 변경되지 않습니다."),
+                    @FieldDesc(name = "profileImageUrl", value = "프로필 이미지 URL. 생략하면 변경되지 않습니다.")
             },
             errors = {
                     @ApiError(code = "MEMBER_NOT_FOUND", when = "인증된 사용자의 로컬 회원 정보가 존재하지 않을 때"),
-                    @ApiError(code = "DUPLICATE_NICKNAME", when = "이미 사용 중인 닉네임으로 변경하려고 할 때")
+                    @ApiError(code = "DUPLICATE_NICKNAME", when = "이미 사용 중인 닉네임으로 변경하려고 할 때"),
+                    @ApiError(code = "INVALID_REQUEST", when = "닉네임 또는 연락처 형식이 올바르지 않을 때")
             },
             example = @Example(
                     request = """
                             {
-                              "nickname": "backend-dev"
+                              "nickname": "backend-dev",
+                              "phone": "010-1234-5678",
+                              "profileImageUrl": "https://bucket.s3.ap-northeast-2.amazonaws.com/members/uuid.png"
                             }
                             """,
                     response = """
@@ -77,8 +82,8 @@ public interface MemberControllerApi {
             )
     )
     @PatchMapping
-    ResponseEntity<ApiResponse<Void>> updateNickname(
-            @RequestBody @Valid UpdateNicknameRequest request,
+    ResponseEntity<ApiResponse<Void>> updateProfile(
+            @RequestBody @Valid UpdateProfileRequest request,
             @AuthenticatedMember MemberPrincipal principal
     );
 

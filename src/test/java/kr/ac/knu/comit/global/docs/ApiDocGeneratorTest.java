@@ -38,7 +38,7 @@ class ApiDocGeneratorTest {
 
         String html = Files.readString(htmlFile);
         assertThat(html).contains("내 프로필 조회");
-        assertThat(html).contains("닉네임 수정");
+        assertThat(html).contains("프로필 수정");
         assertThat(html).contains("학번 공개 여부 수정");
         assertThat(html).contains("/members/me");
         assertThat(html).contains("/members/me/student-number-visibility");
