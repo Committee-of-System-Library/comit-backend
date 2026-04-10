@@ -60,8 +60,9 @@ public class MemberService {
         Member member = findMemberOrThrow(memberId);
 
         if (request.nickname() != null) {
-            if (!member.getNickname().equals(request.nickname()) &&
-                    memberRepository.existsByNicknameAndIdNot(request.nickname(), memberId)) {
+            String trimmed = request.nickname().trim();
+            if (!trimmed.equals(member.getNickname()) &&
+                    memberRepository.existsByNicknameAndIdNot(trimmed, memberId)) {
                 throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
             }
             member.updateNickname(request.nickname());
