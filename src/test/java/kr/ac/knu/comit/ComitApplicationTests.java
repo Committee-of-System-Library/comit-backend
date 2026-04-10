@@ -81,4 +81,9 @@ class ComitApplicationTests {
 
     @MockitoBean
     MainPageQueryService mainPageQueryService;
+
+    @Test
+    void contextLoads() {
+    }
+
 }
