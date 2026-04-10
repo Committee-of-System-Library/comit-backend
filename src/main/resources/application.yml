@@ -54,6 +54,15 @@ spring:
     restart:
       enabled: false
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   file:
     name: ${LOG_FILE_PATH:./logs/app.log}
