@@ -101,7 +101,7 @@ class SsoAuthWebTest {
         given(memberService.hasDeletedMember("sso-sub-1")).willReturn(false);
         given(memberService.hasActiveMember("sso-sub-1")).willReturn(true);
         given(memberService.getMyProfile(1L))
-                .willReturn(new MemberProfileResponse(1L, "comit-user", "2023012780", true));
+                .willReturn(new MemberProfileResponse(1L, "comit-user", "2023012780", true, null));
     }
 
     @Test
