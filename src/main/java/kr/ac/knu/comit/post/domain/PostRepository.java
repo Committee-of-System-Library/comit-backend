@@ -88,9 +88,9 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             value = """
                     SELECT p.id AS postId,
                            (
-                               COALESCE(pl.recent_like_count, 0) * :likeWeight
-                               + COALESCE(c.recent_comment_count, 0) * :commentWeight
-                               + COALESCE(pdv.recent_unique_visitor_count, 0) * :visitorWeight
+                               LOG(1 + COALESCE(pl.recent_like_count, 0)) * :likeWeight
+                               + LOG(1 + COALESCE(c.recent_comment_count, 0)) * :commentWeight
+                               + LOG(1 + COALESCE(pdv.recent_unique_visitor_count, 0)) * :visitorWeight
                            ) AS score
                     FROM post p
                     LEFT JOIN (
@@ -115,9 +115,9 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
                     WHERE p.deleted_at IS NULL
                       AND (:excludedBoardTypesEmpty = true OR p.board_type NOT IN (:excludedBoardTypes))
                       AND (
-                          COALESCE(pl.recent_like_count, 0) * :likeWeight
-                          + COALESCE(c.recent_comment_count, 0) * :commentWeight
-                          + COALESCE(pdv.recent_unique_visitor_count, 0) * :visitorWeight
+                          LOG(1 + COALESCE(pl.recent_like_count, 0)) * :likeWeight
+                          + LOG(1 + COALESCE(c.recent_comment_count, 0)) * :commentWeight
+                          + LOG(1 + COALESCE(pdv.recent_unique_visitor_count, 0)) * :visitorWeight
                       ) > 0
                     ORDER BY score DESC, p.created_at DESC, p.id DESC
                     LIMIT :limit
@@ -181,6 +181,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 
     interface HotPostScoreView {
         Long getPostId();
-        long getScore();
+        double getScore();
     }
 }

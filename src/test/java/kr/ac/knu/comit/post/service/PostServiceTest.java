@@ -434,7 +434,7 @@ class PostServiceTest {
         }
     }
 
-    private PostRepository.HotPostScoreView hotPostScore(Long postId, long score) {
+    private PostRepository.HotPostScoreView hotPostScore(Long postId, double score) {
         return new PostRepository.HotPostScoreView() {
             @Override
             public Long getPostId() {
@@ -442,7 +442,7 @@ class PostServiceTest {
             }
 
             @Override
-            public long getScore() {
+            public double getScore() {
                 return score;
             }
         };

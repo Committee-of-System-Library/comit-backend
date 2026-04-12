@@ -23,6 +23,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.within;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -148,7 +150,13 @@ class PostRepositoryIntegrationTest {
                         lowerIdFourPost.getId()
                 );
         assertThat(results).extracting(PostRepository.HotPostScoreView::getScore)
-                .containsExactly(15L, 10L, 10L, 4L, 4L);
+                .satisfiesExactly(
+                        s -> assertThat((Double) s).isCloseTo(Math.log(3) * 5 + Math.log(2) * 5, within(0.001)),
+                        s -> assertThat((Double) s).isCloseTo(Math.log(2) * 10, within(0.001)),
+                        s -> assertThat((Double) s).isCloseTo(Math.log(2) * 10, within(0.001)),
+                        s -> assertThat((Double) s).isCloseTo(Math.log(3) * 2, within(0.001)),
+                        s -> assertThat((Double) s).isCloseTo(Math.log(3) * 2, within(0.001))
+                );
     }
 
     @Test
@@ -180,7 +188,7 @@ class PostRepositoryIntegrationTest {
         // 동일 회원의 여러 날짜 조회는 1명의 unique 방문자로 계산되어야 한다.
         assertThat(results).singleElement().satisfies(result -> {
             assertThat(result.getPostId()).isEqualTo(post.getId());
-            assertThat(result.getScore()).isEqualTo(2L);
+            assertThat(result.getScore()).isCloseTo(Math.log(2) * 2, within(0.001));
         });
     }
 
