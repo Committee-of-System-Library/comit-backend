@@ -136,26 +136,29 @@ class PostRepositoryIntegrationTest {
         // when
         // 최근 7일 인기글 집계 쿼리를 실행한다.
         List<PostRepository.HotPostScoreView> results = postRepository.findHotPostScores(
-                startDateTime, startDate, 5, 3, 2, false, List.of("NOTICE", "EVENT"), 5);
+                startDateTime, startDate, 5, 3, 2, 0.1, 1, false, List.of("NOTICE", "EVENT"), 5);
 
         // then
         // 가중치, 동점 정렬, 제외 규칙, 상위 5개 제한이 모두 반영되어야 한다.
+        double d6 = Math.exp(-0.6); // 6일 전 반응의 감쇠 계수
+        double d1 = Math.exp(-0.1); // 1일 전 반응의 감쇠 계수
+        double d2 = Math.exp(-0.2); // 2일 전 반응의 감쇠 계수
         assertThat(results).hasSize(5);
         assertThat(results).extracting(PostRepository.HotPostScoreView::getPostId)
                 .containsExactly(
                         topPost.getId(),
-                        newerTenPost.getId(),
                         olderTenPost.getId(),
+                        newerTenPost.getId(),
                         higherIdFourPost.getId(),
                         lowerIdFourPost.getId()
                 );
         assertThat(results).extracting(PostRepository.HotPostScoreView::getScore)
                 .satisfiesExactly(
-                        s -> assertThat((Double) s).isCloseTo(Math.log(3) * 5 + Math.log(2) * 5, within(0.001)),
-                        s -> assertThat((Double) s).isCloseTo(Math.log(2) * 10, within(0.001)),
-                        s -> assertThat((Double) s).isCloseTo(Math.log(2) * 10, within(0.001)),
-                        s -> assertThat((Double) s).isCloseTo(Math.log(3) * 2, within(0.001)),
-                        s -> assertThat((Double) s).isCloseTo(Math.log(3) * 2, within(0.001))
+                        s -> assertThat((Double) s).isCloseTo(Math.log(1 + 2 * d6) * 5 + Math.log(1 + d6) * 3 + Math.log(2) * 2, within(0.001)),
+                        s -> assertThat((Double) s).isCloseTo(Math.log(1 + d6) * 8 + Math.log(1 + d1) * 2, within(0.001)),
+                        s -> assertThat((Double) s).isCloseTo(Math.log(1 + d6) * 8 + Math.log(1 + d2) * 2, within(0.001)),
+                        s -> assertThat((Double) s).isCloseTo(Math.log(2 + d1) * 2, within(0.001)),
+                        s -> assertThat((Double) s).isCloseTo(Math.log(2 + d1) * 2, within(0.001))
                 );
     }
 
@@ -182,13 +185,13 @@ class PostRepositoryIntegrationTest {
         // when
         // 최근 7일 인기글 집계 쿼리를 실행한다.
         List<PostRepository.HotPostScoreView> results = postRepository.findHotPostScores(
-                startDateTime, startDate, 5, 3, 2, false, List.of("NOTICE", "EVENT"), 5);
+                startDateTime, startDate, 5, 3, 2, 0.1, 1, false, List.of("NOTICE", "EVENT"), 5);
 
         // then
         // 동일 회원의 여러 날짜 조회는 1명의 unique 방문자로 계산되어야 한다.
         assertThat(results).singleElement().satisfies(result -> {
             assertThat(result.getPostId()).isEqualTo(post.getId());
-            assertThat(result.getScore()).isCloseTo(Math.log(2) * 2, within(0.001));
+            assertThat(result.getScore()).isCloseTo(Math.log(2 + Math.exp(-0.2)) * 2, within(0.001));
         });
     }
 

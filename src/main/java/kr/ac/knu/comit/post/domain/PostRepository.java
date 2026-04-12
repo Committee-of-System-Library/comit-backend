@@ -88,26 +88,32 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             value = """
                     SELECT p.id AS postId,
                            (
-                               LOG(1 + COALESCE(pl.recent_like_count, 0)) * :likeWeight
-                               + LOG(1 + COALESCE(c.recent_comment_count, 0)) * :commentWeight
-                               + LOG(1 + COALESCE(pdv.recent_unique_visitor_count, 0)) * :visitorWeight
+                               LOG(1 + COALESCE(pl.weighted_like_count, 0)) * :likeWeight
+                               + LOG(1 + COALESCE(c.weighted_comment_count, 0)) * :commentWeight
+                               + LOG(1 + COALESCE(pdv.weighted_visitor_count, 0)) * :visitorWeight
                            ) AS score
                     FROM post p
                     LEFT JOIN (
-                        SELECT post_id, COUNT(*) AS recent_like_count
+                        SELECT post_id,
+                               SUM(EXP(-:decayRate * DATEDIFF(CURDATE(), DATE(created_at)))) AS weighted_like_count,
+                               COUNT(*) AS raw_like_count
                         FROM post_like
                         WHERE created_at >= :startDateTime
                         GROUP BY post_id
                     ) pl ON pl.post_id = p.id
                     LEFT JOIN (
-                        SELECT post_id, COUNT(*) AS recent_comment_count
+                        SELECT post_id,
+                               SUM(EXP(-:decayRate * DATEDIFF(CURDATE(), DATE(created_at)))) AS weighted_comment_count,
+                               COUNT(*) AS raw_comment_count
                         FROM `comment`
                         WHERE deleted_at IS NULL
                           AND created_at >= :startDateTime
                         GROUP BY post_id
                     ) c ON c.post_id = p.id
                     LEFT JOIN (
-                        SELECT post_id, COUNT(DISTINCT member_id) AS recent_unique_visitor_count
+                        SELECT post_id,
+                               SUM(EXP(-:decayRate * DATEDIFF(CURDATE(), viewed_on))) AS weighted_visitor_count,
+                               COUNT(DISTINCT member_id) AS raw_visitor_count
                         FROM post_daily_visitor
                         WHERE viewed_on >= :startDate
                         GROUP BY post_id
@@ -115,10 +121,10 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
                     WHERE p.deleted_at IS NULL
                       AND (:excludedBoardTypesEmpty = true OR p.board_type NOT IN (:excludedBoardTypes))
                       AND (
-                          LOG(1 + COALESCE(pl.recent_like_count, 0)) * :likeWeight
-                          + LOG(1 + COALESCE(c.recent_comment_count, 0)) * :commentWeight
-                          + LOG(1 + COALESCE(pdv.recent_unique_visitor_count, 0)) * :visitorWeight
-                      ) > 0
+                          COALESCE(pl.raw_like_count, 0)
+                          + COALESCE(c.raw_comment_count, 0)
+                          + COALESCE(pdv.raw_visitor_count, 0)
+                      ) >= :minReactions
                     ORDER BY score DESC, p.created_at DESC, p.id DESC
                     LIMIT :limit
                     """,
@@ -130,6 +136,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             @Param("likeWeight") int likeWeight,
             @Param("commentWeight") int commentWeight,
             @Param("visitorWeight") int visitorWeight,
+            @Param("decayRate") double decayRate,
+            @Param("minReactions") int minReactions,
             @Param("excludedBoardTypesEmpty") boolean excludedBoardTypesEmpty,
             @Param("excludedBoardTypes") List<String> excludedBoardTypes,
             @Param("limit") int limit

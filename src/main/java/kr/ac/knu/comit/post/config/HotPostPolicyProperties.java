@@ -38,6 +38,18 @@ public class HotPostPolicyProperties {
     private int limit = 5;
 
     /**
+     * 시간 감쇠율. 하루가 지날수록 반응 가중치를 EXP(-decayRate * days) 배로 줄인다.
+     * 0이면 감쇠 없음 (균등 집계).
+     */
+    private double decayRate = 0.1;
+
+    /**
+     * 인기글 후보가 되기 위한 최소 원시 반응 수 (좋아요 + 댓글 + unique 방문자 합산).
+     * 기본값 1 — 반응이 전혀 없는 게시글만 제외한다.
+     */
+    private int minReactions = 1;
+
+    /**
      * 인기글 집계에서 제외할 게시판 목록.
      * 기본값: NOTICE, EVENT — 운영 게시판은 커뮤니티 활동성 지표에서 제외한다.
      */
