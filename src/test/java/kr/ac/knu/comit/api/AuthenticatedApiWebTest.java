@@ -134,7 +134,7 @@ class AuthenticatedApiWebTest {
         // given
         // 인증된 사용자의 프로필 응답을 준비한다.
         given(memberService.getMyProfile(1L))
-                .willReturn(new MemberProfileResponse(1L, "comit-user", "2020111111", true, null));
+                .willReturn(new MemberProfileResponse(1L, "comit-user", "2020111111", true, null, null));
 
         // when & then
         // 인증 헤더가 컨트롤러까지 주입되고 응답이 정상 직렬화되는지 확인한다.
