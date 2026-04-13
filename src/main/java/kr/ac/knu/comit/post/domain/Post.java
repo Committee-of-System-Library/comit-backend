@@ -94,6 +94,15 @@ public class Post {
      * @implNote 태그는 통째로 교체한다. 기존 row 정리는 orphan removal에 맡긴다.
      */
     public void update(String title, String content, List<String> tagNames, List<String> imageUrls) {
+        applyEditableFields(title, content, tagNames, imageUrls);
+    }
+
+    public void updateByAdmin(BoardType boardType, String title, String content, List<String> tagNames, List<String> imageUrls) {
+        this.boardType = boardType;
+        applyEditableFields(title, content, tagNames, imageUrls);
+    }
+
+    private void applyEditableFields(String title, String content, List<String> tagNames, List<String> imageUrls) {
         List<String> normalizedTagNames = normalizeTagNames(tagNames);
         List<String> normalizedImageUrls = normalizeImageUrls(imageUrls);
         validateTitle(title);

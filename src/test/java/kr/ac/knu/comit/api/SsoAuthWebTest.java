@@ -28,6 +28,8 @@ import kr.ac.knu.comit.global.auth.MemberArgumentResolver;
 import kr.ac.knu.comit.global.auth.SsoAuthenticationFilter;
 import kr.ac.knu.comit.global.config.WebMvcConfig;
 import kr.ac.knu.comit.global.exception.GlobalExceptionHandler;
+import kr.ac.knu.comit.image.dto.PresignedUploadResponse;
+import kr.ac.knu.comit.image.service.ImageService;
 import kr.ac.knu.comit.member.controller.MemberController;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.dto.MemberProfileResponse;
@@ -91,6 +93,9 @@ class SsoAuthWebTest {
 
     @MockitoBean
     private MemberRegistrationService memberRegistrationService;
+
+    @MockitoBean
+    private ImageService imageService;
 
     @BeforeEach
     void setUp() {
@@ -237,6 +242,31 @@ class SsoAuthWebTest {
                 .anySatisfy(cookie -> assertThat(cookie).contains("comit-redirect-uri=").contains("Max-Age=0"));
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .noneSatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN="));
+    }
+
+    @Test
+    @DisplayName("미가입 회원은 회원가입 전용 프로필 이미지 presigned URL을 발급받을 수 있다")
+    void createsProfileImagePresignedUploadForPendingRegistration() throws Exception {
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(imageService.generatePresignedUrl(any())).willReturn(
+                new PresignedUploadResponse(
+                        "https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png?signature=test",
+                        "https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png"
+                )
+        );
+
+        mockMvc.perform(post("/auth/register/profile-image/presigned")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "fileName": "profile.png",
+                                  "contentType": "image/png"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.imageUrl").value("https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png"));
     }
 
     @Test

@@ -8,7 +8,9 @@ import kr.ac.knu.comit.post.controller.api.AdminPostControllerApi;
 import kr.ac.knu.comit.post.domain.BoardType;
 import kr.ac.knu.comit.post.dto.AdminCreatePostRequest;
 import kr.ac.knu.comit.post.dto.AdminCreatePostResponse;
+import kr.ac.knu.comit.post.dto.AdminPostDetailResponse;
 import kr.ac.knu.comit.post.dto.AdminPostPageResponse;
+import kr.ac.knu.comit.post.dto.AdminUpdatePostRequest;
 import kr.ac.knu.comit.post.dto.AdminVisibilityRequest;
 import kr.ac.knu.comit.post.service.AdminPostService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,20 @@ public class AdminPostController implements AdminPostControllerApi {
         validateAdmin(principal);
         return ResponseEntity.ok(ApiResponse.success(
                 adminPostService.getPosts(boardType, pageable)));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<AdminPostDetailResponse>> getPost(Long postId, MemberPrincipal principal) {
+        validateAdmin(principal);
+        return ResponseEntity.ok(ApiResponse.success(adminPostService.getPost(postId)));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Void>> updatePost(
+            Long postId, AdminUpdatePostRequest request, MemberPrincipal principal) {
+        validateAdmin(principal);
+        adminPostService.updatePost(postId, request);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
     @Override
