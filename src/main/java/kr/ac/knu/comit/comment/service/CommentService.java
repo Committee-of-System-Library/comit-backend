@@ -86,10 +86,10 @@ public class CommentService {
     public void deleteComment(Long commentId, Long memberId) {
         Comment comment = findCommentOrThrow(commentId);
         checkOwnership(comment, memberId);
+        comment.delete();
         if (!comment.isReply()) {
             commentRepository.softDeleteRepliesByParentCommentId(commentId, LocalDateTime.now());
         }
-        comment.delete();
     }
 
     @Transactional
