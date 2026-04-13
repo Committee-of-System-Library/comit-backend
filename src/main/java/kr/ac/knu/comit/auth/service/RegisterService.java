@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.auth.service;
 
 import kr.ac.knu.comit.auth.dto.RegisterPrefillResponse;
+import kr.ac.knu.comit.auth.dto.RegisterProfileImagePresignedRequest;
 import kr.ac.knu.comit.auth.dto.RegisterRequest;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
@@ -8,6 +9,9 @@ import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
+import kr.ac.knu.comit.image.dto.PresignedUploadRequest;
+import kr.ac.knu.comit.image.dto.PresignedUploadResponse;
+import kr.ac.knu.comit.image.service.ImageService;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +27,7 @@ public class RegisterService {
     private final ExternalIdentityMapper externalIdentityMapper;
     private final MemberService memberService;
     private final MemberRegistrationService memberRegistrationService;
+    private final ImageService imageService;
 
     public RegisterPrefillResponse getPrefill(String token) {
         ExternalIdentity identity = verifyRegistrationIdentity(token);
@@ -51,6 +56,17 @@ public class RegisterService {
                 identity.studentNumber(),
                 identity.major(),
                 request.profileImageUrl()
+        );
+    }
+
+    public PresignedUploadResponse createProfileImagePresignedUpload(
+            String token,
+            RegisterProfileImagePresignedRequest request
+    ) {
+        ExternalIdentity identity = verifyRegistrationIdentity(token);
+        validateMemberDoesNotExist(identity.ssoSub());
+        return imageService.generatePresignedUrl(
+                new PresignedUploadRequest(request.fileName(), request.contentType(), "members")
         );
     }
 

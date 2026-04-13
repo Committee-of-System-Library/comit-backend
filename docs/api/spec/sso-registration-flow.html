@@ -80,6 +80,7 @@
 <ul>
 <li><code>SsoCallbackPendingRegistration</code> 결과 타입 추가</li>
 <li><code>GET /auth/register/prefill</code> — JWT에서 pre-fill 가능한 값 반환</li>
+<li><code>POST /auth/register/profile-image/presigned</code> — 회원가입 전 프로필 이미지 업로드용 presigned URL 발급</li>
 <li><code>POST /auth/register</code> — 회원가입 완료 API</li>
 <li><code>Member</code> 도메인 필드 확장 (<code>name</code>, <code>phone</code>, <code>majorTrack</code>, <code>agreedAt</code>)</li>
 <li><code>ExternalIdentity</code> <code>major</code> 필드 추가</li>
@@ -88,7 +89,6 @@
 </ul>
 <h3>1.3 Out of Scope</h3>
 <ul>
-<li>프로필 이미지</li>
 <li>약관 버전 관리</li>
 <li>회원가입 후 이메일 인증</li>
 </ul>
@@ -97,6 +97,7 @@
 <li>미가입 INTERNAL 사용자가 SSO 콜백 후 register URL로 리디렉션된다.</li>
 <li><code>GET /auth/register/prefill</code>에서 name, studentNumber, major가 반환된다.</li>
 <li><code>POST /auth/register</code>로 회원가입 완료 후 정상 서비스 진입이 된다.</li>
+<li>회원가입 전 단계에서 프로필 이미지를 업로드해 <code>profileImageUrl</code>을 register 요청에 포함할 수 있다.</li>
 <li>미가입 상태에서 <code>/auth/register/**</code> 외 API 접근 시 <code>REGISTRATION_REQUIRED</code> 에러가 반환된다.</li>
 <li>기존 가입 사용자의 로그인 플로우는 그대로 동작한다.</li>
 </ul>
@@ -185,6 +186,36 @@
 <li><code>200 OK</code>가 반환된다.</li>
 <li>이후 일반 API 접근이 가능해진다.</li>
 </ul>
+<h3>Scenario C-1. 미가입 사용자가 회원가입 전 프로필 이미지 업로드용 presigned URL을 발급받는다</h3>
+<p>Given:</p>
+<ul>
+<li>SSO 토큰 쿠키가 세팅되어 있다.</li>
+<li>DB에 해당 ssoSub의 멤버가 없다.</li>
+<li>업로드 파일 형식은 이미지다.</li>
+</ul>
+<p>When:</p>
+<ul>
+<li><code>POST /auth/register/profile-image/presigned</code>를 호출한다.</li>
+</ul>
+<p>Then:</p>
+<ul>
+<li>서버는 <code>members</code> 경로에 업로드할 presigned URL과 최종 <code>imageUrl</code>을 반환한다.</li>
+<li>프론트는 이 <code>imageUrl</code>을 최종 <code>POST /auth/register</code>의 <code>profileImageUrl</code>로 전달할 수 있다.</li>
+</ul>
+<h3>Scenario C-2. 이미 가입된 사용자는 회원가입 전용 프로필 이미지 presigned URL을 발급받을 수 없다</h3>
+<p>Given:</p>
+<ul>
+<li>SSO 토큰 쿠키가 세팅되어 있다.</li>
+<li>DB에 해당 ssoSub의 멤버가 이미 존재한다.</li>
+</ul>
+<p>When:</p>
+<ul>
+<li><code>POST /auth/register/profile-image/presigned</code>를 호출한다.</li>
+</ul>
+<p>Then:</p>
+<ul>
+<li><code>409 MEMBER_ALREADY_EXISTS</code> 에러가 반환된다.</li>
+</ul>
 <h3>Scenario D. 미가입 상태에서 일반 API에 접근한다</h3>
 <p>Given:</p>
 <ul>
@@ -232,6 +263,8 @@
 <li>FR-1: SSO 콜백 시 INTERNAL + 미가입이면 <code>SsoCallbackPendingRegistration</code>을 반환하고 register URL로 리디렉션한다.</li>
 <li>FR-2: <code>GET /auth/register/prefill</code>은 SSO 쿠키를 검증하고 JWT에서 <code>name</code>, <code>studentNumber</code>, <code>major</code>를 반환한다.</li>
 <li>FR-3: <code>POST /auth/register</code>는 <code>nickname</code>, <code>phone</code>, <code>agreedToTerms</code>를 받는다.</li>
+<li>FR-3-1: <code>POST /auth/register/profile-image/presigned</code>는 <code>fileName</code>, <code>contentType</code>을 받고 presigned URL과 <code>imageUrl</code>을 반환한다.</li>
+<li>FR-3-2: 회원가입 전용 프로필 이미지 presigned 발급은 <code>members</code> 폴더만 사용하며 클라이언트가 임의 폴더를 지정할 수 없다.</li>
 <li>FR-4: <code>agreedToTerms</code>가 <code>false</code>이면 <code>400 INVALID_REQUEST</code>를 반환한다.</li>
 <li>FR-5: <code>nickname</code>은 1~15자, 중복 불가.</li>
 <li>FR-6: <code>phone</code>은 필수 입력값이다.</li>
@@ -244,6 +277,7 @@
 <h3>5.1 Preconditions</h3>
 <ul>
 <li><code>GET /auth/register/prefill</code>, <code>POST /auth/register</code> 모두 유효한 SSO 토큰 쿠키 필요</li>
+<li><code>POST /auth/register/profile-image/presigned</code>도 유효한 SSO 토큰 쿠키 필요</li>
 <li><code>agreedToTerms == true</code></li>
 </ul>
 <h3>5.2 Postconditions</h3>
@@ -251,16 +285,19 @@
 <li>Member 생성: <code>name</code>, <code>phone</code>, <code>nickname</code>, <code>studentNumber</code>, <code>majorTrack</code>, <code>agreedAt</code>, <code>ssoSub</code> 저장</li>
 <li><code>agreedAt = 서버 현재 시각</code></li>
 <li>이후 <code>SsoAuthenticationFilter</code>에서 정상 멤버로 인식</li>
+<li>회원가입 전용 프로필 이미지 업로드는 member row를 생성하지 않는다.</li>
 </ul>
 <h3>5.3 Invariants</h3>
 <ul>
 <li><code>name</code>, <code>studentNumber</code>, <code>major</code>는 서버가 JWT에서 직접 읽는다. 프론트 전달값을 신뢰하지 않는다.</li>
+<li><code>profileImageUrl</code>은 회원가입 전용 presigned 발급 API가 반환한 URL만 사용한다.</li>
 <li>한 ssoSub에 하나의 멤버만 존재한다.</li>
 <li><code>agreedToTerms == false</code>이면 회원가입이 완료되지 않는다.</li>
 </ul>
 <h3>5.4 Forbidden Rules</h3>
 <ul>
 <li>프론트에서 <code>name</code>, <code>studentNumber</code>, <code>major</code>를 전달받아 저장하는 것</li>
+<li>기존 <code>POST /images/presigned</code>를 회원가입 전 단계에서 직접 호출하는 것</li>
 <li>미가입 상태에서 일반 API 접근 허용</li>
 <li>auto-create로 닉네임을 자동 생성하는 것</li>
 <li>soft delete 된 기존 회원을 새 회원가입 플로우로 다시 진입시키는 것</li>
@@ -315,6 +352,30 @@
 <p>- <code>401 UNAUTHORIZED</code>: 쿠키 없음</p>
 <p>- <code>409 MEMBER_ALREADY_EXISTS</code>: 이미 가입된 ssoSub</p>
 <p>- <code>409 DUPLICATE_NICKNAME</code>: 닉네임 중복</p>
+<p><strong>POST /auth/register/profile-image/presigned</strong></p>
+<ul>
+<li>Auth: SSO 토큰 쿠키 필요</li>
+<li>Request:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;fileName&quot;: &quot;profile.png&quot;,
+  &quot;contentType&quot;: &quot;image/png&quot;
+}</code></pre>
+<ul>
+<li>Response:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;presignedUrl&quot;: &quot;https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png?signature=...&quot;,
+  &quot;imageUrl&quot;: &quot;https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png&quot;
+}</code></pre>
+<ul>
+<li>Errors:</li>
+</ul>
+<p>- <code>400 INVALID_REQUEST</code>: fileName 또는 contentType 누락</p>
+<p>- <code>400 UNSUPPORTED_FILE_TYPE</code>: 허용되지 않은 이미지 형식</p>
+<p>- <code>401 UNAUTHORIZED</code>: 쿠키 없음 또는 만료</p>
+<p>- <code>403 FORBIDDEN</code>: EXTERNAL 사용자</p>
+<p>- <code>409 MEMBER_ALREADY_EXISTS</code>: 이미 가입된 ssoSub</p>
 <h3>7.2 Persistence Contract</h3>
 <ul>
 <li>Member 테이블 신규 컬럼:</li>
@@ -329,6 +390,7 @@
 <ul>
 <li><code>name</code>, <code>studentNumber</code>, <code>major</code>는 JWT에서만 읽는다.</li>
 <li>register API는 SSO 쿠키 검증 없이 접근 불가.</li>
+<li>회원가입 전 프로필 이미지 업로드도 SSO 쿠키 검증 없이 접근 불가.</li>
 </ul>
 <h3>8.2 Technical Constraints</h3>
 <ul>
@@ -341,6 +403,7 @@
 <ul>
 <li>미가입 INTERNAL 콜백 → register URL 리디렉션</li>
 <li>prefill 조회 성공</li>
+<li>회원가입 전용 프로필 이미지 presigned URL 발급 성공</li>
 <li>회원가입 완료 → 멤버 생성 확인</li>
 <li>기가입 사용자 콜백 → success URL 리디렉션 (회귀)</li>
 </ul>
@@ -350,6 +413,8 @@
 <li>닉네임 15자 초과 → 400</li>
 <li>닉네임 중복 → 409</li>
 <li>이미 가입된 ssoSub으로 재등록 → 409</li>
+<li>이미 가입된 ssoSub으로 회원가입 전용 프로필 이미지 presigned 요청 → 409</li>
+<li>회원가입 전용 프로필 이미지 presigned 요청에서 비이미지 contentType → 400</li>
 <li>미가입 상태에서 <code>/posts</code> 접근 → 403</li>
 </ul>
 <h3>9.3 Edge Cases</h3>

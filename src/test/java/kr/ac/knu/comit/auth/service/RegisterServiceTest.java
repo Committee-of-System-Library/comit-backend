@@ -2,11 +2,13 @@ package kr.ac.knu.comit.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import java.util.Optional;
 import kr.ac.knu.comit.auth.dto.RegisterPrefillResponse;
+import kr.ac.knu.comit.auth.dto.RegisterProfileImagePresignedRequest;
 import kr.ac.knu.comit.auth.dto.RegisterRequest;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
@@ -14,6 +16,8 @@ import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
+import kr.ac.knu.comit.image.dto.PresignedUploadResponse;
+import kr.ac.knu.comit.image.service.ImageService;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +42,9 @@ class RegisterServiceTest {
 
     @Mock
     private MemberRegistrationService memberRegistrationService;
+
+    @Mock
+    private ImageService imageService;
 
     @InjectMocks
     private RegisterService registerService;
@@ -128,6 +135,30 @@ class RegisterServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(MemberErrorCode.MEMBER_ALREADY_EXISTS);
+    }
+
+    @Test
+    @DisplayName("회원가입 전용 프로필 이미지 presigned URL 발급은 가입 전 사용자에게만 허용된다")
+    void createsProfileImagePresignedUploadForPendingRegistration() {
+        ExternalIdentity identity = identity();
+        given(externalAuthClient.verify("token-123")).willReturn(identity);
+        given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
+        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(imageService.generatePresignedUrl(any())).willReturn(
+                new PresignedUploadResponse(
+                        "https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png?signature=test",
+                        "https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png"
+                )
+        );
+
+        PresignedUploadResponse response = registerService.createProfileImagePresignedUpload(
+                "token-123",
+                new RegisterProfileImagePresignedRequest("profile.png", "image/png")
+        );
+
+        assertThat(response.imageUrl()).isEqualTo("https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png");
+        assertThat(response.presignedUrl()).contains("signature=test");
+        then(imageService).should().generatePresignedUrl(any());
     }
 
     private ExternalIdentity identity() {

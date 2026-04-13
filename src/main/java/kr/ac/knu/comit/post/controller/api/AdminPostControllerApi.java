@@ -12,7 +12,9 @@ import kr.ac.knu.comit.global.exception.ApiResponse;
 import kr.ac.knu.comit.post.domain.BoardType;
 import kr.ac.knu.comit.post.dto.AdminCreatePostRequest;
 import kr.ac.knu.comit.post.dto.AdminCreatePostResponse;
+import kr.ac.knu.comit.post.dto.AdminPostDetailResponse;
 import kr.ac.knu.comit.post.dto.AdminPostPageResponse;
+import kr.ac.knu.comit.post.dto.AdminUpdatePostRequest;
 import kr.ac.knu.comit.post.dto.AdminVisibilityRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -113,6 +115,91 @@ public interface AdminPostControllerApi {
     ResponseEntity<ApiResponse<AdminPostPageResponse>> getPosts(
             @RequestParam(required = false) BoardType boardType,
             Pageable pageable,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "게시글 상세 조회 (관리자)",
+            description = "관리자가 공지/이벤트/정보 게시글 상세 내용을 조회합니다. 수정 화면 진입에 필요한 본문, 태그, 이미지 URL을 포함합니다.",
+            descriptions = {
+                    @FieldDesc(name = "postId", value = "조회할 게시글 ID입니다."),
+                    @FieldDesc(name = "boardType", value = "게시판 유형입니다."),
+                    @FieldDesc(name = "title", value = "게시글 제목입니다."),
+                    @FieldDesc(name = "content", value = "게시글 본문입니다."),
+                    @FieldDesc(name = "tags", value = "태그 목록입니다."),
+                    @FieldDesc(name = "imageUrls", value = "첨부 이미지 URL 목록입니다."),
+                    @FieldDesc(name = "hiddenByAdmin", value = "관리자 숨김 여부입니다.")
+            },
+            errors = {
+                    @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),
+                    @ApiError(code = "POST_NOT_FOUND", when = "존재하지 않는 게시글 ID로 요청할 때")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": {
+                                "id": 42,
+                                "boardType": "EVENT",
+                                "title": "세미나 신청 안내",
+                                "content": "상세 일정 안내입니다.",
+                                "authorNickname": "관리자",
+                                "likeCount": 0,
+                                "viewCount": 10,
+                                "hiddenByAdmin": false,
+                                "tags": ["세미나", "행사"],
+                                "imageUrls": [],
+                                "createdAt": "2026-04-14T10:00:00",
+                                "updatedAt": "2026-04-14T10:05:00"
+                              }
+                            }
+                            """
+            )
+    )
+    @GetMapping("/{postId}")
+    ResponseEntity<ApiResponse<AdminPostDetailResponse>> getPost(
+            @PathVariable Long postId,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "공지/이벤트/정보 게시글 수정 (관리자)",
+            description = "관리자가 NOTICE, EVENT, INFO 게시판의 게시글을 수정합니다. 수정 시 게시판 유형, 제목, 본문, 태그, 이미지 URL을 통째로 교체합니다.",
+            descriptions = {
+                    @FieldDesc(name = "postId", value = "수정할 게시글 ID입니다."),
+                    @FieldDesc(name = "boardType", value = "게시판 유형입니다. NOTICE, EVENT, INFO 중 하나만 허용됩니다."),
+                    @FieldDesc(name = "title", value = "수정할 게시글 제목입니다."),
+                    @FieldDesc(name = "content", value = "수정할 게시글 내용입니다."),
+                    @FieldDesc(name = "tags", value = "태그 목록입니다. 생략 가능합니다."),
+                    @FieldDesc(name = "imageUrls", value = "첨부 이미지 URL 목록입니다. 생략 가능합니다.")
+            },
+            errors = {
+                    @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),
+                    @ApiError(code = "FORBIDDEN_BOARD_TYPE", when = "NOTICE, EVENT, INFO 외 boardType으로 요청할 때"),
+                    @ApiError(code = "POST_NOT_FOUND", when = "존재하지 않는 게시글 ID로 요청할 때"),
+                    @ApiError(code = "INVALID_REQUEST", when = "요청 본문이 검증 규칙을 만족하지 않을 때")
+            },
+            example = @Example(
+                    request = """
+                            {
+                              "boardType": "EVENT",
+                              "title": "세미나 신청 안내 수정",
+                              "content": "수정된 상세 일정 안내입니다.",
+                              "tags": ["세미나", "행사"],
+                              "imageUrls": []
+                            }
+                            """,
+                    response = """
+                            {
+                              "result": "SUCCESS"
+                            }
+                            """
+            )
+    )
+    @PatchMapping("/{postId}")
+    ResponseEntity<ApiResponse<Void>> updatePost(
+            @PathVariable Long postId,
+            @Valid @RequestBody AdminUpdatePostRequest request,
             @AuthenticatedMember MemberPrincipal principal
     );
 

@@ -45,6 +45,7 @@ import kr.ac.knu.comit.post.controller.PostController;
 import kr.ac.knu.comit.post.domain.BoardType;
 import kr.ac.knu.comit.post.domain.PostConstraints;
 import kr.ac.knu.comit.post.service.AdminPostService;
+import kr.ac.knu.comit.post.dto.AdminPostDetailResponse;
 import kr.ac.knu.comit.post.dto.HotPostListResponse;
 import kr.ac.knu.comit.post.dto.HotPostResponse;
 import kr.ac.knu.comit.post.dto.PostCursorPageResponse;
@@ -535,6 +536,38 @@ class AuthenticatedApiWebTest {
     }
 
     @Test
+    void returnsForbiddenWhenNonAdminRequestsAdminPostDetail() throws Exception {
+        mockMvc.perform(get("/admin/posts/1")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "student")
+                        .header("X-Member-Role", "STUDENT"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("/problems/common/forbidden"))
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
+    }
+
+    @Test
+    void returnsForbiddenWhenNonAdminUpdatesAdminPost() throws Exception {
+        mockMvc.perform(patch("/admin/posts/1")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "student")
+                        .header("X-Member-Role", "STUDENT")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "boardType": "EVENT",
+                                  "title": "수정 제목",
+                                  "content": "수정 본문",
+                                  "tags": [],
+                                  "imageUrls": []
+                                }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("/problems/common/forbidden"))
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
+    }
+
+    @Test
     void returnsForbiddenWhenNonAdminRequestsAdminCommentList() throws Exception {
         // when & then
         // 관리자 권한이 아니면 댓글 관리자 API 접근이 거부되어야 한다.
@@ -584,6 +617,56 @@ class AuthenticatedApiWebTest {
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "admin")
                         .header("X-Member-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"));
+    }
+
+    @Test
+    void returnsAdminPostDetailWhenAdminRequestsIt() throws Exception {
+        given(adminPostService.getPost(42L)).willReturn(
+                new AdminPostDetailResponse(
+                        42L,
+                        BoardType.EVENT,
+                        "세미나 신청 안내",
+                        "상세 일정 안내입니다.",
+                        "관리자",
+                        0,
+                        10,
+                        false,
+                        List.of("세미나", "행사"),
+                        List.of("https://cdn.example.com/event-42.png"),
+                        LocalDateTime.parse("2026-04-14T10:00:00"),
+                        LocalDateTime.parse("2026-04-14T10:05:00")
+                )
+        );
+
+        mockMvc.perform(get("/admin/posts/42")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "admin")
+                        .header("X-Member-Role", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.boardType").value("EVENT"))
+                .andExpect(jsonPath("$.data.content").value("상세 일정 안내입니다."))
+                .andExpect(jsonPath("$.data.tags[0]").value("세미나"));
+    }
+
+    @Test
+    void updatesAdminPostWhenAdminRequestsIt() throws Exception {
+        mockMvc.perform(patch("/admin/posts/42")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "admin")
+                        .header("X-Member-Role", "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "boardType": "EVENT",
+                                  "title": "수정 제목",
+                                  "content": "수정 본문",
+                                  "tags": ["세미나"],
+                                  "imageUrls": []
+                                }
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"));
     }

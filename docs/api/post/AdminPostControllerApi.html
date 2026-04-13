@@ -260,9 +260,17 @@
     <strong>게시글 삭제 (관리자)</strong>
     <span>DELETE /admin/posts/{postId}</span>
 </a>
+<a href="#getPost">
+    <strong>게시글 상세 조회 (관리자)</strong>
+    <span>GET /admin/posts/{postId}</span>
+</a>
 <a href="#getPosts">
     <strong>게시글 목록 조회 (관리자)</strong>
     <span>GET /admin/posts</span>
+</a>
+<a href="#updatePost">
+    <strong>공지/이벤트/정보 게시글 수정 (관리자)</strong>
+    <span>PATCH /admin/posts/{postId}</span>
 </a>
 <a href="#updateVisibility">
     <strong>게시글 숨김/복원 (관리자)</strong>
@@ -639,6 +647,259 @@
 </section>
 </div>
 </article>
+<article class="endpoint" id="getPost">
+    <div class="eyebrow">GET</div>
+    <h2>게시글 상세 조회 (관리자)</h2>
+    <p>관리자가 공지/이벤트/정보 게시글 상세 내용을 조회합니다. 수정 화면 진입에 필요한 본문, 태그, 이미지 URL을 포함합니다.</p>
+    <div class="path-box"><span class="method">GET</span>/admin/posts/{postId}</div>
+    <div class="section-grid"><section class="card">
+    <h3>경로 변수</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>postId</code></td>
+    <td><span class="type-chip type-number">Long</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>조회할 게시글 ID입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>응답 바디 필드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>authorNickname</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>-</td>
+</tr>
+<tr>
+    <td><code>boardType</code></td>
+    <td><span class="type-chip type-custom">BoardType</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>게시판 유형입니다.</td>
+</tr>
+<tr>
+    <td><code>content</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>게시글 본문입니다.</td>
+</tr>
+<tr>
+    <td><code>createdAt</code></td>
+    <td><span class="type-chip type-datetime">LocalDateTime</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>-</td>
+</tr>
+<tr>
+    <td><code>hiddenByAdmin</code></td>
+    <td><span class="type-chip type-boolean">boolean</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>관리자 숨김 여부입니다.</td>
+</tr>
+<tr>
+    <td><code>id</code></td>
+    <td><span class="type-chip type-number">Long</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>-</td>
+</tr>
+<tr>
+    <td><code>imageUrls</code></td>
+    <td><span class="type-chip type-collection">List&lt;String&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>첨부 이미지 URL 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>likeCount</code></td>
+    <td><span class="type-chip type-number">int</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>-</td>
+</tr>
+<tr>
+    <td><code>tags</code></td>
+    <td><span class="type-chip type-collection">List&lt;String&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>태그 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>title</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>게시글 제목입니다.</td>
+</tr>
+<tr>
+    <td><code>updatedAt</code></td>
+    <td><span class="type-chip type-datetime">LocalDateTime</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>-</td>
+</tr>
+<tr>
+    <td><code>viewCount</code></td>
+    <td><span class="type-chip type-number">int</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>-</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>에러 응답 필드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>type</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>문제 유형을 식별하는 URI path입니다.</td>
+</tr>
+<tr>
+    <td><code>title</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>HTTP 상태를 요약한 제목입니다.</td>
+</tr>
+<tr>
+    <td><code>status</code></td>
+    <td><span class="type-chip type-number">Integer</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>HTTP 상태 코드입니다.</td>
+</tr>
+<tr>
+    <td><code>detail</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>클라이언트에 노출할 에러 설명입니다.</td>
+</tr>
+<tr>
+    <td><code>instance</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>에러가 발생한 요청 경로입니다.</td>
+</tr>
+<tr>
+    <td><code>errorCode</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>프론트엔드 분기에 사용하는 안정적인 에러 코드입니다.</td>
+</tr>
+<tr>
+    <td><code>invalidFields</code></td>
+    <td><span class="type-chip type-collection">List&lt;ProblemFieldViolation&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>validation 에러에서만 포함됩니다. 필드명과 검증 메시지 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>errorTrackingId</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>서버 내부 오류에서만 포함됩니다. 로그 추적용 식별자입니다.</td>
+</tr>
+<tr>
+    <td><code>timestamp</code></td>
+    <td><span class="type-chip type-datetime">OffsetDateTime</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>에러 응답 생성 시각입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>에러 코드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>errorCode</th>
+            <th>HTTP 상태</th>
+            <th>type</th>
+            <th>detail</th>
+            <th>발생 조건</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>UNAUTHORIZED</code></td>
+    <td>401</td>
+    <td><code>/problems/common/unauthorized</code></td>
+    <td>인증이 필요합니다.</td>
+    <td>인증 정보가 없거나 유효한 회원을 식별할 수 없을 때</td>
+</tr>
+<tr>
+    <td><code>FORBIDDEN</code></td>
+    <td>403</td>
+    <td><code>/problems/common/forbidden</code></td>
+    <td>접근 권한이 없습니다.</td>
+    <td>관리자 권한이 없는 사용자가 요청할 때</td>
+</tr>
+<tr>
+    <td><code>POST_NOT_FOUND</code></td>
+    <td>404</td>
+    <td><code>/problems/post/not-found</code></td>
+    <td>존재하지 않는 게시글입니다.</td>
+    <td>존재하지 않는 게시글 ID로 요청할 때</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>응답 예시</h3>
+    <pre><code>{
+  &quot;result&quot; : &quot;SUCCESS&quot;,
+  &quot;data&quot; : {
+    &quot;id&quot; : 42,
+    &quot;boardType&quot; : &quot;EVENT&quot;,
+    &quot;title&quot; : &quot;세미나 신청 안내&quot;,
+    &quot;content&quot; : &quot;상세 일정 안내입니다.&quot;,
+    &quot;authorNickname&quot; : &quot;관리자&quot;,
+    &quot;likeCount&quot; : 0,
+    &quot;viewCount&quot; : 10,
+    &quot;hiddenByAdmin&quot; : false,
+    &quot;tags&quot; : [ &quot;세미나&quot;, &quot;행사&quot; ],
+    &quot;imageUrls&quot; : [ ],
+    &quot;createdAt&quot; : &quot;2026-04-14T10:00:00&quot;,
+    &quot;updatedAt&quot; : &quot;2026-04-14T10:05:00&quot;
+  }
+}</code></pre>
+</section>
+<section class="card">
+    <h3>에러 예시</h3>
+    <pre><code>{
+  &quot;type&quot; : &quot;/problems/common/unauthorized&quot;,
+  &quot;title&quot; : &quot;Unauthorized&quot;,
+  &quot;status&quot; : 401,
+  &quot;detail&quot; : &quot;인증이 필요합니다.&quot;,
+  &quot;instance&quot; : &quot;/admin/posts/{postId}&quot;,
+  &quot;errorCode&quot; : &quot;UNAUTHORIZED&quot;,
+  &quot;timestamp&quot; : &quot;2026-03-24T03:10:00Z&quot;
+}</code></pre>
+</section>
+</div>
+</article>
 <article class="endpoint" id="getPosts">
     <div class="eyebrow">GET</div>
     <h2>게시글 목록 조회 (관리자)</h2>
@@ -839,6 +1100,227 @@
   &quot;status&quot; : 401,
   &quot;detail&quot; : &quot;인증이 필요합니다.&quot;,
   &quot;instance&quot; : &quot;/admin/posts&quot;,
+  &quot;errorCode&quot; : &quot;UNAUTHORIZED&quot;,
+  &quot;timestamp&quot; : &quot;2026-03-24T03:10:00Z&quot;
+}</code></pre>
+</section>
+</div>
+</article>
+<article class="endpoint" id="updatePost">
+    <div class="eyebrow">PATCH</div>
+    <h2>공지/이벤트/정보 게시글 수정 (관리자)</h2>
+    <p>관리자가 NOTICE, EVENT, INFO 게시판의 게시글을 수정합니다. 수정 시 게시판 유형, 제목, 본문, 태그, 이미지 URL을 통째로 교체합니다.</p>
+    <div class="path-box"><span class="method">PATCH</span>/admin/posts/{postId}</div>
+    <div class="section-grid"><section class="card">
+    <h3>경로 변수</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>postId</code></td>
+    <td><span class="type-chip type-number">Long</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>수정할 게시글 ID입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>요청 바디 필드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>boardType</code></td>
+    <td><span class="type-chip type-custom">BoardType</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>게시판 유형입니다. NOTICE, EVENT, INFO 중 하나만 허용됩니다.</td>
+</tr>
+<tr>
+    <td><code>content</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>수정할 게시글 내용입니다.</td>
+</tr>
+<tr>
+    <td><code>imageUrls</code></td>
+    <td><span class="type-chip type-collection">List&lt;String&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>첨부 이미지 URL 목록입니다. 생략 가능합니다.</td>
+</tr>
+<tr>
+    <td><code>tags</code></td>
+    <td><span class="type-chip type-collection">List&lt;String&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>태그 목록입니다. 생략 가능합니다.</td>
+</tr>
+<tr>
+    <td><code>title</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>수정할 게시글 제목입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>에러 응답 필드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>type</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>문제 유형을 식별하는 URI path입니다.</td>
+</tr>
+<tr>
+    <td><code>title</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>HTTP 상태를 요약한 제목입니다.</td>
+</tr>
+<tr>
+    <td><code>status</code></td>
+    <td><span class="type-chip type-number">Integer</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>HTTP 상태 코드입니다.</td>
+</tr>
+<tr>
+    <td><code>detail</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>클라이언트에 노출할 에러 설명입니다.</td>
+</tr>
+<tr>
+    <td><code>instance</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>에러가 발생한 요청 경로입니다.</td>
+</tr>
+<tr>
+    <td><code>errorCode</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>프론트엔드 분기에 사용하는 안정적인 에러 코드입니다.</td>
+</tr>
+<tr>
+    <td><code>invalidFields</code></td>
+    <td><span class="type-chip type-collection">List&lt;ProblemFieldViolation&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>validation 에러에서만 포함됩니다. 필드명과 검증 메시지 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>errorTrackingId</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>서버 내부 오류에서만 포함됩니다. 로그 추적용 식별자입니다.</td>
+</tr>
+<tr>
+    <td><code>timestamp</code></td>
+    <td><span class="type-chip type-datetime">OffsetDateTime</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>에러 응답 생성 시각입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>에러 코드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>errorCode</th>
+            <th>HTTP 상태</th>
+            <th>type</th>
+            <th>detail</th>
+            <th>발생 조건</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>UNAUTHORIZED</code></td>
+    <td>401</td>
+    <td><code>/problems/common/unauthorized</code></td>
+    <td>인증이 필요합니다.</td>
+    <td>인증 정보가 없거나 유효한 회원을 식별할 수 없을 때</td>
+</tr>
+<tr>
+    <td><code>INVALID_REQUEST</code></td>
+    <td>400</td>
+    <td><code>/problems/common/invalid-request</code></td>
+    <td>입력값이 올바르지 않습니다.</td>
+    <td>요청 본문이 검증 규칙을 만족하지 않을 때</td>
+</tr>
+<tr>
+    <td><code>FORBIDDEN</code></td>
+    <td>403</td>
+    <td><code>/problems/common/forbidden</code></td>
+    <td>접근 권한이 없습니다.</td>
+    <td>관리자 권한이 없는 사용자가 요청할 때</td>
+</tr>
+<tr>
+    <td><code>FORBIDDEN_BOARD_TYPE</code></td>
+    <td>400</td>
+    <td><code>/problems/post/forbidden-board-type</code></td>
+    <td>해당 게시판 유형은 관리자만 작성할 수 있습니다.</td>
+    <td>NOTICE, EVENT, INFO 외 boardType으로 요청할 때</td>
+</tr>
+<tr>
+    <td><code>POST_NOT_FOUND</code></td>
+    <td>404</td>
+    <td><code>/problems/post/not-found</code></td>
+    <td>존재하지 않는 게시글입니다.</td>
+    <td>존재하지 않는 게시글 ID로 요청할 때</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>요청 예시</h3>
+    <pre><code>{
+  &quot;boardType&quot; : &quot;EVENT&quot;,
+  &quot;title&quot; : &quot;세미나 신청 안내 수정&quot;,
+  &quot;content&quot; : &quot;수정된 상세 일정 안내입니다.&quot;,
+  &quot;tags&quot; : [ &quot;세미나&quot;, &quot;행사&quot; ],
+  &quot;imageUrls&quot; : [ ]
+}</code></pre>
+</section>
+<section class="card">
+    <h3>응답 예시</h3>
+    <pre><code>{
+  &quot;result&quot; : &quot;SUCCESS&quot;
+}</code></pre>
+</section>
+<section class="card">
+    <h3>에러 예시</h3>
+    <pre><code>{
+  &quot;type&quot; : &quot;/problems/common/unauthorized&quot;,
+  &quot;title&quot; : &quot;Unauthorized&quot;,
+  &quot;status&quot; : 401,
+  &quot;detail&quot; : &quot;인증이 필요합니다.&quot;,
+  &quot;instance&quot; : &quot;/admin/posts/{postId}&quot;,
   &quot;errorCode&quot; : &quot;UNAUTHORIZED&quot;,
   &quot;timestamp&quot; : &quot;2026-03-24T03:10:00Z&quot;
 }</code></pre>

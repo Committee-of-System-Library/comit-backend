@@ -1,9 +1,9 @@
 window.API_DOCS = [
 {
   title: "RegisterControllerApi",
-  summary: "SSO 토큰 쿠키를 검증하고 회원가입 폼에 미리 채울 값을 반환합니다.",
+  summary: "회원가입 전 단계에서 SSO 토큰 쿠키를 검증한 뒤 프로필 이미지 업로드용 presigned URL을 발급합니다.",
   href: "./auth/RegisterControllerApi.html",
-  endpointCount: 2,
+  endpointCount: 3,
   sectionPath: "auth"
 },
 {
@@ -66,7 +66,7 @@ window.API_DOCS = [
   title: "AdminPostControllerApi",
   summary: "관리자가 NOTICE, EVENT, INFO 게시판에 게시글을 작성합니다. QNA, FREE 게시판에는 작성할 수 없습니다.",
   href: "./post/AdminPostControllerApi.html",
-  endpointCount: 4,
+  endpointCount: 6,
   sectionPath: "post"
 },
 {

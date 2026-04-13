@@ -71,6 +71,10 @@ class ApiDocGeneratorTest {
         assertThat(authHtml).contains("/auth/sso/login");
         assertThat(authHtml).contains("/auth/sso/callback");
 
+        String registerHtml = Files.readString(tempDir.resolve("auth/RegisterControllerApi.html"));
+        assertThat(registerHtml).contains("/auth/register/profile-image/presigned");
+        assertThat(registerHtml).contains("회원가입 프로필 이미지 업로드용 presigned URL 발급");
+
         String mainHtml = Files.readString(tempDir.resolve("main/MainControllerApi.html"));
         assertThat(mainHtml).contains("/main");
         assertThat(mainHtml).contains("qna");
@@ -81,5 +85,10 @@ class ApiDocGeneratorTest {
         String adminMemberHtml = Files.readString(tempDir.resolve("member/AdminMemberControllerApi.html"));
         assertThat(adminMemberHtml).contains("회원 삭제 (관리자)");
         assertThat(adminMemberHtml).contains("탈퇴한 사용자");
+
+        String adminPostHtml = Files.readString(tempDir.resolve("post/AdminPostControllerApi.html"));
+        assertThat(adminPostHtml).contains("/admin/posts/{postId}");
+        assertThat(adminPostHtml).contains("게시글 상세 조회 (관리자)");
+        assertThat(adminPostHtml).contains("공지/이벤트/정보 게시글 수정 (관리자)");
     }
 }
