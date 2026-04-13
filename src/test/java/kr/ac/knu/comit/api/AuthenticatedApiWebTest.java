@@ -196,6 +196,7 @@ class AuthenticatedApiWebTest {
                         "JPA fetch join 질문",
                         "join fetch와 entity graph 차이가 궁금합니다.",
                         "backend-dev",
+                        "https://cdn.example.com/profiles/backend-dev.png",
                         3,
                         128,
                         true,
@@ -215,6 +216,7 @@ class AuthenticatedApiWebTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.id").value(101L))
                 .andExpect(jsonPath("$.data.boardType").value("QNA"))
+                .andExpect(jsonPath("$.data.authorProfileImageUrl").value("https://cdn.example.com/profiles/backend-dev.png"))
                 .andExpect(jsonPath("$.data.viewCount").value(128))
                 .andExpect(jsonPath("$.data.likedByMe").value(true))
                 .andExpect(jsonPath("$.data.tags[0]").value("spring"));
@@ -231,6 +233,7 @@ class AuthenticatedApiWebTest {
                                 "JPA fetch join 질문",
                                 "join fetch와 entity graph 차이가 궁금합니다.",
                                 "backend-dev",
+                                "https://cdn.example.com/profiles/backend-dev.png",
                                 3,
                                 2,
                                 List.of("spring", "jpa"),
@@ -251,6 +254,7 @@ class AuthenticatedApiWebTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.posts[0].title").value("JPA fetch join 질문"))
                 .andExpect(jsonPath("$.data.posts[0].contentPreview").value("join fetch와 entity graph 차이가 궁금합니다."))
+                .andExpect(jsonPath("$.data.posts[0].authorProfileImageUrl").value("https://cdn.example.com/profiles/backend-dev.png"))
                 .andExpect(jsonPath("$.data.posts[0].imageUrls[0]").value("https://cdn.example.com/post-101/image-1.png"))
                 .andExpect(jsonPath("$.data.nextCursorId").value(100L))
                 .andExpect(jsonPath("$.data.hasNext").value(true));
@@ -267,6 +271,7 @@ class AuthenticatedApiWebTest {
                         BoardType.QNA,
                         "JPA fetch join 질문",
                         "backend-dev",
+                        "https://cdn.example.com/profiles/backend-dev.png",
                         3,
                         4,
                         List.of("spring", "jpa"),
@@ -284,6 +289,7 @@ class AuthenticatedApiWebTest {
                 .andExpect(jsonPath("$.data.posts[0].rank").value(1))
                 .andExpect(jsonPath("$.data.posts[0].id").value(101L))
                 .andExpect(jsonPath("$.data.posts[0].boardType").value("QNA"))
+                .andExpect(jsonPath("$.data.posts[0].authorProfileImageUrl").value("https://cdn.example.com/profiles/backend-dev.png"))
                 .andExpect(jsonPath("$.data.posts[0].commentCount").value(4));
     }
 
@@ -298,6 +304,7 @@ class AuthenticatedApiWebTest {
                         "QNA 최신글",
                         "본문 미리보기",
                         "writer",
+                        "https://cdn.example.com/profiles/writer.png",
                         3,
                         2,
                         List.of("spring"),
@@ -310,6 +317,7 @@ class AuthenticatedApiWebTest {
                         "INFO 최신글",
                         "본문 미리보기",
                         "writer",
+                        "https://cdn.example.com/profiles/writer.png",
                         3,
                         2,
                         List.of("info"),
@@ -322,6 +330,7 @@ class AuthenticatedApiWebTest {
                         "FREE 최신글",
                         "본문 미리보기",
                         "writer",
+                        "https://cdn.example.com/profiles/writer.png",
                         3,
                         2,
                         List.of("free"),
@@ -334,6 +343,7 @@ class AuthenticatedApiWebTest {
                         "NOTICE 최신글",
                         "본문 미리보기",
                         "writer",
+                        "https://cdn.example.com/profiles/writer.png",
                         3,
                         2,
                         List.of("notice"),
@@ -346,6 +356,7 @@ class AuthenticatedApiWebTest {
                         "EVENT 최신글",
                         "본문 미리보기",
                         "writer",
+                        "https://cdn.example.com/profiles/writer.png",
                         3,
                         2,
                         List.of("event"),
@@ -358,6 +369,7 @@ class AuthenticatedApiWebTest {
                         BoardType.QNA,
                         "인기글",
                         "writer",
+                        "https://cdn.example.com/profiles/writer.png",
                         11,
                         4,
                         List.of("spring"),
@@ -746,6 +758,7 @@ class AuthenticatedApiWebTest {
                                 201L,
                                 "부모 댓글",
                                 "orm-master",
+                                "https://cdn.example.com/profiles/orm-master.png",
                                 4,
                                 true,
                                 false,
@@ -755,6 +768,7 @@ class AuthenticatedApiWebTest {
                                         202L,
                                         "대댓글입니다.",
                                         "backend-dev",
+                                        "https://cdn.example.com/profiles/backend-dev.png",
                                         1,
                                         false,
                                         true,
@@ -773,7 +787,9 @@ class AuthenticatedApiWebTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.comments[0].id").value(201L))
+                .andExpect(jsonPath("$.data.comments[0].authorProfileImageUrl").value("https://cdn.example.com/profiles/orm-master.png"))
                 .andExpect(jsonPath("$.data.comments[0].replies[0].id").value(202L))
+                .andExpect(jsonPath("$.data.comments[0].replies[0].authorProfileImageUrl").value("https://cdn.example.com/profiles/backend-dev.png"))
                 .andExpect(jsonPath("$.data.comments[0].replies[0].mine").value(true));
     }
 

@@ -679,7 +679,7 @@
     <td><code>comments</code></td>
     <td><span class="type-chip type-collection">List&lt;CommentResponse&gt;</span></td>
     <td><span class="badge-optional">optional</span></td>
-    <td>최상위 댓글 목록입니다. 각 항목은 댓글 ID, 본문, 작성자 닉네임, 좋아요 수, 내 반응 여부, 내 작성 여부, 생성/수정 시각과 대댓글 목록을 포함합니다.</td>
+    <td>최상위 댓글 목록입니다. 각 항목은 댓글 ID, 본문, 작성자 닉네임, 작성자 프로필 이미지 URL, 좋아요 수, 내 반응 여부, 내 작성 여부, 생성/수정 시각과 대댓글 목록을 포함합니다.</td>
 </tr>
 </tbody>
 </table>
@@ -793,6 +793,7 @@
       &quot;id&quot; : 201,
       &quot;content&quot; : &quot;entity graph도 같이 비교해보면 좋습니다.&quot;,
       &quot;authorNickname&quot; : &quot;orm-master&quot;,
+      &quot;authorProfileImageUrl&quot; : &quot;https://cdn.example.com/profiles/orm-master.png&quot;,
       &quot;likeCount&quot; : 4,
       &quot;likedByMe&quot; : true,
       &quot;mine&quot; : false,
@@ -802,6 +803,7 @@
         &quot;id&quot; : 202,
         &quot;content&quot; : &quot;저도 같은 방식 추천합니다.&quot;,
         &quot;authorNickname&quot; : &quot;backend-dev&quot;,
+        &quot;authorProfileImageUrl&quot; : &quot;https://cdn.example.com/profiles/backend-dev.png&quot;,
         &quot;likeCount&quot; : 1,
         &quot;likedByMe&quot; : false,
         &quot;mine&quot; : true,
