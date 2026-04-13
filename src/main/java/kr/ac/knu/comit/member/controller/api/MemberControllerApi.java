@@ -29,7 +29,8 @@ public interface MemberControllerApi {
                     @FieldDesc(name = "id", value = "회원 고유 ID"),
                     @FieldDesc(name = "nickname", value = "현재 회원 닉네임"),
                     @FieldDesc(name = "studentNumber", value = "현재 회원의 학번"),
-                    @FieldDesc(name = "studentNumberVisible", value = "학번 공개 여부")
+                    @FieldDesc(name = "studentNumberVisible", value = "학번 공개 여부"),
+                    @FieldDesc(name = "majorTrack", value = "현재 회원의 전공 트랙")
             },
             errors = {
                     @ApiError(code = "MEMBER_NOT_FOUND", when = "인증된 사용자의 로컬 회원 정보가 존재하지 않을 때")
@@ -42,7 +43,8 @@ public interface MemberControllerApi {
                                 "id": 1,
                                 "nickname": "comit-user",
                                 "studentNumber": "20230001",
-                                "studentNumberVisible": true
+                                "studentNumberVisible": true,
+                                "majorTrack": "심화"
                               }
                             }
                             """

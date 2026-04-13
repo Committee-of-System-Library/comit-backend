@@ -7,7 +7,8 @@ public record MemberProfileResponse(
         String nickname,
         String studentNumber,
         boolean studentNumberVisible,
-        String profileImageUrl
+        String profileImageUrl,
+        String majorTrack
 ) {
     public static MemberProfileResponse from(Member member) {
         return new MemberProfileResponse(
@@ -15,7 +16,8 @@ public record MemberProfileResponse(
                 member.getNickname(),
                 member.getStudentNumber(),
                 member.isStudentNumberVisible(),
-                member.getProfileImageUrl()
+                member.getProfileImageUrl(),
+                member.getMajorTrack()
         );
     }
 }
