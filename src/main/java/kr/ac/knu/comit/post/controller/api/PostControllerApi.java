@@ -15,7 +15,6 @@ import kr.ac.knu.comit.post.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @ApiContract
 @RequestMapping("/posts")
@@ -83,36 +82,55 @@ public interface PostControllerApi {
     );
 
     @ApiDoc(
-            summary = "게시글 검색",
-            description = "키워드로 제목 또는 본문을 검색합니다. 최대 5개를 최신순으로 반환합니다.",
+            summary = "게시글 통합 검색",
+            description = "키워드로 제목 또는 본문을 검색합니다. cursor 기반 페이지네이션을 지원하며 전체 매칭 건수를 함께 반환합니다.",
             descriptions = {
                     @FieldDesc(name = "keyword", value = "검색할 키워드입니다."),
                     @FieldDesc(name = "boardType", value = "특정 게시판으로 범위를 한정할 경우 전달합니다. 생략하면 전체 게시판을 대상으로 검색합니다."),
-                    @FieldDesc(name = "id", value = "게시글 ID입니다."),
-                    @FieldDesc(name = "boardType", value = "게시글이 속한 게시판 유형입니다."),
-                    @FieldDesc(name = "title", value = "게시글 제목입니다."),
-                    @FieldDesc(name = "contentPreview", value = "본문 미리보기입니다. 최대 60자이며 초과 시 ...이 붙습니다.")
+                    @FieldDesc(name = "cursor", value = "이전 응답의 nextCursorId. 첫 페이지는 생략합니다."),
+                    @FieldDesc(name = "size", value = "조회할 게시글 수입니다. 기본값은 20이고 최대 20입니다."),
+                    @FieldDesc(name = "totalCount", value = "키워드에 매칭되는 전체 게시글 수입니다."),
+                    @FieldDesc(name = "hasNext", value = "다음 페이지 존재 여부입니다."),
+                    @FieldDesc(name = "nextCursorId", value = "다음 페이지 조회에 사용할 마지막 게시글 ID입니다. 마지막 페이지면 null입니다."),
+                    @FieldDesc(name = "posts", value = "검색된 게시글 요약 목록입니다.")
+            },
+            errors = {
+                    @ApiError(code = "INVALID_REQUEST", when = "size가 1 이상이 아닐 때")
             },
             example = @Example(
                     response = """
                             {
                               "result": "SUCCESS",
-                              "data": [
-                                {
-                                  "id": 101,
-                                  "boardType": "QNA",
-                                  "title": "JPA fetch join 질문",
-                                  "contentPreview": "join fetch와 entity graph 차이가 궁금합니다."
-                                }
-                              ]
+                              "data": {
+                                "totalCount": 42,
+                                "hasNext": true,
+                                "nextCursorId": 98,
+                                "posts": [
+                                  {
+                                    "id": 101,
+                                    "boardType": "QNA",
+                                    "title": "JPA fetch join 질문",
+                                    "contentPreview": "join fetch와 entity graph 차이가 궁금합니다.",
+                                    "authorNickname": "backend-dev",
+                                    "authorProfileImageUrl": null,
+                                    "likeCount": 3,
+                                    "commentCount": 2,
+                                    "tags": ["spring", "jpa"],
+                                    "imageUrls": [],
+                                    "createdAt": "2026-03-24T10:00:00"
+                                  }
+                                ]
+                              }
                             }
                             """
             )
     )
     @GetMapping("/search")
-    ResponseEntity<ApiResponse<List<PostSearchResult>>> searchPosts(
+    ResponseEntity<ApiResponse<PostSearchPageResponse>> searchPosts(
             @RequestParam String keyword,
-            @RequestParam(required = false) BoardType boardType
+            @RequestParam(required = false) BoardType boardType,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size
     );
 
     @ApiDoc(

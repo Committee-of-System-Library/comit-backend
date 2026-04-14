@@ -105,13 +105,24 @@ public class PostService {
         );
     }
 
-    public List<PostSearchResult> searchPosts(String keyword, BoardType boardType) {
-        List<Post> posts = postRepository.searchByKeyword(
-                keyword, boardType, PageRequest.of(0, SEARCH_RESULT_LIMIT)
+    public PostSearchPageResponse searchPosts(String keyword, BoardType boardType, Long cursorId, int size) {
+        if (size <= 0) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+        int pageSize = Math.min(size, DEFAULT_PAGE_SIZE);
+
+        long totalCount = postRepository.countByKeyword(keyword, boardType);
+        List<Post> posts = postRepository.searchByKeywordWithCursor(keyword, boardType, cursorId, pageSize + 1);
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+
+        return PostSearchPageResponse.of(
+                posts,
+                pageSize,
+                totalCount,
+                commentQueryService.countActiveCommentsByPostIds(postIds),
+                imageUrlsByPostId(postIds),
+                contentPreviewGenerator::generate
         );
-        return posts.stream()
-                .map(PostSearchResult::from)
-                .collect(Collectors.toList());
     }
 
     @Transactional

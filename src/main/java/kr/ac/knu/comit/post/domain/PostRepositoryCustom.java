@@ -14,4 +14,8 @@ public interface PostRepositoryCustom {
     List<Post> findMyPosts(Long memberId, Long cursorId, int limit);
 
     long countMyPosts(Long memberId);
+
+    List<Post> searchByKeywordWithCursor(String keyword, BoardType boardType, Long cursorId, int limit);
+
+    long countByKeyword(String keyword, BoardType boardType);
 }
