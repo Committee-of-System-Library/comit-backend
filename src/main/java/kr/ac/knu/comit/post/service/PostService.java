@@ -84,6 +84,8 @@ public class PostService {
                 hotPostPolicy.getLikeWeight(),
                 hotPostPolicy.getCommentWeight(),
                 hotPostPolicy.getVisitorWeight(),
+                hotPostPolicy.getDecayRate(),
+                hotPostPolicy.getMinReactions(),
                 excludedBoardTypeNames.isEmpty(),
                 excludedBoardTypeNames,
                 hotPostPolicy.getLimit()

@@ -46,6 +46,7 @@ import kr.ac.knu.comit.post.dto.PostCursorPageResponse;
 import kr.ac.knu.comit.post.dto.UpdatePostRequest;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 
@@ -151,8 +152,10 @@ class PostServiceTest {
         given(hotPostPolicy.getLikeWeight()).willReturn(5);
         given(hotPostPolicy.getCommentWeight()).willReturn(3);
         given(hotPostPolicy.getVisitorWeight()).willReturn(2);
+        given(hotPostPolicy.getDecayRate()).willReturn(0.1);
+        given(hotPostPolicy.getMinReactions()).willReturn(1);
         given(hotPostPolicy.getLimit()).willReturn(5);
-        given(postRepository.findHotPostScores(any(), any(), anyInt(), anyInt(), anyInt(), anyBoolean(), any(), anyInt()))
+        given(postRepository.findHotPostScores(any(), any(), anyInt(), anyInt(), anyInt(), anyDouble(), anyInt(), anyBoolean(), any(), anyInt()))
                 .willReturn(List.of(
                         hotPostScore(20L, 15),
                         hotPostScore(10L, 9)
@@ -187,8 +190,10 @@ class PostServiceTest {
         given(hotPostPolicy.getLikeWeight()).willReturn(5);
         given(hotPostPolicy.getCommentWeight()).willReturn(3);
         given(hotPostPolicy.getVisitorWeight()).willReturn(2);
+        given(hotPostPolicy.getDecayRate()).willReturn(0.1);
+        given(hotPostPolicy.getMinReactions()).willReturn(1);
         given(hotPostPolicy.getLimit()).willReturn(5);
-        given(postRepository.findHotPostScores(any(), any(), anyInt(), anyInt(), anyInt(), anyBoolean(), any(), anyInt())).willReturn(List.of());
+        given(postRepository.findHotPostScores(any(), any(), anyInt(), anyInt(), anyInt(), anyDouble(), anyInt(), anyBoolean(), any(), anyInt())).willReturn(List.of());
 
         // when
         // 인기글 목록 조회를 실행한다.
@@ -434,7 +439,7 @@ class PostServiceTest {
         }
     }
 
-    private PostRepository.HotPostScoreView hotPostScore(Long postId, long score) {
+    private PostRepository.HotPostScoreView hotPostScore(Long postId, double score) {
         return new PostRepository.HotPostScoreView() {
             @Override
             public Long getPostId() {
@@ -442,7 +447,7 @@ class PostServiceTest {
             }
 
             @Override
-            public long getScore() {
+            public double getScore() {
                 return score;
             }
         };
