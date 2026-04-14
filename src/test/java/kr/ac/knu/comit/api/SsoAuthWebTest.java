@@ -52,6 +52,7 @@ import org.springframework.test.web.servlet.MvcResult;
         GlobalExceptionHandler.class,
         ComitSsoProperties.class,
         AuthCookieManager.class,
+        kr.ac.knu.comit.auth.config.AdminEmailProperties.class,
         ExternalIdentityMapper.class,
         RegisterService.class,
         SsoAuthService.class,

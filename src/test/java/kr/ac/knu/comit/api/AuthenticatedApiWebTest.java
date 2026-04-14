@@ -124,6 +124,12 @@ class AuthenticatedApiWebTest {
     @MockitoBean
     private MemberRepository memberRepository;
 
+    @MockitoBean
+    private kr.ac.knu.comit.auth.config.AdminEmailProperties adminEmailProperties;
+
+    @MockitoBean
+    private kr.ac.knu.comit.member.service.MemberRegistrationService memberRegistrationService;
+
     @BeforeEach
     void setUp() {
         given(memberService.findBySso(any())).willReturn(Optional.of(authenticatedMember()));

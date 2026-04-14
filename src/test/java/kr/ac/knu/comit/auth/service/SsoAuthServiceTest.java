@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.lenient;
 
 import java.util.List;
+import kr.ac.knu.comit.auth.config.AdminEmailProperties;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
 import kr.ac.knu.comit.auth.dto.SsoCallbackRejected;
@@ -18,6 +19,7 @@ import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
+import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,6 +38,8 @@ class SsoAuthServiceTest {
     @Mock private AuthCookieManager authCookieManager;
     @Mock private ExternalIdentityMapper externalIdentityMapper;
     @Mock private MemberService memberService;
+    @Mock private MemberRegistrationService memberRegistrationService;
+    @Mock private AdminEmailProperties adminEmailProperties;
     @InjectMocks private SsoAuthService ssoAuthService;
 
     @Nested
