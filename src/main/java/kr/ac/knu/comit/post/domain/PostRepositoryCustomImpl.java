@@ -48,4 +48,48 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
                 .fetchOne();
         return result != null ? result : 0L;
     }
+
+    @Override
+    public List<Post> searchByKeywordWithCursor(String keyword, BoardType boardType, Long cursorId, int limit) {
+        QPost post = QPost.post;
+
+        BooleanBuilder where = new BooleanBuilder();
+        where.and(post.deletedAt.isNull());
+        where.and(post.hiddenByAdmin.isFalse());
+        where.and(post.title.contains(keyword).or(post.content.contains(keyword)));
+        if (boardType != null) {
+            where.and(post.boardType.eq(boardType));
+        }
+        if (cursorId != null) {
+            where.and(post.id.lt(cursorId));
+        }
+
+        return queryFactory
+                .selectFrom(post)
+                .join(post.member).fetchJoin()
+                .where(where)
+                .orderBy(post.id.desc())
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public long countByKeyword(String keyword, BoardType boardType) {
+        QPost post = QPost.post;
+
+        BooleanBuilder where = new BooleanBuilder();
+        where.and(post.deletedAt.isNull());
+        where.and(post.hiddenByAdmin.isFalse());
+        where.and(post.title.contains(keyword).or(post.content.contains(keyword)));
+        if (boardType != null) {
+            where.and(post.boardType.eq(boardType));
+        }
+
+        Long result = queryFactory
+                .select(post.count())
+                .from(post)
+                .where(where)
+                .fetchOne();
+        return result != null ? result : 0L;
+    }
 }
