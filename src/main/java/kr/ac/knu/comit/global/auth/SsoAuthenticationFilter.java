@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
+
+import kr.ac.knu.comit.auth.config.AdminEmailProperties;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.auth.service.AuthCookieManager;
@@ -13,6 +15,7 @@ import kr.ac.knu.comit.auth.service.ExternalIdentityMapper;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
+import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -31,10 +34,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String ADMIN_DISPLAY = "관리자";
+    private static final String ADMIN_PHONE_PLACEHOLDER = "000-000-0000";
+
     private final AuthCookieManager authCookieManager;
     private final ExternalAuthClient externalAuthClient;
     private final ExternalIdentityMapper externalIdentityMapper;
     private final MemberService memberService;
+    private final MemberRegistrationService memberRegistrationService;
+    private final AdminEmailProperties adminEmailProperties;
     private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
@@ -60,7 +68,20 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
             Optional<Member> memberOptional = memberService.findBySso(provisionalPrincipal);
             if (memberOptional.isEmpty()) {
-                throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
+                if (adminEmailProperties.isAdminEmail(identity.email())) {
+                    memberRegistrationService.register(
+                            identity.ssoSub(),
+                            ADMIN_DISPLAY,
+                            ADMIN_PHONE_PLACEHOLDER,
+                            adminNickname(identity.ssoSub()),
+                            null,
+                            null,
+                            null
+                    );
+                    memberOptional = memberService.findBySso(provisionalPrincipal);
+                } else {
+                    throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
+                }
             }
 
             Member member = memberOptional.get();
@@ -95,5 +116,11 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
     private boolean isAuthPath(String servletPath, String path) {
         return servletPath.equals(path) || servletPath.startsWith(path + "/");
+    }
+
+    private static String adminNickname(String ssoSub) {
+        String cleaned = ssoSub.replaceAll("[^a-zA-Z0-9]", "");
+        String suffix = cleaned.length() >= 6 ? cleaned.substring(0, 6) : cleaned;
+        return "관리자-" + suffix;
     }
 }
