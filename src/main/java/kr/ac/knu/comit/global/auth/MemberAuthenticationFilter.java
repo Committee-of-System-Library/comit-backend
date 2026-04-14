@@ -10,6 +10,7 @@ import java.util.Optional;
 import kr.ac.knu.comit.auth.config.AdminEmailProperties;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
+
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
@@ -73,15 +74,21 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
             Optional<Member> memberOptional = memberService.findBySso(provisionalPrincipal);
             if (memberOptional.isEmpty()) {
                 if (isAdmin) {
-                    memberRegistrationService.register(
-                            ssoSub,
-                            ADMIN_DISPLAY,
-                            ADMIN_PHONE_PLACEHOLDER,
-                            adminNickname(ssoSub),
-                            null,
-                            null,
-                            null
-                    );
+                    try {
+                        memberRegistrationService.register(
+                                ssoSub,
+                                ADMIN_DISPLAY,
+                                ADMIN_PHONE_PLACEHOLDER,
+                                adminNickname(ssoSub),
+                                null,
+                                null,
+                                null
+                        );
+                    } catch (BusinessException e) {
+                        if (e.getErrorCode() != MemberErrorCode.MEMBER_ALREADY_EXISTS) {
+                            throw e;
+                        }
+                    }
                     memberOptional = memberService.findBySso(provisionalPrincipal);
                 } else {
                     throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);

@@ -14,6 +14,7 @@ import kr.ac.knu.comit.auth.service.AuthCookieManager;
 import kr.ac.knu.comit.auth.service.ExternalIdentityMapper;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
+
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
@@ -69,15 +70,21 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
             Optional<Member> memberOptional = memberService.findBySso(provisionalPrincipal);
             if (memberOptional.isEmpty()) {
                 if (adminEmailProperties.isAdminEmail(identity.email())) {
-                    memberRegistrationService.register(
-                            identity.ssoSub(),
-                            ADMIN_DISPLAY,
-                            ADMIN_PHONE_PLACEHOLDER,
-                            adminNickname(identity.ssoSub()),
-                            null,
-                            null,
-                            null
-                    );
+                    try {
+                        memberRegistrationService.register(
+                                identity.ssoSub(),
+                                ADMIN_DISPLAY,
+                                ADMIN_PHONE_PLACEHOLDER,
+                                adminNickname(identity.ssoSub()),
+                                null,
+                                null,
+                                null
+                        );
+                    } catch (BusinessException e) {
+                        if (e.getErrorCode() != MemberErrorCode.MEMBER_ALREADY_EXISTS) {
+                            throw e;
+                        }
+                    }
                     memberOptional = memberService.findBySso(provisionalPrincipal);
                 } else {
                     throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
