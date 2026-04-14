@@ -14,6 +14,7 @@ import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
+import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -77,15 +78,21 @@ public class SsoAuthService {
 
         if (!memberService.hasActiveMember(principal.ssoSub())) {
             if (adminEmailProperties.isAdminEmail(identity.email())) {
-                memberRegistrationService.register(
-                        identity.ssoSub(),
-                        ADMIN_DISPLAY,
-                        ADMIN_PHONE_PLACEHOLDER,
-                        adminNickname(identity.ssoSub()),
-                        null,
-                        null,
-                        null
-                );
+                try {
+                    memberRegistrationService.register(
+                            identity.ssoSub(),
+                            ADMIN_DISPLAY,
+                            ADMIN_PHONE_PLACEHOLDER,
+                            adminNickname(identity.ssoSub()),
+                            null,
+                            null,
+                            null
+                    );
+                } catch (BusinessException e) {
+                    if (e.getErrorCode() != MemberErrorCode.MEMBER_ALREADY_EXISTS) {
+                        throw e;
+                    }
+                }
             } else {
                 return new SsoCallbackPendingRegistration(
                         resolveRegisterUrl(storedRedirectUri),
