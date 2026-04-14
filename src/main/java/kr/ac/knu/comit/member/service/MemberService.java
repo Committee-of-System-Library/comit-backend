@@ -82,6 +82,12 @@ public class MemberService {
         findMemberOrThrow(memberId).updateStudentNumberVisibility(request.visible());
     }
 
+    public void checkNicknameAvailability(String nickname) {
+        if (memberRepository.existsByNickname(nickname)) {
+            throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
+        }
+    }
+
     public Member findMemberOrThrow(Long memberId) {
         return memberRepository.findById(memberId)
                 .filter(m -> !m.isDeleted())
