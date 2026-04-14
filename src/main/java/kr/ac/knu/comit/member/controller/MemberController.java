@@ -19,7 +19,7 @@ public class MemberController implements MemberControllerApi {
 
     @Override
     public ResponseEntity<ApiResponse<MemberProfileResponse>> getMyProfile(MemberPrincipal principal) {
-        return ResponseEntity.ok(ApiResponse.success(memberService.getMyProfile(principal.memberId())));
+        return ResponseEntity.ok(ApiResponse.success(memberService.getMyProfile(principal.memberId(), principal.role())));
     }
 
     @Override
