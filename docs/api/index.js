@@ -63,6 +63,13 @@ window.API_DOCS = [
   sectionPath: "member"
 },
 {
+  title: "NicknameControllerApi",
+  summary: "닉네임이 이미 사용 중인지 확인합니다. 인증 없이 호출할 수 있으며 회원가입·프로필 수정 전에 사용합니다.",
+  href: "./member/NicknameControllerApi.html",
+  endpointCount: 1,
+  sectionPath: "member"
+},
+{
   title: "AdminPostControllerApi",
   summary: "관리자가 NOTICE, EVENT, INFO 게시판에 게시글을 작성합니다. QNA, FREE 게시판에는 작성할 수 없습니다.",
   href: "./post/AdminPostControllerApi.html",
