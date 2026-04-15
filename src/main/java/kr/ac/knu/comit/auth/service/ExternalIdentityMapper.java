@@ -21,7 +21,7 @@ public class ExternalIdentityMapper {
                 requiredString(identity.email()),
                 identity.studentNumber(),
                 parseUserType(identity.userType()),
-                parseRole(identity.role())
+                MemberPrincipal.MemberRole.STUDENT  // SSO role 무시, Comit role은 DB에서 관리
         );
     }
 
@@ -31,15 +31,6 @@ public class ExternalIdentityMapper {
         } catch (IllegalArgumentException exception) {
             throw new BusinessException(CommonErrorCode.UNAUTHORIZED);
         }
-    }
-
-    private MemberPrincipal.MemberRole parseRole(String rawValue) {
-        if (rawValue == null || rawValue.isBlank()) {
-            return MemberPrincipal.MemberRole.STUDENT;
-        }
-        return "ADMIN".equalsIgnoreCase(rawValue)
-                ? MemberPrincipal.MemberRole.ADMIN
-                : MemberPrincipal.MemberRole.STUDENT;
     }
 
     private String requiredString(String value) {

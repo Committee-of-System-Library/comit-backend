@@ -48,6 +48,10 @@ public class Member {
     @Column(nullable = false, length = 20)
     private MemberStatus status = MemberStatus.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ComitRole comitRole = ComitRole.STUDENT;
+
     private LocalDateTime suspendedUntil;
 
     @Column(nullable = false, updatable = false)
@@ -200,6 +204,18 @@ public class Member {
 
     public MemberStatus getStatus() {
         return status;
+    }
+
+    public ComitRole getComitRole() {
+        return comitRole;
+    }
+
+    public void promoteToAdmin() {
+        this.comitRole = ComitRole.ADMIN;
+    }
+
+    public void demoteToStudent() {
+        this.comitRole = ComitRole.STUDENT;
     }
 
     public LocalDateTime getSuspendedUntil() {

@@ -35,6 +35,7 @@ import kr.ac.knu.comit.main.dto.MainPageResponse;
 import kr.ac.knu.comit.main.service.MainService;
 import kr.ac.knu.comit.member.controller.AdminMemberController;
 import kr.ac.knu.comit.member.controller.MemberController;
+import kr.ac.knu.comit.member.domain.ComitRole;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.service.AdminMemberService;
@@ -135,7 +136,7 @@ class AuthenticatedApiWebTest {
         // given
         // 인증된 사용자의 프로필 응답을 준비한다.
         given(memberService.getMyProfile(1L))
-                .willReturn(new MemberProfileResponse(1L, "comit-user", "2020111111", true, null, null));
+                .willReturn(new MemberProfileResponse(1L, "comit-user", "2020111111", true, null, null, ComitRole.STUDENT));
 
         // when & then
         // 인증 헤더가 컨트롤러까지 주입되고 응답이 정상 직렬화되는지 확인한다.
@@ -462,6 +463,7 @@ class AuthenticatedApiWebTest {
     @Test
     void mapsAdminReportListResponseForAdmin() throws Exception {
         // given
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
         // 관리자 신고 목록 응답을 준비한다.
         given(adminReportService.getReports(eq(null), eq(null), any(org.springframework.data.domain.Pageable.class)))
                 .willReturn(new AdminReportPageResponse(
@@ -503,6 +505,19 @@ class AuthenticatedApiWebTest {
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "student")
                         .header("X-Member-Role", "STUDENT"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("/problems/common/forbidden"))
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
+    }
+
+    @Test
+    void returnsForbiddenWhenHeaderSaysAdminButDbRoleIsStudent() throws Exception {
+        // when & then
+        // 헤더 role이 ADMIN이어도 DB role이 STUDENT면 관리자 API 접근은 거부되어야 한다.
+        mockMvc.perform(get("/admin/reports")
+                        .header("X-Member-Sub", "member-1")
+                        .header("X-Member-Name", "student")
+                        .header("X-Member-Role", "ADMIN"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.type").value("/problems/common/forbidden"))
                 .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
@@ -595,6 +610,7 @@ class AuthenticatedApiWebTest {
     @Test
     void returnsBadRequestWhenAdminMemberStatusBodyOmitsStatus() throws Exception {
         // given
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
         // 실제 회원 조회까지 도달하도록 관리자 대상 회원을 준비한다.
         given(memberRepository.findByIdAndDeletedAtIsNull(1L))
                 .willReturn(Optional.of(authenticatedMember()));
@@ -619,6 +635,7 @@ class AuthenticatedApiWebTest {
     @Test
     void deletesMemberWhenAdminRequestsAdminMemberDelete() throws Exception {
         // given
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
         // 실제 회원 조회까지 도달하도록 관리자 대상 회원을 준비한다.
         given(memberRepository.findByIdAndDeletedAtIsNull(1L))
                 .willReturn(Optional.of(authenticatedMember()));
@@ -635,6 +652,7 @@ class AuthenticatedApiWebTest {
 
     @Test
     void returnsAdminPostDetailWhenAdminRequestsIt() throws Exception {
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
         given(adminPostService.getPost(42L)).willReturn(
                 new AdminPostDetailResponse(
                         42L,
@@ -665,6 +683,7 @@ class AuthenticatedApiWebTest {
 
     @Test
     void updatesAdminPostWhenAdminRequestsIt() throws Exception {
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
         mockMvc.perform(patch("/admin/posts/42")
                         .header("X-Member-Sub", "member-1")
                         .header("X-Member-Name", "admin")
@@ -686,6 +705,7 @@ class AuthenticatedApiWebTest {
     @Test
     void returnsNotFoundWhenAdminRequestsMissingAdminMemberDelete() throws Exception {
         // given
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
         // 삭제 대상 회원이 존재하지 않는 상황을 준비한다.
         given(memberRepository.findByIdAndDeletedAtIsNull(99L)).willReturn(Optional.empty());
 
@@ -703,6 +723,7 @@ class AuthenticatedApiWebTest {
     @Test
     void returnsBadRequestWhenAdminRequestsReceivedTransitionForReportReview() throws Exception {
         // given
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
         // RECEIVED로의 자기 전이를 요청하면 INVALID_REQUEST를 반환하도록 준비한다.
         willThrow(new BusinessException(CommonErrorCode.INVALID_REQUEST))
                 .given(adminReportService)
@@ -918,6 +939,22 @@ class AuthenticatedApiWebTest {
                 LocalDateTime.now()
         );
         ReflectionTestUtils.setField(member, "id", 1L);
+        return member;
+    }
+
+    private Member adminMember() {
+        Member member = Member.create(
+                "member-1",
+                "관리자",
+                "010-0000-0000",
+                "admin-user",
+                "2020000001",
+                null,
+                null,
+                LocalDateTime.now()
+        );
+        ReflectionTestUtils.setField(member, "id", 1L);
+        ReflectionTestUtils.setField(member, "comitRole", ComitRole.ADMIN);
         return member;
     }
 }

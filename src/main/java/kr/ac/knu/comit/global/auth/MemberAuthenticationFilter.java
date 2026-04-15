@@ -78,7 +78,7 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
                     provisionalPrincipal.email(),
                     provisionalPrincipal.studentNumber(),
                     provisionalPrincipal.userType(),
-                    provisionalPrincipal.role()
+                    toMemberRole(member.getComitRole())
             );
 
             request.setAttribute(MemberArgumentResolver.PRINCIPAL_ATTRIBUTE, authenticatedPrincipal);
@@ -107,6 +107,12 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
 
     private MemberPrincipal.UserType parseUserType(String rawValue) {
         return parseEnum(rawValue, MemberPrincipal.UserType.CSE_STUDENT, MemberPrincipal.UserType.class);
+    }
+
+    private MemberPrincipal.MemberRole toMemberRole(kr.ac.knu.comit.member.domain.ComitRole comitRole) {
+        return comitRole == kr.ac.knu.comit.member.domain.ComitRole.ADMIN
+                ? MemberPrincipal.MemberRole.ADMIN
+                : MemberPrincipal.MemberRole.STUDENT;
     }
 
     private MemberPrincipal.MemberRole parseRole(String rawValue) {

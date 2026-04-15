@@ -1,6 +1,6 @@
 package kr.ac.knu.comit.member.dto;
 
-import kr.ac.knu.comit.global.auth.MemberPrincipal;
+import kr.ac.knu.comit.member.domain.ComitRole;
 import kr.ac.knu.comit.member.domain.Member;
 
 public record MemberProfileResponse(
@@ -10,9 +10,9 @@ public record MemberProfileResponse(
         boolean studentNumberVisible,
         String profileImageUrl,
         String majorTrack,
-        MemberPrincipal.MemberRole role
+        ComitRole role
 ) {
-    public static MemberProfileResponse from(Member member, MemberPrincipal.MemberRole role) {
+    public static MemberProfileResponse from(Member member) {
         return new MemberProfileResponse(
                 member.getId(),
                 member.getNickname(),
@@ -20,7 +20,7 @@ public record MemberProfileResponse(
                 member.isStudentNumberVisible(),
                 member.getProfileImageUrl(),
                 member.getMajorTrack(),
-                role
+                member.getComitRole()
         );
     }
 }

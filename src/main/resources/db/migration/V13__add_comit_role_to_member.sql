@@ -1,0 +1,2 @@
+ALTER TABLE member
+    ADD COLUMN comit_role VARCHAR(20) NOT NULL DEFAULT 'STUDENT' AFTER status;

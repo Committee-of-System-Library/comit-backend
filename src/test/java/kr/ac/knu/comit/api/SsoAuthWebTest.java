@@ -31,6 +31,7 @@ import kr.ac.knu.comit.global.exception.GlobalExceptionHandler;
 import kr.ac.knu.comit.image.dto.PresignedUploadResponse;
 import kr.ac.knu.comit.image.service.ImageService;
 import kr.ac.knu.comit.member.controller.MemberController;
+import kr.ac.knu.comit.member.domain.ComitRole;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
@@ -106,7 +107,7 @@ class SsoAuthWebTest {
         given(memberService.hasDeletedMember("sso-sub-1")).willReturn(false);
         given(memberService.hasActiveMember("sso-sub-1")).willReturn(true);
         given(memberService.getMyProfile(1L))
-                .willReturn(new MemberProfileResponse(1L, "comit-user", "2023012780", true, null, null));
+                .willReturn(new MemberProfileResponse(1L, "comit-user", "2023012780", true, null, null, ComitRole.STUDENT));
     }
 
     @Test

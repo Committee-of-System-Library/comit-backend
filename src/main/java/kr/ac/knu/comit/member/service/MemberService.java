@@ -21,8 +21,8 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
-    public MemberProfileResponse getMyProfile(Long memberId, MemberPrincipal.MemberRole role) {
-        return MemberProfileResponse.from(findMemberOrThrow(memberId), role);
+    public MemberProfileResponse getMyProfile(Long memberId) {
+        return MemberProfileResponse.from(findMemberOrThrow(memberId));
     }
 
     @Transactional

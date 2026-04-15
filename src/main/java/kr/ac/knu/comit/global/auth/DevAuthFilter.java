@@ -49,11 +49,11 @@ public class DevAuthFilter extends OncePerRequestFilter {
         try {
             String[] parts = cookieValue.split("\\|", 2);
             String ssoSub = parts[0];
-            MemberPrincipal.MemberRole role = parts.length > 1
-                    ? parseRole(parts[1])
-                    : MemberPrincipal.MemberRole.STUDENT;
 
             memberRepository.findBySsoSubAndDeletedAtIsNull(ssoSub).ifPresent(member -> {
+                MemberPrincipal.MemberRole memberRole = member.getComitRole() == kr.ac.knu.comit.member.domain.ComitRole.ADMIN
+                        ? MemberPrincipal.MemberRole.ADMIN
+                        : MemberPrincipal.MemberRole.STUDENT;
                 MemberPrincipal principal = new MemberPrincipal(
                         member.getId(),
                         member.getSsoSub(),
@@ -61,7 +61,7 @@ public class DevAuthFilter extends OncePerRequestFilter {
                         null,
                         member.getStudentNumber(),
                         MemberPrincipal.UserType.CSE_STUDENT,
-                        role
+                        memberRole
                 );
                 request.setAttribute(MemberArgumentResolver.PRINCIPAL_ATTRIBUTE, principal);
             });
@@ -97,11 +97,4 @@ public class DevAuthFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private MemberPrincipal.MemberRole parseRole(String value) {
-        try {
-            return MemberPrincipal.MemberRole.valueOf(value.toUpperCase());
-        } catch (IllegalArgumentException ignored) {
-            return MemberPrincipal.MemberRole.STUDENT;
-        }
-    }
 }
