@@ -10,12 +10,14 @@ import kr.ac.knu.comit.member.dto.AdminMemberPageResponse;
 import kr.ac.knu.comit.member.dto.AdminMemberStatusRequest;
 import kr.ac.knu.comit.member.service.AdminMemberService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class AdminMemberController implements AdminMemberControllerApi {
 
     private final AdminMemberService adminMemberService;
@@ -23,6 +25,8 @@ public class AdminMemberController implements AdminMemberControllerApi {
     @Override
     public ResponseEntity<ApiResponse<AdminMemberPageResponse>> getMembers(
             MemberStatus status, Pageable pageable, MemberPrincipal principal) {
+        log.debug("Admin API called - principal: {}, role: {}, isAdmin: {}",
+            principal.memberId(), principal.role(), principal.isAdmin());
         validateAdmin(principal);
         return ResponseEntity.ok(ApiResponse.success(
                 adminMemberService.getMembers(status, pageable)));
@@ -46,6 +50,8 @@ public class AdminMemberController implements AdminMemberControllerApi {
 
     private void validateAdmin(MemberPrincipal principal) {
         if (!principal.isAdmin()) {
+            log.warn("Admin access denied - memberId: {}, role: {}",
+                principal.memberId(), principal.role());
             throw new BusinessException(CommonErrorCode.FORBIDDEN);
         }
     }
