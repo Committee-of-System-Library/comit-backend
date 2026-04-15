@@ -155,7 +155,7 @@ class PostServiceTest {
         given(hotPostPolicy.getDecayRate()).willReturn(0.1);
         given(hotPostPolicy.getMinReactions()).willReturn(1);
         given(hotPostPolicy.getLimit()).willReturn(5);
-        given(postRepository.findHotPostScores(any(), any(), anyInt(), anyInt(), anyInt(), anyDouble(), anyInt(), anyBoolean(), any(), anyInt()))
+        given(postRepository.findHotPostScores(any(), any(), any(), anyInt(), anyInt(), anyInt(), anyDouble(), anyInt(), anyBoolean(), any(), anyInt()))
                 .willReturn(List.of(
                         hotPostScore(20L, 15),
                         hotPostScore(10L, 9)
@@ -193,7 +193,7 @@ class PostServiceTest {
         given(hotPostPolicy.getDecayRate()).willReturn(0.1);
         given(hotPostPolicy.getMinReactions()).willReturn(1);
         given(hotPostPolicy.getLimit()).willReturn(5);
-        given(postRepository.findHotPostScores(any(), any(), anyInt(), anyInt(), anyInt(), anyDouble(), anyInt(), anyBoolean(), any(), anyInt())).willReturn(List.of());
+        given(postRepository.findHotPostScores(any(), any(), any(), anyInt(), anyInt(), anyInt(), anyDouble(), anyInt(), anyBoolean(), any(), anyInt())).willReturn(List.of());
 
         // when
         // 인기글 목록 조회를 실행한다.

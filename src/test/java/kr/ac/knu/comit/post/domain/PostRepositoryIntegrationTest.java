@@ -51,7 +51,8 @@ class PostRepositoryIntegrationTest {
     static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.36")
             .withDatabaseName("comit_test")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            .withEnv("TZ", "Asia/Seoul");
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
@@ -136,7 +137,7 @@ class PostRepositoryIntegrationTest {
         // when
         // 최근 7일 인기글 집계 쿼리를 실행한다.
         List<PostRepository.HotPostScoreView> results = postRepository.findHotPostScores(
-                startDateTime, startDate, 5, 3, 2, 0.1, 1, false, List.of("NOTICE", "EVENT"), 5);
+                startDateTime, startDate, today, 5, 3, 2, 0.1, 1, false, List.of("NOTICE", "EVENT"), 5);
 
         // then
         // 가중치, 동점 정렬, 제외 규칙, 상위 5개 제한이 모두 반영되어야 한다.
@@ -185,7 +186,7 @@ class PostRepositoryIntegrationTest {
         // when
         // 최근 7일 인기글 집계 쿼리를 실행한다.
         List<PostRepository.HotPostScoreView> results = postRepository.findHotPostScores(
-                startDateTime, startDate, 5, 3, 2, 0.1, 1, false, List.of("NOTICE", "EVENT"), 5);
+                startDateTime, startDate, today, 5, 3, 2, 0.1, 1, false, List.of("NOTICE", "EVENT"), 5);
 
         // then
         // 동일 회원의 여러 날짜 조회는 1명의 unique 방문자로 계산되어야 한다.

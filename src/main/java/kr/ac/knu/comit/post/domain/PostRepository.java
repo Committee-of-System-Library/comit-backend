@@ -95,7 +95,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
                     FROM post p
                     LEFT JOIN (
                         SELECT post_id,
-                               SUM(EXP(-:decayRate * DATEDIFF(CURDATE(), DATE(created_at)))) AS weighted_like_count,
+                               SUM(EXP(-:decayRate * DATEDIFF(:today, DATE(created_at)))) AS weighted_like_count,
                                COUNT(*) AS raw_like_count
                         FROM post_like
                         WHERE created_at >= :startDateTime
@@ -103,7 +103,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
                     ) pl ON pl.post_id = p.id
                     LEFT JOIN (
                         SELECT post_id,
-                               SUM(EXP(-:decayRate * DATEDIFF(CURDATE(), DATE(created_at)))) AS weighted_comment_count,
+                               SUM(EXP(-:decayRate * DATEDIFF(:today, DATE(created_at)))) AS weighted_comment_count,
                                COUNT(*) AS raw_comment_count
                         FROM `comment`
                         WHERE deleted_at IS NULL
@@ -112,7 +112,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
                     ) c ON c.post_id = p.id
                     LEFT JOIN (
                         SELECT post_id,
-                               SUM(EXP(-:decayRate * DATEDIFF(CURDATE(), viewed_on))) AS weighted_visitor_count,
+                               SUM(EXP(-:decayRate * DATEDIFF(:today, viewed_on))) AS weighted_visitor_count,
                                COUNT(DISTINCT member_id) AS raw_visitor_count
                         FROM post_daily_visitor
                         WHERE viewed_on >= :startDate
@@ -133,6 +133,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<HotPostScoreView> findHotPostScores(
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("startDate") LocalDate startDate,
+            @Param("today") LocalDate today,
             @Param("likeWeight") int likeWeight,
             @Param("commentWeight") int commentWeight,
             @Param("visitorWeight") int visitorWeight,
