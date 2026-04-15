@@ -71,7 +71,8 @@ public class PostService {
 
     @Cacheable("hotPosts")
     public HotPostListResponse getHotPosts() {
-        LocalDate startDate = LocalDate.now(KST).minusDays(hotPostPolicy.getWindowDays() - 1L);
+        LocalDate today = LocalDate.now(KST);
+        LocalDate startDate = today.minusDays(hotPostPolicy.getWindowDays() - 1L);
         LocalDateTime startDateTime = startDate.atStartOfDay();
 
         List<String> excludedBoardTypeNames = hotPostPolicy.getExcludedBoardTypes().stream()
@@ -81,6 +82,7 @@ public class PostService {
         List<Long> orderedPostIds = postRepository.findHotPostScores(
                 startDateTime,
                 startDate,
+                today,
                 hotPostPolicy.getLikeWeight(),
                 hotPostPolicy.getCommentWeight(),
                 hotPostPolicy.getVisitorWeight(),
