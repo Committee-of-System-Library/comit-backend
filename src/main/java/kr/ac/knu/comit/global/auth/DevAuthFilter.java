@@ -11,6 +11,7 @@ import kr.ac.knu.comit.global.exception.MemberErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -20,6 +21,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
+@Slf4j
 @ConditionalOnProperty("comit.dev.auth.enabled")
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -42,6 +44,7 @@ public class DevAuthFilter extends OncePerRequestFilter {
 
         String cookieValue = resolveCookie(request);
         if (cookieValue == null) {
+            log.debug("[DevAuth] no cookie → anonymous, uri={}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
@@ -50,10 +53,12 @@ public class DevAuthFilter extends OncePerRequestFilter {
             String[] parts = cookieValue.split("\\|", 2);
             String ssoSub = parts[0];
 
-            memberRepository.findBySsoSubAndDeletedAtIsNull(ssoSub).ifPresent(member -> {
+            memberRepository.findBySsoSubAndDeletedAtIsNull(ssoSub).ifPresentOrElse(member -> {
                 MemberPrincipal.MemberRole memberRole = member.getComitRole() == kr.ac.knu.comit.member.domain.ComitRole.ADMIN
                         ? MemberPrincipal.MemberRole.ADMIN
                         : MemberPrincipal.MemberRole.STUDENT;
+                log.debug("[DevAuth] ssoSub={} comitRole={} → memberRole={} uri={}",
+                        ssoSub, member.getComitRole(), memberRole, request.getRequestURI());
                 MemberPrincipal principal = new MemberPrincipal(
                         member.getId(),
                         member.getSsoSub(),
@@ -64,9 +69,10 @@ public class DevAuthFilter extends OncePerRequestFilter {
                         memberRole
                 );
                 request.setAttribute(MemberArgumentResolver.PRINCIPAL_ATTRIBUTE, principal);
-            });
-        } catch (Exception ignored) {
+            }, () -> log.debug("[DevAuth] ssoSub={} not found in DB → anonymous", ssoSub));
+        } catch (Exception e) {
             // 쿠키가 오염됐거나 DB 재시드 후 stale 상태인 경우 anonymous로 fallthrough
+            log.warn("[DevAuth] cookie parse failed → anonymous, error={}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

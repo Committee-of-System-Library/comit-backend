@@ -15,11 +15,13 @@ import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(prefix = "comit.auth.bridge", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
@@ -102,6 +104,8 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
             if (member.isSuspended()) {
                 throw new BusinessException(MemberErrorCode.MEMBER_SUSPENDED);
             }
+            log.debug("[BridgeAuth] ssoSub={} comitRole={} uri={}",
+                    member.getSsoSub(), member.getComitRole(), request.getRequestURI());
             MemberPrincipal authenticatedPrincipal = new MemberPrincipal(
                     member.getId(),
                     member.getSsoSub(),

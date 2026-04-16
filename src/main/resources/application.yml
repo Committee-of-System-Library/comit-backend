@@ -66,6 +66,8 @@ management:
 logging:
   file:
     name: ${LOG_FILE_PATH:./logs/app.log}
+  level:
+    kr.ac.knu.comit.global.auth: ${LOG_LEVEL_AUTH:WARN}
 
 comit:
   web:
