@@ -118,7 +118,8 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
         String servletPath = request.getServletPath();
         return isAuthPath(servletPath, "/auth/sso")
                 || isAuthPath(servletPath, "/auth/register")
-                || isAuthPath(servletPath, "/auth/dev");
+                || isAuthPath(servletPath, "/auth/dev")
+                || servletPath.equals("/members/nicknames/check");
     }
 
     private boolean isAuthPath(String servletPath, String path) {
