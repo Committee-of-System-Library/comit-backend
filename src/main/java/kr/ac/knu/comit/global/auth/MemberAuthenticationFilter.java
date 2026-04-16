@@ -6,9 +6,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
+
+import kr.ac.knu.comit.auth.config.AdminEmailProperties;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
+
 import kr.ac.knu.comit.member.domain.Member;
+import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,8 +32,13 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
     private static final String USER_TYPE_HEADER = "X-Member-User-Type";
     private static final String ROLE_HEADER = "X-Member-Role";
 
+    private static final String ADMIN_DISPLAY = "관리자";
+    private static final String ADMIN_PHONE_PLACEHOLDER = "000-000-0000";
+
     private final MemberService memberService;
+    private final MemberRegistrationService memberRegistrationService;
     private final HandlerExceptionResolver handlerExceptionResolver;
+    private final AdminEmailProperties adminEmailProperties;
 
     @Override
     protected void doFilterInternal(
@@ -48,20 +57,42 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        String email = trimToNull(request.getHeader(EMAIL_HEADER));
+        boolean isAdmin = adminEmailProperties.isAdminEmail(email);
+
         MemberPrincipal provisionalPrincipal = new MemberPrincipal(
                 null,
                 ssoSub,
-                defaultName(request),
-                trimToNull(request.getHeader(EMAIL_HEADER)),
+                isAdmin ? ADMIN_DISPLAY : defaultName(request),
+                isAdmin ? ADMIN_DISPLAY : email,
                 trimToNull(request.getHeader(STUDENT_NUMBER_HEADER)),
                 parseUserType(request.getHeader(USER_TYPE_HEADER)),
-                parseRole(request.getHeader(ROLE_HEADER))
+                isAdmin ? MemberPrincipal.MemberRole.ADMIN : parseRole(request.getHeader(ROLE_HEADER))
         );
 
         try {
             Optional<Member> memberOptional = memberService.findBySso(provisionalPrincipal);
             if (memberOptional.isEmpty()) {
-                throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
+                if (isAdmin) {
+                    try {
+                        memberRegistrationService.register(
+                                ssoSub,
+                                ADMIN_DISPLAY,
+                                ADMIN_PHONE_PLACEHOLDER,
+                                adminNickname(ssoSub),
+                                null,
+                                null,
+                                null
+                        );
+                    } catch (BusinessException e) {
+                        if (e.getErrorCode() != MemberErrorCode.MEMBER_ALREADY_EXISTS) {
+                            throw e;
+                        }
+                    }
+                    memberOptional = memberService.findBySso(provisionalPrincipal);
+                } else {
+                    throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
+                }
             }
 
             Member member = memberOptional.get();
@@ -137,5 +168,11 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
         }
         String normalized = value.trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static String adminNickname(String ssoSub) {
+        String cleaned = ssoSub.replaceAll("[^a-zA-Z0-9]", "");
+        String suffix = cleaned.length() >= 6 ? cleaned.substring(0, 6) : cleaned;
+        return "관리자-" + suffix;
     }
 }

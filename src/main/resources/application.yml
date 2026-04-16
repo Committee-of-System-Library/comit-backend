@@ -76,6 +76,7 @@ comit:
       enabled: ${COMIT_DEV_AUTH_ENABLED:false}
       cookie-same-site: ${COMIT_DEV_AUTH_COOKIE_SAME_SITE:None}
   auth:
+    admin-emails: ${COMIT_AUTH_ADMIN_EMAILS:}
     bridge:
       enabled: ${COMIT_AUTH_BRIDGE_ENABLED:false}
     sso:

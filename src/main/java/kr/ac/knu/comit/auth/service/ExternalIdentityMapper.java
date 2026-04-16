@@ -1,19 +1,37 @@
 package kr.ac.knu.comit.auth.service;
 
+import kr.ac.knu.comit.auth.config.AdminEmailProperties;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class ExternalIdentityMapper {
+
+    static final String ADMIN_DISPLAY = "관리자";
+
+    private final AdminEmailProperties adminEmailProperties;
 
     public MemberPrincipal toPrincipal(ExternalIdentity identity) {
         return toPrincipal(null, identity);
     }
 
     public MemberPrincipal toPrincipal(Long memberId, ExternalIdentity identity) {
+        if (adminEmailProperties.isAdminEmail(identity.email())) {
+            return new MemberPrincipal(
+                    memberId,
+                    requiredString(identity.ssoSub()),
+                    ADMIN_DISPLAY,
+                    ADMIN_DISPLAY,
+                    ADMIN_DISPLAY,
+                    MemberPrincipal.UserType.CSE_STUDENT,
+                    MemberPrincipal.MemberRole.ADMIN
+            );
+        }
         return new MemberPrincipal(
                 memberId,
                 requiredString(identity.ssoSub()),
