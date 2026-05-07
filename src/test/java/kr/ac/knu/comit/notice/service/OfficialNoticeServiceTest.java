@@ -11,10 +11,8 @@ import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.NoticeErrorCode;
 import kr.ac.knu.comit.notice.domain.OfficialNotice;
 import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
-import kr.ac.knu.comit.notice.dto.CreateOfficialNoticeRequest;
 import kr.ac.knu.comit.notice.dto.OfficialNoticeListResponse;
 import kr.ac.knu.comit.notice.dto.OfficialNoticeResponse;
-import kr.ac.knu.comit.notice.dto.UpdateOfficialNoticeRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -112,11 +110,6 @@ class OfficialNoticeServiceTest {
     @DisplayName("공지사항을 생성하면 저장된 ID를 반환한다")
     void savesAndReturnsIdOnCreate() {
         // given
-        CreateOfficialNoticeRequest request = new CreateOfficialNoticeRequest(
-                "신규 공지사항", "본문 내용", "학사지원팀",
-                "https://computer.knu.ac.kr/notice/1",
-                LocalDateTime.of(2026, 1, 10, 9, 0)
-        );
         given(officialNoticeRepository.save(any(OfficialNotice.class))).willAnswer(invocation -> {
             OfficialNotice saved = invocation.getArgument(0);
             ReflectionTestUtils.setField(saved, "id", 100L);
@@ -124,7 +117,11 @@ class OfficialNoticeServiceTest {
         });
 
         // when
-        Long noticeId = officialNoticeService.createNotice(request);
+        Long noticeId = officialNoticeService.createNotice(
+                "신규 공지사항", "본문 내용", "학사지원팀",
+                "https://computer.knu.ac.kr/notice/1",
+                LocalDateTime.of(2026, 1, 10, 9, 0)
+        );
 
         // then
         assertThat(noticeId).isEqualTo(100L);
@@ -140,12 +137,9 @@ class OfficialNoticeServiceTest {
         // given
         OfficialNotice notice = OfficialNoticeFixture.notice(1L, "기존 제목");
         given(officialNoticeRepository.findActiveById(1L)).willReturn(Optional.of(notice));
-        UpdateOfficialNoticeRequest request = new UpdateOfficialNoticeRequest(
-                "수정된 제목", "수정된 본문", null, null, null
-        );
 
         // when
-        officialNoticeService.updateNotice(1L, request);
+        officialNoticeService.updateNotice(1L, "수정된 제목", "수정된 본문", null, null, null);
 
         // then
         assertThat(notice.getTitle()).isEqualTo("수정된 제목");
@@ -172,12 +166,9 @@ class OfficialNoticeServiceTest {
     void throwsWhenUpdatingDeletedNotice() {
         // given
         given(officialNoticeRepository.findActiveById(1L)).willReturn(Optional.empty());
-        UpdateOfficialNoticeRequest request = new UpdateOfficialNoticeRequest(
-                "제목", "본문", null, null, null
-        );
 
         // when & then
-        assertThatThrownBy(() -> officialNoticeService.updateNotice(1L, request))
+        assertThatThrownBy(() -> officialNoticeService.updateNotice(1L, "제목", "본문", null, null, null))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(NoticeErrorCode.NOTICE_NOT_FOUND);

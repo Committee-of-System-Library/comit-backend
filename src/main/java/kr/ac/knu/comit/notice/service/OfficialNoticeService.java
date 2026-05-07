@@ -4,15 +4,14 @@ import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.NoticeErrorCode;
 import kr.ac.knu.comit.notice.domain.OfficialNotice;
 import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
-import kr.ac.knu.comit.notice.dto.CreateOfficialNoticeRequest;
 import kr.ac.knu.comit.notice.dto.OfficialNoticeListResponse;
 import kr.ac.knu.comit.notice.dto.OfficialNoticeResponse;
-import kr.ac.knu.comit.notice.dto.UpdateOfficialNoticeRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -45,47 +44,37 @@ public class OfficialNoticeService {
      */
     @Transactional(readOnly = true)
     public OfficialNoticeResponse getNotice(Long noticeId) {
-        OfficialNotice notice = findActiveOrThrow(noticeId);
-        return OfficialNoticeResponse.from(notice);
+        return OfficialNoticeResponse.from(findActiveOrThrow(noticeId));
     }
 
     /**
-     * 새 공지사항을 등록한다. (관리자 전용)
+     * 새 공지사항을 저장한다.
+     * Stage 2 크롤러 스케쥴러가 호출한다.
      */
     @Transactional
-    public Long createNotice(CreateOfficialNoticeRequest request) {
-        OfficialNotice notice = OfficialNotice.create(
-                request.title(),
-                request.content(),
-                request.author(),
-                request.originalUrl(),
-                request.postedAt()
-        );
+    public Long createNotice(String title, String content, String author,
+                              String originalUrl, LocalDateTime postedAt) {
+        OfficialNotice notice = OfficialNotice.create(title, content, author, originalUrl, postedAt);
         return officialNoticeRepository.save(notice).getId();
     }
 
     /**
-     * 공지사항을 수정한다. (관리자 전용)
+     * 기존 공지사항을 갱신한다.
+     * Stage 2 크롤러 스케쥴러가 호출한다.
      */
     @Transactional
-    public void updateNotice(Long noticeId, UpdateOfficialNoticeRequest request) {
-        OfficialNotice notice = findActiveOrThrow(noticeId);
-        notice.update(
-                request.title(),
-                request.content(),
-                request.author(),
-                request.originalUrl(),
-                request.postedAt()
-        );
+    public void updateNotice(Long noticeId, String title, String content, String author,
+                              String originalUrl, LocalDateTime postedAt) {
+        findActiveOrThrow(noticeId).update(title, content, author, originalUrl, postedAt);
     }
 
     /**
-     * 공지사항을 소프트 삭제한다. (관리자 전용)
+     * 공지사항을 소프트 삭제한다.
+     * Stage 2 어드민 모듈에서 호출 예정.
      */
     @Transactional
     public void deleteNotice(Long noticeId) {
-        OfficialNotice notice = findActiveOrThrow(noticeId);
-        notice.delete();
+        findActiveOrThrow(noticeId).delete();
     }
 
     // ── internal helpers ─────────────────────────────────────
