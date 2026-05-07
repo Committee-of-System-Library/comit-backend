@@ -19,10 +19,7 @@ public class OfficialNotice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * 원본 사이트의 고유 식별자. 크롤링 단계에서 중복 저장을 막기 위해 사용한다.
-     * 수동 등록 시에는 null 허용.
-     */
+    /** 원본 사이트의 고유 식별자(num). 크롤러 중복 저장 방지용. */
     @Column(length = 100, unique = true)
     private String sourceId;
 
@@ -38,14 +35,9 @@ public class OfficialNotice {
     @Column(length = 500)
     private String originalUrl;
 
-    /**
-     * 원본 사이트에 게시된 시각. 크롤링 전 수동 등록 시 null 허용.
-     */
     private LocalDateTime postedAt;
 
-    /**
-     * AI가 생성한 요약문. 벡터 임베딩 단계에서 채워진다.
-     */
+    /** AI 요약문. 벡터 임베딩 단계에서 채워진다. */
     @Column(columnDefinition = "TEXT")
     private String summary;
 
@@ -58,9 +50,6 @@ public class OfficialNotice {
     protected OfficialNotice() {
     }
 
-    /**
-     * 새 공지사항을 생성한다.
-     */
     public static OfficialNotice create(String title, String content, String author,
                                         String originalUrl, LocalDateTime postedAt) {
         validateTitle(title);
@@ -76,9 +65,6 @@ public class OfficialNotice {
         return notice;
     }
 
-    /**
-     * 공지사항의 수정 가능한 필드를 갱신한다.
-     */
     public void update(String title, String content, String author,
                        String originalUrl, LocalDateTime postedAt) {
         validateTitle(title);
@@ -100,8 +86,6 @@ public class OfficialNotice {
         return this.deletedAt != null;
     }
 
-    // ── getters ──────────────────────────────────────────────
-
     public Long getId() { return id; }
 
     public String getSourceId() { return sourceId; }
@@ -121,8 +105,6 @@ public class OfficialNotice {
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-
-    // ── validation ───────────────────────────────────────────
 
     private static void validateTitle(String title) {
         if (title == null || title.isBlank() || title.strip().length() > 300) {
