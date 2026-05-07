@@ -6,10 +6,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.NoticeErrorCode;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "official_notice")
@@ -19,8 +18,10 @@ public class OfficialNotice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 원본 사이트의 고유 식별자(num). 크롤러 중복 저장 방지용. */
-    @Column(length = 100, unique = true)
+    /**
+     * 원본 사이트의 고유 식별자(num). 크롤러 중복 저장 방지용.
+     */
+    @Column(unique = true)
     private String sourceId;
 
     @Column(nullable = false, length = 300)
@@ -37,7 +38,6 @@ public class OfficialNotice {
 
     private LocalDateTime postedAt;
 
-    /** AI 요약문. 벡터 임베딩 단계에서 채워진다. */
     @Column(columnDefinition = "TEXT")
     private String summary;
 
@@ -65,6 +65,18 @@ public class OfficialNotice {
         return notice;
     }
 
+    private static void validateTitle(String title) {
+        if (title == null || title.isBlank() || title.strip().length() > 300) {
+            throw new BusinessException(NoticeErrorCode.INVALID_TITLE);
+        }
+    }
+
+    private static void validateContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new BusinessException(NoticeErrorCode.INVALID_CONTENT);
+        }
+    }
+
     public void update(String title, String content, String author,
                        String originalUrl, LocalDateTime postedAt) {
         validateTitle(title);
@@ -86,35 +98,43 @@ public class OfficialNotice {
         return this.deletedAt != null;
     }
 
-    public Long getId() { return id; }
-
-    public String getSourceId() { return sourceId; }
-
-    public String getTitle() { return title; }
-
-    public String getContent() { return content; }
-
-    public String getAuthor() { return author; }
-
-    public String getOriginalUrl() { return originalUrl; }
-
-    public LocalDateTime getPostedAt() { return postedAt; }
-
-    public String getSummary() { return summary; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-
-    private static void validateTitle(String title) {
-        if (title == null || title.isBlank() || title.strip().length() > 300) {
-            throw new BusinessException(NoticeErrorCode.INVALID_TITLE);
-        }
+    public Long getId() {
+        return id;
     }
 
-    private static void validateContent(String content) {
-        if (content == null || content.isBlank()) {
-            throw new BusinessException(NoticeErrorCode.INVALID_CONTENT);
-        }
+    public String getSourceId() {
+        return sourceId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public String getOriginalUrl() {
+        return originalUrl;
+    }
+
+    public LocalDateTime getPostedAt() {
+        return postedAt;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 }

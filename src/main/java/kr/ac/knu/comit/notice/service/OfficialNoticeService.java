@@ -55,12 +55,6 @@ public class OfficialNoticeService {
         findActiveOrThrow(noticeId).update(title, content, author, originalUrl, postedAt);
     }
 
-    /** 어드민 모듈에서 호출 예정. */
-    @Transactional
-    public void deleteNotice(Long noticeId) {
-        findActiveOrThrow(noticeId).delete();
-    }
-
     private OfficialNotice findActiveOrThrow(Long noticeId) {
         return officialNoticeRepository.findActiveById(noticeId)
                 .orElseThrow(() -> new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));

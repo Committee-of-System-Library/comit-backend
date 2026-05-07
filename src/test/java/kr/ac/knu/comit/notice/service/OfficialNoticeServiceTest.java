@@ -148,20 +148,6 @@ class OfficialNoticeServiceTest {
     }
 
     @Test
-    @DisplayName("공지사항을 소프트 삭제한다")
-    void softDeletesNotice() {
-        // given
-        OfficialNotice notice = OfficialNoticeFixture.notice(1L);
-        given(officialNoticeRepository.findActiveById(1L)).willReturn(Optional.of(notice));
-
-        // when
-        officialNoticeService.deleteNotice(1L);
-
-        // then
-        assertThat(notice.isDeleted()).isTrue();
-    }
-
-    @Test
     @DisplayName("삭제된 공지사항 수정 시 NOTICE_NOT_FOUND 예외가 발생한다")
     void throwsWhenUpdatingDeletedNotice() {
         // given
