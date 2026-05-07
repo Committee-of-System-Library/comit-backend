@@ -71,6 +71,9 @@ dependencies {
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 
+    // Jsoup
+    implementation 'org.jsoup:jsoup:1.18.3'
+
     // AWS SDK v2 - S3
     implementation platform('software.amazon.awssdk:bom:2.29.0')
     implementation 'software.amazon.awssdk:s3'

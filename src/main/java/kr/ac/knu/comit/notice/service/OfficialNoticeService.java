@@ -39,16 +39,16 @@ public class OfficialNoticeService {
         return OfficialNoticeResponse.from(findActiveOrThrow(noticeId));
     }
 
-    /** Stage 2 크롤러 스케쥴러에서 호출한다. */
+    /** 크롤러 스케쥴러에서 호출한다. */
     @Transactional
-    public Long createNotice(String title, String content, String author,
+    public Long createNotice(String wrId, String title, String content, String author,
                               String originalUrl, LocalDateTime postedAt) {
         return officialNoticeRepository.save(
-                OfficialNotice.create(title, content, author, originalUrl, postedAt)
+                OfficialNotice.create(wrId, title, content, author, originalUrl, postedAt)
         ).getId();
     }
 
-    /** Stage 2 크롤러 스케쥴러에서 호출한다. */
+    /** 크롤러 스케쥴러에서 호출한다. */
     @Transactional
     public void updateNotice(Long noticeId, String title, String content, String author,
                               String originalUrl, LocalDateTime postedAt) {

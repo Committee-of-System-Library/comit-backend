@@ -13,6 +13,7 @@ public class OfficialNoticeFixture {
 
     public static OfficialNotice notice(Long id, String title) {
         OfficialNotice notice = OfficialNotice.create(
+                String.valueOf(id),
                 title,
                 "공지사항 본문 내용입니다.",
                 "학사지원팀",

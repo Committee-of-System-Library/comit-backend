@@ -7,11 +7,15 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface OfficialNoticeRepository extends JpaRepository<OfficialNotice, Long> {
 
     @Query("SELECT n FROM OfficialNotice n WHERE n.id = :id AND n.deletedAt IS NULL")
     Optional<OfficialNotice> findActiveById(@Param("id") Long id);
+
+    @Query("SELECT n.wrId FROM OfficialNotice n WHERE n.wrId IN :wrIds")
+    Set<String> findExistingWrIds(@Param("wrIds") List<String> wrIds);
 
     @Query("""
             SELECT n FROM OfficialNotice n

@@ -48,12 +48,13 @@ public class OfficialNotice {
     protected OfficialNotice() {
     }
 
-    public static OfficialNotice create(String title, String content, String author,
+    public static OfficialNotice create(String wrId, String title, String content, String author,
                                         String originalUrl, LocalDateTime postedAt) {
         validateTitle(title);
         validateContent(content);
 
         OfficialNotice notice = new OfficialNotice();
+        notice.wrId = wrId;
         notice.title = title.strip();
         notice.content = content.strip();
         notice.author = author != null ? author.strip() : null;
