@@ -125,7 +125,7 @@ public class OfficialNotice {
     // ── validation ───────────────────────────────────────────
 
     private static void validateTitle(String title) {
-        if (title == null || title.isBlank() || title.strip().length() > OfficialNoticeConstraints.TITLE_MAX_LENGTH) {
+        if (title == null || title.isBlank() || title.strip().length() > 300) {
             throw new BusinessException(NoticeErrorCode.INVALID_TITLE);
         }
     }
