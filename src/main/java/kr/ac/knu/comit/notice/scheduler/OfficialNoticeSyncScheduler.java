@@ -17,7 +17,7 @@ public class OfficialNoticeSyncScheduler {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        Thread.ofVirtual().start(syncService::syncInitial);
+        syncService.syncInitial();
     }
 
     @Scheduled(cron = "0 30 2 * * *")
