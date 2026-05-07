@@ -18,11 +18,9 @@ public class OfficialNotice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * 원본 사이트의 고유 식별자(num). 크롤러 중복 저장 방지용.
-     */
-    @Column(unique = true)
-    private String sourceId;
+    /** 원본 게시판의 wr_id. 크롤러 중복 저장 방지용. */
+    @Column(length = 20, unique = true)
+    private String wrId;
 
     @Column(nullable = false, length = 300)
     private String title;
@@ -102,8 +100,8 @@ public class OfficialNotice {
         return id;
     }
 
-    public String getSourceId() {
-        return sourceId;
+    public String getWrId() {
+        return wrId;
     }
 
     public String getTitle() {
