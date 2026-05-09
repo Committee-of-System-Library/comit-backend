@@ -23,12 +23,19 @@ tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://repo.spring.io/milestone") }
     maven {
         url = uri("https://maven.pkg.github.com/Committee-of-System-Library/knu-cse-sso-spring-boot-starter")
         credentials {
             username = findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
             password = findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
         }
+    }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.ai:spring-ai-bom:2.0.0-M6'
     }
 }
 
@@ -73,6 +80,10 @@ dependencies {
 
     // Jsoup
     implementation 'org.jsoup:jsoup:1.18.3'
+
+    // Spring AI
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-qdrant'
 
     // AWS SDK v2 - S3
     implementation platform('software.amazon.awssdk:bom:2.29.0')

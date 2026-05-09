@@ -24,6 +24,7 @@ public class OfficialNoticeSyncService {
     private final KnuCseNoticeCrawler crawler;
     private final OfficialNoticeRepository noticeRepository;
     private final OfficialNoticeService noticeService;
+    private final NoticeEmbeddingService embeddingService;
 
     /**
      * 최초 실행 시 최근 공지 300개를 크롤링한다.
@@ -102,10 +103,17 @@ public class OfficialNoticeSyncService {
                     ? detail.postedAt()
                     : item.postedDate() != null ? item.postedDate().atStartOfDay() : null;
 
-            noticeService.createNotice(
+            Long noticeId = noticeService.createNotice(
                     item.wrId(), item.title(), detail.content(),
                     item.author(), item.originalUrl(), postedAt
             );
+
+            try {
+                embeddingService.embed(noticeId, item.wrId(), item.title(), detail.content(), item.originalUrl());
+            } catch (Exception e) {
+                log.warn("임베딩 실패: noticeId={}, wrId={}", noticeId, item.wrId(), e);
+            }
+
             return true;
         } catch (Exception e) {
             log.warn("공지 저장 실패: wrId={}", item.wrId(), e);

@@ -53,6 +53,18 @@ spring:
   devtools:
     restart:
       enabled: false
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      embedding:
+        options:
+          model: text-embedding-3-small
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_PORT:6334}
+        collection-name: official-notices
+        initialize-schema: true
 
 management:
   endpoints:
