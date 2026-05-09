@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.crawler;
+package kr.ac.knu.comit.notice.infra;
 
 import java.time.LocalDateTime;
 

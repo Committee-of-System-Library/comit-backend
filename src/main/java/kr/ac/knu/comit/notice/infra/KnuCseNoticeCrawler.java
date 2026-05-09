@@ -1,11 +1,4 @@
-package kr.ac.knu.comit.notice.crawler;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
+package kr.ac.knu.comit.notice.infra;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -13,6 +6,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 public class KnuCseNoticeCrawler {

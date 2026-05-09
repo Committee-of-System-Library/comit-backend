@@ -120,7 +120,8 @@ class OfficialNoticeServiceTest {
         Long noticeId = officialNoticeService.createNotice(
                 "1234", "신규 공지사항", "본문 내용", "학사지원팀",
                 "https://computer.knu.ac.kr/notice/1",
-                LocalDateTime.of(2026, 1, 10, 9, 0)
+                LocalDateTime.of(2026, 1, 10, 9, 0),
+                "요약 내용입니다."
         );
 
         // then

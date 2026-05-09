@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.service;
+package kr.ac.knu.comit.notice.infra;
 
 import java.util.List;
 import java.util.Map;
@@ -6,12 +6,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class NoticeEmbeddingService {
+public class NoticeEmbedder {
 
     private final VectorStore vectorStore;
 

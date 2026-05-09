@@ -66,12 +66,11 @@ public class OfficialNoticeService {
 
     @Transactional
     public Long createNotice(String wrId, String title, String content, String author,
-                             String originalUrl, LocalDateTime postedAt) {
-        OfficialNotice saveNotice = officialNoticeRepository.save(
-                OfficialNotice.create(wrId, title, content, author, originalUrl, postedAt)
+                             String originalUrl, LocalDateTime postedAt, String summary) {
+        OfficialNotice notice = officialNoticeRepository.save(
+                OfficialNotice.create(wrId, title, content, author, originalUrl, postedAt, summary)
         );
-
-        return saveNotice.getId();
+        return notice.getId();
     }
 
     @Transactional

@@ -18,7 +18,8 @@ public class OfficialNoticeFixture {
                 "공지사항 본문 내용입니다.",
                 "학사지원팀",
                 "https://computer.knu.ac.kr/notice/" + id,
-                LocalDateTime.of(2026, 1, 10, 9, 0)
+                LocalDateTime.of(2026, 1, 10, 9, 0),
+                null
         );
         ReflectionTestUtils.setField(notice, "id", id);
         return notice;

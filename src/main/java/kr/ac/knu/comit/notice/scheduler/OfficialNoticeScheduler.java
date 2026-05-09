@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-import kr.ac.knu.comit.notice.crawler.KnuCseNoticeCrawler;
-import kr.ac.knu.comit.notice.crawler.NoticeDetail;
-import kr.ac.knu.comit.notice.crawler.NoticeListItem;
 import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
-import kr.ac.knu.comit.notice.service.NoticeEmbeddingService;
+import kr.ac.knu.comit.notice.infra.KnuCseNoticeCrawler;
+import kr.ac.knu.comit.notice.infra.NoticeDetail;
+import kr.ac.knu.comit.notice.infra.NoticeEmbedder;
+import kr.ac.knu.comit.notice.infra.NoticeListItem;
+import kr.ac.knu.comit.notice.infra.NoticeSummarizer;
 import kr.ac.knu.comit.notice.service.OfficialNoticeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,8 @@ public class OfficialNoticeScheduler {
     private final KnuCseNoticeCrawler crawler;
     private final OfficialNoticeRepository noticeRepository;
     private final OfficialNoticeService noticeService;
-    private final NoticeEmbeddingService embeddingService;
+    private final NoticeEmbedder embedder;
+    private final NoticeSummarizer summarizer;
 
     @EventListener(ApplicationReadyEvent.class)
     public void syncInitial() {
@@ -78,9 +80,10 @@ public class OfficialNoticeScheduler {
         try {
             NoticeDetail detail = crawler.crawlDetail(item.wrId());
             LocalDateTime postedAt = resolvePostedAt(detail, item);
+            String summary = summarizeSafely(item.title(), detail.content());
             Long noticeId = noticeService.createNotice(
                     item.wrId(), item.title(), detail.content(),
-                    item.author(), item.originalUrl(), postedAt
+                    item.author(), item.originalUrl(), postedAt, summary
             );
             embedSafely(noticeId, item, detail.content());
             return true;
@@ -114,9 +117,18 @@ public class OfficialNoticeScheduler {
         return null;
     }
 
+    private String summarizeSafely(String title, String content) {
+        try {
+            return summarizer.summarize(title, content);
+        } catch (Exception e) {
+            log.warn("요약 실패: title={}", title, e);
+            return null;
+        }
+    }
+
     private void embedSafely(Long noticeId, NoticeListItem item, String content) {
         try {
-            embeddingService.embed(noticeId, item.wrId(), item.title(), content, item.originalUrl());
+            embedder.embed(noticeId, item.wrId(), item.title(), content, item.originalUrl());
         } catch (Exception e) {
             log.warn("임베딩 실패: noticeId={}, wrId={}", noticeId, item.wrId(), e);
         }

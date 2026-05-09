@@ -49,7 +49,7 @@ public class OfficialNotice {
     }
 
     public static OfficialNotice create(String wrId, String title, String content, String author,
-                                        String originalUrl, LocalDateTime postedAt) {
+                                        String originalUrl, LocalDateTime postedAt, String summary) {
         validateTitle(title);
         validateContent(content);
 
@@ -60,6 +60,7 @@ public class OfficialNotice {
         notice.author = author != null ? author.strip() : null;
         notice.originalUrl = originalUrl;
         notice.postedAt = postedAt;
+        notice.summary = summary;
         notice.createdAt = LocalDateTime.now();
         return notice;
     }
