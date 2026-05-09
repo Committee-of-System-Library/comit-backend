@@ -8,6 +8,7 @@ import kr.ac.knu.comit.global.docs.annotation.FieldDesc;
 import kr.ac.knu.comit.global.exception.ApiResponse;
 import kr.ac.knu.comit.notice.dto.OfficialNoticeListResponse;
 import kr.ac.knu.comit.notice.dto.OfficialNoticeResponse;
+import kr.ac.knu.comit.notice.dto.OfficialNoticeSearchResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,40 @@ import org.springframework.web.bind.annotation.RequestParam;
 @ApiContract
 @RequestMapping("/official-notices")
 public interface OfficialNoticeControllerApi {
+
+    @ApiDoc(
+            summary = "공지사항 의미 검색",
+            description = "자연어 쿼리로 관련 공지사항을 벡터 유사도 기반으로 검색합니다.",
+            descriptions = {
+                    @FieldDesc(name = "query", value = "검색할 자연어 쿼리입니다."),
+                    @FieldDesc(name = "size", value = "조회할 결과 수입니다. 기본값은 10이고 최대 20입니다."),
+                    @FieldDesc(name = "notices", value = "유사도 순으로 정렬된 공지사항 목록입니다.")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": {
+                                "notices": [
+                                  {
+                                    "id": 1,
+                                    "title": "2026학년도 1학기 수강신청 안내",
+                                    "author": "학사지원팀",
+                                    "originalUrl": "https://computer.knu.ac.kr/bbs/board.php?tbl=notice&mode=VIEW&num=1",
+                                    "postedAt": "2026-01-10T09:00:00",
+                                    "createdAt": "2026-01-10T10:00:00"
+                                  }
+                                ]
+                              }
+                            }
+                            """
+            )
+    )
+    @GetMapping("/search")
+    ResponseEntity<ApiResponse<OfficialNoticeSearchResponse>> searchNotices(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "10") int size
+    );
 
     @ApiDoc(
             summary = "공지사항 목록 조회",

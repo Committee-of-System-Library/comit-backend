@@ -1,5 +1,9 @@
 package kr.ac.knu.comit.notice.scheduler;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 import kr.ac.knu.comit.notice.crawler.KnuCseNoticeCrawler;
 import kr.ac.knu.comit.notice.crawler.NoticeDetail;
 import kr.ac.knu.comit.notice.crawler.NoticeListItem;
@@ -13,15 +17,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OfficialNoticeSyncScheduler {
+public class OfficialNoticeScheduler {
 
     private static final int INITIAL_SYNC_MAX = 300;
     private static final int LATEST_SYNC_MAX_PAGES = 3;
@@ -43,15 +42,8 @@ public class OfficialNoticeSyncScheduler {
         int saved = 0;
 
         while (saved < INITIAL_SYNC_MAX) {
-            List<NoticeListItem> items;
-            try {
-                items = crawler.crawlListPage(page++);
-            } catch (IOException e) {
-                log.error("목록 페이지 크롤링 실패: page={}", page - 1, e);
-                break;
-            }
-
-            if (items.isEmpty()) break;
+            List<NoticeListItem> items = crawlListPageSafely(page++);
+            if (items == null || items.isEmpty()) break;
 
             for (NoticeListItem item : items) {
                 if (saved >= INITIAL_SYNC_MAX) break;
@@ -68,29 +60,15 @@ public class OfficialNoticeSyncScheduler {
         int newCount = 0;
 
         for (int page = 1; page <= LATEST_SYNC_MAX_PAGES; page++) {
-            List<NoticeListItem> items;
-            try {
-                items = crawler.crawlListPage(page);
-            } catch (IOException e) {
-                log.error("목록 페이지 크롤링 실패: page={}", page, e);
-                break;
-            }
-
-            if (items.isEmpty()) break;
+            List<NoticeListItem> items = crawlListPageSafely(page);
+            if (items == null || items.isEmpty()) break;
 
             List<String> wrIds = items.stream().map(NoticeListItem::wrId).toList();
             Set<String> existing = noticeRepository.findExistingWrIds(wrIds);
 
-            boolean hitExisting = false;
-            for (NoticeListItem item : items) {
-                if (existing.contains(item.wrId())) {
-                    hitExisting = true;
-                    break;
-                }
-                if (saveNotice(item)) newCount++;
-            }
-
-            if (hitExisting) break;
+            SaveResult result = saveNewItems(items, existing);
+            newCount += result.saved();
+            if (result.hitExisting()) break;
         }
 
         log.info("최신 공지 동기화 완료 - {}개 저장", newCount);
@@ -99,25 +77,50 @@ public class OfficialNoticeSyncScheduler {
     private boolean saveNotice(NoticeListItem item) {
         try {
             NoticeDetail detail = crawler.crawlDetail(item.wrId());
-            LocalDateTime postedAt = detail.postedAt() != null
-                    ? detail.postedAt()
-                    : item.postedDate() != null ? item.postedDate().atStartOfDay() : null;
-
+            LocalDateTime postedAt = resolvePostedAt(detail, item);
             Long noticeId = noticeService.createNotice(
                     item.wrId(), item.title(), detail.content(),
                     item.author(), item.originalUrl(), postedAt
             );
-
-            try {
-                embeddingService.embed(noticeId, item.wrId(), item.title(), detail.content(), item.originalUrl());
-            } catch (Exception e) {
-                log.warn("임베딩 실패: noticeId={}, wrId={}", noticeId, item.wrId(), e);
-            }
-
+            embedSafely(noticeId, item, detail.content());
             return true;
         } catch (Exception e) {
             log.warn("공지 저장 실패: wrId={}", item.wrId(), e);
             return false;
         }
     }
+
+    private List<NoticeListItem> crawlListPageSafely(int page) {
+        try {
+            return crawler.crawlListPage(page);
+        } catch (IOException e) {
+            log.error("목록 페이지 크롤링 실패: page={}", page, e);
+            return null;
+        }
+    }
+
+    private SaveResult saveNewItems(List<NoticeListItem> items, Set<String> existing) {
+        int saved = 0;
+        for (NoticeListItem item : items) {
+            if (existing.contains(item.wrId())) return new SaveResult(saved, true);
+            if (saveNotice(item)) saved++;
+        }
+        return new SaveResult(saved, false);
+    }
+
+    private LocalDateTime resolvePostedAt(NoticeDetail detail, NoticeListItem item) {
+        if (detail.postedAt() != null) return detail.postedAt();
+        if (item.postedDate() != null) return item.postedDate().atStartOfDay();
+        return null;
+    }
+
+    private void embedSafely(Long noticeId, NoticeListItem item, String content) {
+        try {
+            embeddingService.embed(noticeId, item.wrId(), item.title(), content, item.originalUrl());
+        } catch (Exception e) {
+            log.warn("임베딩 실패: noticeId={}, wrId={}", noticeId, item.wrId(), e);
+        }
+    }
+
+    private record SaveResult(int saved, boolean hitExisting) {}
 }
