@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class NoticeChatClient {
 
     private static final int CONTEXT_NOTICE_COUNT = 5;
+    private static final double SIMILARITY_THRESHOLD = 0.7;
     private static final String SYSTEM_PROMPT = """
             당신은 경북대학교 컴퓨터학부 공지사항 도우미입니다.
             아래 공지사항 컨텍스트를 바탕으로 질문에 한국어로 간결하게 답변하세요.
@@ -31,6 +32,7 @@ public class NoticeChatClient {
         this.vectorStore = vectorStore;
         this.searchRequest = SearchRequest.builder()
                 .topK(CONTEXT_NOTICE_COUNT)
+                .similarityThreshold(SIMILARITY_THRESHOLD)
                 .build();
     }
 
