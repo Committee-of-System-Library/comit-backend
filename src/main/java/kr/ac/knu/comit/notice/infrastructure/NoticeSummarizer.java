@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.infra;
+package kr.ac.knu.comit.notice.infrastructure;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Component;

@@ -3,6 +3,7 @@ package kr.ac.knu.comit.notice.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import kr.ac.knu.comit.global.exception.BusinessException;
@@ -46,7 +47,8 @@ public class OfficialNoticeService {
         List<Long> noticeIds = vectorStore.similaritySearch(
                         SearchRequest.builder().query(query).topK(topK).build()
                 ).stream()
-                .map(doc -> ((Number) doc.getMetadata().get("noticeId")).longValue())
+                .map(doc -> parseNoticeId(doc.getId()))
+                .filter(Objects::nonNull)
                 .toList();
 
         Map<Long, OfficialNotice> noticeMap = officialNoticeRepository.findAllById(noticeIds).stream()
@@ -82,5 +84,17 @@ public class OfficialNoticeService {
     private OfficialNotice findActiveOrThrow(Long noticeId) {
         return officialNoticeRepository.findActiveById(noticeId)
                 .orElseThrow(() -> new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
+    }
+
+    private Long parseNoticeId(String id) {
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

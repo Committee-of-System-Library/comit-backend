@@ -1,6 +1,7 @@
-package kr.ac.knu.comit.notice.infra;
+package kr.ac.knu.comit.notice.infrastructure;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import kr.ac.knu.comit.notice.dto.NoticeSource;
 import org.springframework.ai.chat.client.ChatClient;
@@ -63,12 +64,35 @@ public class NoticeChatClient {
 
     private List<NoticeSource> toSources(List<Document> docs) {
         return docs.stream()
-                .map(doc -> new NoticeSource(
-                        ((Number) doc.getMetadata().get("noticeId")).longValue(),
-                        (String) doc.getMetadata().get("title"),
-                        (String) doc.getMetadata().get("originalUrl")
-                ))
+                .map(this::toNoticeSource)
+                .filter(Objects::nonNull)
                 .toList();
+    }
+
+    private NoticeSource toNoticeSource(Document doc) {
+        Long noticeId = parseNoticeId(doc);
+        if (noticeId == null) {
+            return null;
+        }
+
+        return new NoticeSource(
+                noticeId,
+                (String) doc.getMetadata().get("title"),
+                (String) doc.getMetadata().get("originalUrl")
+        );
+    }
+
+    private Long parseNoticeId(Document doc) {
+        String id = doc.getId();
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public record ChatResult(String answer, List<NoticeSource> sources) {
