@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.infra;
+package kr.ac.knu.comit.notice.infrastructure;
 
 import java.util.List;
 import java.util.Map;
