@@ -57,8 +57,7 @@ spring:
     openai:
       api-key: ${OPENAI_API_KEY:}
       embedding:
-        options:
-          model: text-embedding-3-small
+        model: text-embedding-3-small
     vectorstore:
       qdrant:
         host: ${QDRANT_HOST:localhost}
