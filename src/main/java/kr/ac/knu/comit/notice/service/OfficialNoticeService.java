@@ -47,7 +47,7 @@ public class OfficialNoticeService {
         List<Long> noticeIds = vectorStore.similaritySearch(
                         SearchRequest.builder().query(query).topK(topK).build()
                 ).stream()
-                .map(doc -> parseNoticeId(doc.getId()))
+                .map(doc -> parseNoticeId(doc.getMetadata().get("noticeId")))
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -86,13 +86,18 @@ public class OfficialNoticeService {
                 .orElseThrow(() -> new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
-    private Long parseNoticeId(String id) {
-        if (id == null || id.isBlank()) {
+    private Long parseNoticeId(Object value) {
+        if (value == null) {
+            return null;
+        }
+
+        String noticeId = value.toString();
+        if (noticeId.isBlank()) {
             return null;
         }
 
         try {
-            return Long.parseLong(id);
+            return Long.parseLong(noticeId);
         } catch (NumberFormatException e) {
             return null;
         }

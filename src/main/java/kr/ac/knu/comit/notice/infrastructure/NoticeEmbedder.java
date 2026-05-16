@@ -1,7 +1,9 @@
 package kr.ac.knu.comit.notice.infrastructure;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -19,10 +21,10 @@ public class NoticeEmbedder {
         String url = originalUrl != null ? originalUrl : "";
 
         Document doc = Document.builder()
-                .id(String.valueOf(noticeId))
+                .id(toDocumentId(noticeId))
                 .text(title + "\n\n" + content)
                 .metadata(Map.of(
-                        "noticeId", noticeId,
+                        "noticeId", String.valueOf(noticeId),
                         "wrId", wrId,
                         "title", title,
                         "originalUrl", url
@@ -30,5 +32,10 @@ public class NoticeEmbedder {
                 .build();
         vectorStore.add(List.of(doc));
         log.debug("임베딩 저장 완료: noticeId={}", noticeId);
+    }
+
+    private String toDocumentId(Long noticeId) {
+        return UUID.nameUUIDFromBytes(("official-notice:" + noticeId).getBytes(StandardCharsets.UTF_8))
+                .toString();
     }
 }

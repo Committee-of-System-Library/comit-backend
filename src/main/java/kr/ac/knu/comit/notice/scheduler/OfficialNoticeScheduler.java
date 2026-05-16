@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OfficialNoticeScheduler {
 
-    private static final int INITIAL_SYNC_MAX = 300;
+    private static final int INITIAL_SYNC_MAX = 20;
     private static final int LATEST_SYNC_MAX_PAGES = 3;
 
     private final KnuCseNoticeCrawler crawler;
@@ -45,11 +45,17 @@ public class OfficialNoticeScheduler {
 
         while (saved < INITIAL_SYNC_MAX) {
             List<NoticeListItem> items = crawlListPageSafely(page++);
-            if (items == null || items.isEmpty()) break;
+            if (items == null || items.isEmpty()) {
+                break;
+            }
 
             for (NoticeListItem item : items) {
-                if (saved >= INITIAL_SYNC_MAX) break;
-                if (saveNotice(item)) saved++;
+                if (saved >= INITIAL_SYNC_MAX) {
+                    break;
+                }
+                if (saveNotice(item)) {
+                    saved++;
+                }
             }
         }
 
@@ -63,14 +69,18 @@ public class OfficialNoticeScheduler {
 
         for (int page = 1; page <= LATEST_SYNC_MAX_PAGES; page++) {
             List<NoticeListItem> items = crawlListPageSafely(page);
-            if (items == null || items.isEmpty()) break;
+            if (items == null || items.isEmpty()) {
+                break;
+            }
 
             List<String> wrIds = items.stream().map(NoticeListItem::wrId).toList();
             Set<String> existing = noticeRepository.findExistingWrIds(wrIds);
 
             SaveResult result = saveNewItems(items, existing);
             newCount += result.saved();
-            if (result.hitExisting()) break;
+            if (result.hitExisting()) {
+                break;
+            }
         }
 
         log.info("최신 공지 동기화 완료 - {}개 저장", newCount);
@@ -105,15 +115,23 @@ public class OfficialNoticeScheduler {
     private SaveResult saveNewItems(List<NoticeListItem> items, Set<String> existing) {
         int saved = 0;
         for (NoticeListItem item : items) {
-            if (existing.contains(item.wrId())) return new SaveResult(saved, true);
-            if (saveNotice(item)) saved++;
+            if (existing.contains(item.wrId())) {
+                return new SaveResult(saved, true);
+            }
+            if (saveNotice(item)) {
+                saved++;
+            }
         }
         return new SaveResult(saved, false);
     }
 
     private LocalDateTime resolvePostedAt(NoticeDetail detail, NoticeListItem item) {
-        if (detail.postedAt() != null) return detail.postedAt();
-        if (item.postedDate() != null) return item.postedDate().atStartOfDay();
+        if (detail.postedAt() != null) {
+            return detail.postedAt();
+        }
+        if (item.postedDate() != null) {
+            return item.postedDate().atStartOfDay();
+        }
         return null;
     }
 
@@ -134,5 +152,6 @@ public class OfficialNoticeScheduler {
         }
     }
 
-    private record SaveResult(int saved, boolean hitExisting) {}
+    private record SaveResult(int saved, boolean hitExisting) {
+    }
 }

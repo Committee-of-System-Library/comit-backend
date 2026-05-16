@@ -83,13 +83,18 @@ public class NoticeChatClient {
     }
 
     private Long parseNoticeId(Document doc) {
-        String id = doc.getId();
-        if (id == null || id.isBlank()) {
+        Object value = doc.getMetadata().get("noticeId");
+        if (value == null) {
+            return null;
+        }
+
+        String noticeId = value.toString();
+        if (noticeId.isBlank()) {
             return null;
         }
 
         try {
-            return Long.parseLong(id);
+            return Long.parseLong(noticeId);
         } catch (NumberFormatException e) {
             return null;
         }
