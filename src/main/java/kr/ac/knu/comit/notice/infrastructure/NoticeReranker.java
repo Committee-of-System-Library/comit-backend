@@ -28,11 +28,10 @@ public class NoticeReranker {
             """;
 
     private final ChatClient chatClient;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public NoticeReranker(ChatClient.Builder builder, ObjectMapper objectMapper) {
+    public NoticeReranker(ChatClient.Builder builder) {
         this.chatClient = builder.build();
-        this.objectMapper = objectMapper;
     }
 
     public RerankedNotices rerank(String message, List<Document> docs) {
