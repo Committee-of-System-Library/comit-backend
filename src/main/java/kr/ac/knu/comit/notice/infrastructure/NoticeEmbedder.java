@@ -22,7 +22,7 @@ public class NoticeEmbedder {
 
         Document doc = Document.builder()
                 .id(toDocumentId(noticeId))
-                .text(title + "\n\n" + content)
+                .text(NoticeDocumentText.format(title, content))
                 .metadata(Map.of(
                         "noticeId", String.valueOf(noticeId),
                         "wrId", wrId,
