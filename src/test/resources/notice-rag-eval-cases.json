@@ -1,0 +1,104 @@
+[
+  {
+    "id": "scholarship_typo_001",
+    "question": "장학급관련 공지사항들 알려줘",
+    "type": "typo_multi_notice_search",
+    "expectedTitleContains": ["장학"],
+    "expectedMatch": "ANY",
+    "checks": {
+      "retrieval": true,
+      "selection": false,
+      "source": false,
+      "answer": true
+    },
+    "mustContain": ["장학"],
+    "shouldNotContain": ["도서관"],
+    "difficulty": "medium",
+    "notes": "오타를 장학금으로 보정하고 장학 관련 공지를 찾아야 한다."
+  },
+  {
+    "id": "master_scholarship_001",
+    "question": "석사우수장학금 공지 알려줘",
+    "type": "single_notice_search",
+    "expectedTitleContains": ["석사우수장학금"],
+    "expectedMatch": "ALL",
+    "checks": {
+      "retrieval": true,
+      "selection": true,
+      "source": true,
+      "answer": true
+    },
+    "mustContain": ["석사우수장학금"],
+    "shouldNotContain": ["도서관"],
+    "difficulty": "easy",
+    "notes": "특정 장학금 공지 단건 검색."
+  },
+  {
+    "id": "excellent_scholarship_001",
+    "question": "국가우수장학금 성적우수유형 공지 알려줘",
+    "type": "single_notice_search",
+    "expectedTitleContains": ["국가우수장학금", "성적우수유형"],
+    "expectedMatch": "ALL",
+    "checks": {
+      "retrieval": true,
+      "selection": true,
+      "source": true,
+      "answer": true
+    },
+    "mustContain": ["성적우수"],
+    "shouldNotContain": ["도서관"],
+    "difficulty": "easy",
+    "notes": "비슷한 국가우수장학금 공지 중 성적우수유형을 골라야 한다."
+  },
+  {
+    "id": "exit_interview_001",
+    "question": "Exit 인터뷰 업로드링크 알려줘",
+    "type": "exact_token_detail",
+    "expectedTitleContains": ["Exit 인터뷰"],
+    "expectedMatch": "ALL",
+    "checks": {
+      "retrieval": true,
+      "selection": true,
+      "source": true,
+      "answer": true
+    },
+    "mustContain": ["업로드", "링크"],
+    "shouldNotContain": ["장학금"],
+    "difficulty": "medium",
+    "notes": "영문 키워드와 링크성 표현을 포함한 세부 질의."
+  },
+  {
+    "id": "five_step_001",
+    "question": "5-Step 프로그램 신청 마감됐어?",
+    "type": "exact_token_status",
+    "expectedTitleContains": ["5-Step 프로그램"],
+    "expectedMatch": "ANY",
+    "checks": {
+      "retrieval": true,
+      "selection": true,
+      "source": true,
+      "answer": true
+    },
+    "mustContain": ["마감"],
+    "shouldNotContain": ["장학금"],
+    "difficulty": "medium",
+    "notes": "특수 표기 프로그램명과 신청마감 상태를 찾아야 한다."
+  },
+  {
+    "id": "library_list_001",
+    "question": "도서관 관련한 문서 찾아줘",
+    "type": "category_multi_notice_search",
+    "expectedTitleContains": ["도서관"],
+    "expectedMatch": "ANY",
+    "checks": {
+      "retrieval": true,
+      "selection": true,
+      "source": true,
+      "answer": true
+    },
+    "mustContain": ["도서관"],
+    "shouldNotContain": ["장학금"],
+    "difficulty": "easy",
+    "notes": "반복되는 제목 prefix 기반의 관련 공지 목록 검색."
+  }
+]
