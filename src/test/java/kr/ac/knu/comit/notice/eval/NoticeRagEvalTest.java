@@ -30,7 +30,9 @@ import org.springframework.test.context.ActiveProfiles;
 class NoticeRagEvalTest {
 
     private static final int EVAL_TOP_K = 20;
+    private static final int DEFAULT_CONTEXT_NOTICE_COUNT = 5;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final NoticeRagEvalReportWriter REPORT_WRITER = new NoticeRagEvalReportWriter(OBJECT_MAPPER);
 
     @Autowired
     private VectorStore vectorStore;
@@ -55,6 +57,8 @@ class NoticeRagEvalTest {
                 .map(this::evaluate)
                 .toList();
 
+        REPORT_WRITER.write(results);
+
         assertThat(results)
                 .filteredOn(result -> !result.isPass())
                 .as(() -> buildFailureReport(results))
@@ -78,9 +82,13 @@ class NoticeRagEvalTest {
         List<Document> selectedDocs = documentSelector.select(retrievedDocs, rerankedNotices.noticeIds());
         List<Long> selectedNoticeIds = noticeIds(selectedDocs);
         List<String> selectedTitles = titles(selectedDocs);
+        int appliedSourceLimit = maxSourcesByType(evalCase.type());
+        List<Document> answerDocs = selectedDocs.stream()
+                .limit(appliedSourceLimit)
+                .toList();
 
-        GeneratedAnswer generatedAnswer = answerGenerator.generate(evalCase.question(), selectedDocs);
-        List<NoticeSource> sources = toSources(selectedDocs);
+        GeneratedAnswer generatedAnswer = answerGenerator.generate(evalCase.question(), answerDocs);
+        List<NoticeSource> sources = toSources(answerDocs);
         List<Long> sourceNoticeIds = sources.stream()
                 .map(NoticeSource::noticeId)
                 .toList();
@@ -99,9 +107,19 @@ class NoticeRagEvalTest {
                 rerankedNotices.noticeIds(),
                 selectedNoticeIds,
                 selectedTitles,
+                appliedSourceLimit,
                 sourceNoticeIds,
                 sourceTitles,
                 generatedAnswer.content(),
+                transformedQuery.promptTokens(),
+                transformedQuery.completionTokens(),
+                transformedQuery.totalTokens(),
+                rerankedNotices.promptTokens(),
+                rerankedNotices.completionTokens(),
+                rerankedNotices.totalTokens(),
+                generatedAnswer.promptTokens(),
+                generatedAnswer.completionTokens(),
+                generatedAnswer.totalTokens(),
                 evaluateExpected("retrieval", evalCase, retrievedNoticeIds, retrievedTitles),
                 evaluateExpected("selection", evalCase, selectedNoticeIds, selectedTitles),
                 evaluateExpected("source", evalCase, sourceNoticeIds, sourceTitles),
@@ -239,6 +257,17 @@ class NoticeRagEvalTest {
                 .anyMatch(title -> contains(title, keyword));
     }
 
+    private int maxSourcesByType(String type) {
+        return switch (type) {
+            case "single_notice_search", "detail_answer" -> 1;
+            case "exact_token_detail", "exact_token_status", "domain_label_single_notice_search",
+                    "long_notice_single_search" -> 2;
+            case "repeated_title_search" -> 3;
+            case "out_of_scope_question" -> 0;
+            default -> DEFAULT_CONTEXT_NOTICE_COUNT;
+        };
+    }
+
     private Long parseNoticeId(Document doc) {
         Object value = doc.getMetadata().get("noticeId");
         if (value == null) {
@@ -258,4 +287,5 @@ class NoticeRagEvalTest {
                 .map(NoticeRagEvalResult::failureSummary)
                 .reduce("\n", (left, right) -> left + "\n---\n" + right);
     }
+
 }
