@@ -16,12 +16,12 @@ public class NoticeRagTracer {
     }
 
     public void queryReceived(String traceId, String message, int topK, double threshold) {
-        log.info("[RAG_TRACE] traceId={} step=query_received originalQuery=\"{}\" topK={} threshold={}",
+        log.debug("[RAG_TRACE] traceId={} step=query_received originalQuery=\"{}\" topK={} threshold={}",
                 traceId, message, topK, threshold);
     }
 
     public void queryTransformed(String traceId, TransformedQuery transformedQuery) {
-        log.info("[RAG_TRACE] traceId={} step=query_transformed transformedQuery=\"{}\" promptTokens={} completionTokens={} totalTokens={}",
+        log.debug("[RAG_TRACE] traceId={} step=query_transformed transformedQuery=\"{}\" promptTokens={} completionTokens={} totalTokens={}",
                 traceId,
                 transformedQuery.content(),
                 transformedQuery.promptTokens(),
@@ -31,11 +31,11 @@ public class NoticeRagTracer {
     }
 
     public void retrievedDocuments(String traceId, List<Document> docs) {
-        log.info("[RAG_TRACE] traceId={} step=retrieved count={}", traceId, docs.size());
+        log.debug("[RAG_TRACE] traceId={} step=retrieved count={}", traceId, docs.size());
 
         for (int i = 0; i < docs.size(); i++) {
             Document doc = docs.get(i);
-            log.info("[RAG_TRACE] traceId={} step=retrieved_document rank={} score={} noticeId={} title=\"{}\" documentId={}",
+            log.debug("[RAG_TRACE] traceId={} step=retrieved_document rank={} score={} noticeId={} title=\"{}\" documentId={}",
                     traceId,
                     i + 1,
                     doc.getScore(),
@@ -47,7 +47,7 @@ public class NoticeRagTracer {
     }
 
     public void reranked(String traceId, RerankedNotices rerankedNotices) {
-        log.info("[RAG_TRACE] traceId={} step=reranked noticeIds={} promptTokens={} completionTokens={} totalTokens={}",
+        log.debug("[RAG_TRACE] traceId={} step=reranked noticeIds={} promptTokens={} completionTokens={} totalTokens={}",
                 traceId,
                 rerankedNotices.noticeIds(),
                 rerankedNotices.promptTokens(),
@@ -57,12 +57,12 @@ public class NoticeRagTracer {
     }
 
     public void selectedDocuments(String traceId, List<Document> docs) {
-        log.info("[RAG_TRACE] traceId={} step=selected count={} noticeIds={}",
+        log.debug("[RAG_TRACE] traceId={} step=selected count={} noticeIds={}",
                 traceId, docs.size(), NoticeDocumentMetadata.noticeIds(docs));
     }
 
     public void queryClassified(String traceId, NoticeQueryType queryType, List<Document> selectedDocs, List<Document> answerDocs) {
-        log.info("[RAG_TRACE] traceId={} step=query_classified queryType={} selectedCount={} answerSourceLimit={} answerNoticeIds={}",
+        log.debug("[RAG_TRACE] traceId={} step=query_classified queryType={} selectedCount={} answerSourceLimit={} answerNoticeIds={}",
                 traceId,
                 queryType,
                 selectedDocs.size(),
@@ -73,7 +73,7 @@ public class NoticeRagTracer {
 
     public void answerGenerated(String traceId, GeneratedAnswer generatedAnswer, List<NoticeSource> sources) {
         String answer = generatedAnswer.content();
-        log.info("[RAG_TRACE] traceId={} step=answer_generated sourceNoticeIds={} answerLength={} promptTokens={} completionTokens={} totalTokens={}",
+        log.debug("[RAG_TRACE] traceId={} step=answer_generated sourceNoticeIds={} answerLength={} promptTokens={} completionTokens={} totalTokens={}",
                 traceId,
                 sources.stream().map(NoticeSource::noticeId).toList(),
                 answer != null ? answer.length() : 0,
