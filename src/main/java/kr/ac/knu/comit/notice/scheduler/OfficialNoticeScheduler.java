@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OfficialNoticeScheduler {
 
-    private static final int INITIAL_SYNC_MAX = 20;
+    private static final int INITIAL_SYNC_MAX = 200;
     private static final int LATEST_SYNC_MAX_PAGES = 3;
 
     private final KnuCseNoticeCrawler crawler;
