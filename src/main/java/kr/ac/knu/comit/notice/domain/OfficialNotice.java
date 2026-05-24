@@ -67,13 +67,13 @@ public class OfficialNotice {
 
     private static void validateTitle(String title) {
         if (title == null || title.isBlank() || title.strip().length() > 300) {
-            throw new BusinessException(NoticeErrorCode.INVALID_TITLE);
+            throw new BusinessException(NoticeErrorCode.INVALID_NOTICE_TITLE);
         }
     }
 
     private static void validateContent(String content) {
         if (content == null || content.isBlank()) {
-            throw new BusinessException(NoticeErrorCode.INVALID_CONTENT);
+            throw new BusinessException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
         }
     }
 
