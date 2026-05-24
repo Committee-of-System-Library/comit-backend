@@ -61,6 +61,16 @@ public class NoticeRagTracer {
                 traceId, docs.size(), NoticeDocumentMetadata.noticeIds(docs));
     }
 
+    public void queryClassified(String traceId, NoticeQueryType queryType, List<Document> selectedDocs, List<Document> answerDocs) {
+        log.info("[RAG_TRACE] traceId={} step=query_classified queryType={} selectedCount={} answerSourceLimit={} answerNoticeIds={}",
+                traceId,
+                queryType,
+                selectedDocs.size(),
+                queryType.maxSources(),
+                NoticeDocumentMetadata.noticeIds(answerDocs)
+        );
+    }
+
     public void answerGenerated(String traceId, GeneratedAnswer generatedAnswer, List<NoticeSource> sources) {
         String answer = generatedAnswer.content();
         log.info("[RAG_TRACE] traceId={} step=answer_generated sourceNoticeIds={} answerLength={} promptTokens={} completionTokens={} totalTokens={}",

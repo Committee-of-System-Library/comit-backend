@@ -17,6 +17,7 @@ public class NoticeChatClient {
     private final NoticeQueryTransformer queryTransformer;
     private final NoticeReranker reranker;
     private final NoticeDocumentSelector documentSelector;
+    private final NoticeQueryTypeClassifier queryTypeClassifier;
     private final NoticeAnswerGenerator answerGenerator;
     private final NoticeRagTracer ragTracer;
     private final SearchRequest traceSearchRequest;
@@ -26,6 +27,7 @@ public class NoticeChatClient {
             NoticeQueryTransformer queryTransformer,
             NoticeReranker reranker,
             NoticeDocumentSelector documentSelector,
+            NoticeQueryTypeClassifier queryTypeClassifier,
             NoticeAnswerGenerator answerGenerator,
             NoticeRagTracer ragTracer
     ) {
@@ -33,6 +35,7 @@ public class NoticeChatClient {
         this.queryTransformer = queryTransformer;
         this.reranker = reranker;
         this.documentSelector = documentSelector;
+        this.queryTypeClassifier = queryTypeClassifier;
         this.answerGenerator = answerGenerator;
         this.ragTracer = ragTracer;
         this.traceSearchRequest = SearchRequest.builder()
@@ -61,8 +64,14 @@ public class NoticeChatClient {
         List<Document> selectedDocs = documentSelector.select(retrievedDocs, rerankedNotices.noticeIds());
         ragTracer.selectedDocuments(traceId, selectedDocs);
 
-        GeneratedAnswer generatedAnswer = answerGenerator.generate(message, selectedDocs);
-        List<NoticeSource> sources = toSources(selectedDocs);
+        NoticeQueryType queryType = queryTypeClassifier.classify(message);
+        List<Document> answerDocs = selectedDocs.stream()
+                .limit(queryType.maxSources())
+                .toList();
+        ragTracer.queryClassified(traceId, queryType, selectedDocs, answerDocs);
+
+        GeneratedAnswer generatedAnswer = answerGenerator.generate(message, answerDocs);
+        List<NoticeSource> sources = toSources(answerDocs);
         ragTracer.answerGenerated(traceId, generatedAnswer, sources);
 
         return new ChatResult(generatedAnswer.content(), sources);

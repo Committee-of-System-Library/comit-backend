@@ -12,6 +12,7 @@ import kr.ac.knu.comit.notice.infrastructure.GeneratedAnswer;
 import kr.ac.knu.comit.notice.infrastructure.NoticeAnswerGenerator;
 import kr.ac.knu.comit.notice.infrastructure.NoticeDocumentSelector;
 import kr.ac.knu.comit.notice.infrastructure.NoticeQueryTransformer;
+import kr.ac.knu.comit.notice.infrastructure.NoticeQueryTypeClassifier;
 import kr.ac.knu.comit.notice.infrastructure.NoticeReranker;
 import kr.ac.knu.comit.notice.infrastructure.RerankedNotices;
 import kr.ac.knu.comit.notice.infrastructure.TransformedQuery;
@@ -30,7 +31,6 @@ import org.springframework.test.context.ActiveProfiles;
 class NoticeRagEvalTest {
 
     private static final int EVAL_TOP_K = 20;
-    private static final int DEFAULT_CONTEXT_NOTICE_COUNT = 5;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final NoticeRagEvalReportWriter REPORT_WRITER = new NoticeRagEvalReportWriter(OBJECT_MAPPER);
 
@@ -45,6 +45,9 @@ class NoticeRagEvalTest {
 
     @Autowired
     private NoticeDocumentSelector documentSelector;
+
+    @Autowired
+    private NoticeQueryTypeClassifier queryTypeClassifier;
 
     @Autowired
     private NoticeAnswerGenerator answerGenerator;
@@ -82,7 +85,7 @@ class NoticeRagEvalTest {
         List<Document> selectedDocs = documentSelector.select(retrievedDocs, rerankedNotices.noticeIds());
         List<Long> selectedNoticeIds = noticeIds(selectedDocs);
         List<String> selectedTitles = titles(selectedDocs);
-        int appliedSourceLimit = maxSourcesByType(evalCase.type());
+        int appliedSourceLimit = queryTypeClassifier.maxSources(evalCase.question());
         List<Document> answerDocs = selectedDocs.stream()
                 .limit(appliedSourceLimit)
                 .toList();
@@ -255,17 +258,6 @@ class NoticeRagEvalTest {
     private boolean titleContains(List<String> actualTitles, String keyword) {
         return actualTitles.stream()
                 .anyMatch(title -> contains(title, keyword));
-    }
-
-    private int maxSourcesByType(String type) {
-        return switch (type) {
-            case "single_notice_search", "detail_answer" -> 1;
-            case "exact_token_detail", "exact_token_status", "domain_label_single_notice_search",
-                    "long_notice_single_search" -> 2;
-            case "repeated_title_search" -> 3;
-            case "out_of_scope_question" -> 0;
-            default -> DEFAULT_CONTEXT_NOTICE_COUNT;
-        };
     }
 
     private Long parseNoticeId(Document doc) {
