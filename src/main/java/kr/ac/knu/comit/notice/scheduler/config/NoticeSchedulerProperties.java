@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.scheduler;
+package kr.ac.knu.comit.notice.scheduler.config;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
