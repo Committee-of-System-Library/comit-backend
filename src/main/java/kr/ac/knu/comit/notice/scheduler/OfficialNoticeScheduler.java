@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import kr.ac.knu.comit.notice.domain.OfficialNotice;
 import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
 import kr.ac.knu.comit.notice.infrastructure.KnuCseNoticeCrawler;
 import kr.ac.knu.comit.notice.infrastructure.NoticeDetail;
@@ -14,43 +15,46 @@ import kr.ac.knu.comit.notice.service.OfficialNoticeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@EnableConfigurationProperties(NoticeSchedulerProperties.class)
 @RequiredArgsConstructor
 public class OfficialNoticeScheduler {
-
-    private static final int INITIAL_SYNC_MAX = 200;
-    private static final int LATEST_SYNC_MAX_PAGES = 3;
 
     private final KnuCseNoticeCrawler crawler;
     private final OfficialNoticeRepository noticeRepository;
     private final OfficialNoticeService noticeService;
     private final NoticeEmbedder embedder;
     private final NoticeSummarizer summarizer;
+    private final NoticeSchedulerProperties properties;
 
     @EventListener(ApplicationReadyEvent.class)
     public void syncInitial() {
         if (noticeRepository.count() > 0) {
+            if (properties.isReindexEmbeddingsOnStartup()) {
+                reindexEmbeddings();
+            }
             log.info("초기 크롤링 스킵 - 이미 데이터 존재");
             return;
         }
 
-        log.info("초기 크롤링 시작 - 최대 {}개", INITIAL_SYNC_MAX);
+        log.info("초기 크롤링 시작 - 최대 {}개", properties.getInitialSyncMax());
         int page = 1;
         int saved = 0;
 
-        while (saved < INITIAL_SYNC_MAX) {
+        while (saved < properties.getInitialSyncMax()) {
             List<NoticeListItem> items = crawlListPageSafely(page++);
             if (items == null || items.isEmpty()) {
                 break;
             }
 
             for (NoticeListItem item : items) {
-                if (saved >= INITIAL_SYNC_MAX) {
+                if (saved >= properties.getInitialSyncMax()) {
                     break;
                 }
                 if (saveNotice(item)) {
@@ -67,7 +71,7 @@ public class OfficialNoticeScheduler {
         log.info("최신 공지 동기화 시작");
         int newCount = 0;
 
-        for (int page = 1; page <= LATEST_SYNC_MAX_PAGES; page++) {
+        for (int page = 1; page <= properties.getLatestSyncMaxPages(); page++) {
             List<NoticeListItem> items = crawlListPageSafely(page);
             if (items == null || items.isEmpty()) {
                 break;
@@ -150,6 +154,32 @@ public class OfficialNoticeScheduler {
         } catch (Exception e) {
             log.warn("임베딩 실패: noticeId={}, wrId={}", noticeId, item.wrId(), e);
         }
+    }
+
+    private void reindexEmbeddings() {
+        List<OfficialNotice> notices = noticeRepository.findAllActive();
+        if (properties.getReindexEmbeddingsLimit() > 0) {
+            notices = notices.stream()
+                    .limit(properties.getReindexEmbeddingsLimit())
+                    .toList();
+        }
+        log.info("공지 임베딩 재색인 시작 - count={}", notices.size());
+        int embedded = 0;
+        for (OfficialNotice notice : notices) {
+            try {
+                embedder.embed(
+                        notice.getId(),
+                        notice.getWrId(),
+                        notice.getTitle(),
+                        notice.getContent(),
+                        notice.getOriginalUrl()
+                );
+                embedded++;
+            } catch (Exception e) {
+                log.warn("공지 임베딩 재색인 실패: noticeId={}, wrId={}", notice.getId(), notice.getWrId(), e);
+            }
+        }
+        log.info("공지 임베딩 재색인 완료 - embedded={}", embedded);
     }
 
     private record SaveResult(int saved, boolean hitExisting) {
