@@ -62,7 +62,7 @@ spring:
       qdrant:
         host: ${QDRANT_HOST:localhost}
         port: ${QDRANT_PORT:6334}
-        collection-name: official-notices
+        collection-name: ${NOTICE_VECTOR_COLLECTION:official-notices}
         initialize-schema: true
 
 management:
@@ -121,6 +121,12 @@ comit:
       visitor-weight: ${COMIT_POST_HOT_VISITOR_WEIGHT:2}
       limit: ${COMIT_POST_HOT_LIMIT:5}
       excluded-board-types: ${COMIT_POST_HOT_EXCLUDED_BOARD_TYPES:NOTICE,EVENT}
+  notice:
+    scheduler:
+      initial-sync-max: ${NOTICE_INITIAL_SYNC_MAX:200}
+      latest-sync-max-pages: ${NOTICE_LATEST_SYNC_MAX_PAGES:3}
+      reindex-embeddings-on-startup: ${NOTICE_REINDEX_EMBEDDINGS_ON_STARTUP:false}
+      reindex-embeddings-limit: ${NOTICE_REINDEX_EMBEDDINGS_LIMIT:0}
   storage:
     s3:
       bucket-name: ${S3_BUCKET_NAME:}
