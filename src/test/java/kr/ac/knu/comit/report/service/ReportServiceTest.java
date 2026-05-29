@@ -2,11 +2,11 @@ package kr.ac.knu.comit.report.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import java.sql.SQLException;
 import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.fixture.CommentFixture;
 import kr.ac.knu.comit.fixture.MemberFixture;
@@ -16,31 +16,25 @@ import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.ReportErrorCode;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.service.MemberService;
-import kr.ac.knu.comit.post.domain.Post;
 import kr.ac.knu.comit.post.service.PostService;
+import kr.ac.knu.comit.report.domain.FakeReportRepository;
 import kr.ac.knu.comit.report.domain.Report;
-import kr.ac.knu.comit.report.domain.ReportRepository;
 import kr.ac.knu.comit.report.domain.ReportStatus;
 import kr.ac.knu.comit.report.domain.ReportTargetType;
+import org.hibernate.exception.ConstraintViolationException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.sql.SQLException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReportService")
 class ReportServiceTest {
 
-    @Mock
-    private ReportRepository reportRepository;
+    private FakeReportRepository reportRepository;
 
     @Mock
     private MemberService memberService;
@@ -51,25 +45,22 @@ class ReportServiceTest {
     @Mock
     private CommentQueryService commentQueryService;
 
-    @InjectMocks
     private ReportService reportService;
+
+    @BeforeEach
+    void setUp() {
+        reportRepository = new FakeReportRepository();
+        reportService = new ReportService(reportRepository, memberService, postService, commentQueryService);
+    }
 
     @Test
     @DisplayName("활성 게시글을 신고하면 접수 상태의 신고를 저장한다")
     void savesReceivedReportForPost() {
         // given
-        // 활성 게시글과 신고자, 저장 결과를 준비한다.
-        Post post = PostFixture.post(10L);
+        // 신고 대상 게시글과 신고자를 준비한다.
         Member reporter = MemberFixture.member(1L, "reporter");
-        given(postService.getActivePostOrThrow(10L)).willReturn(post);
-        given(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.POST, 10L))
-                .willReturn(false);
+        given(postService.getActivePostOrThrow(10L)).willReturn(PostFixture.post(10L));
         given(memberService.findMemberOrThrow(1L)).willReturn(reporter);
-        given(reportRepository.save(any(Report.class))).willAnswer(invocation -> {
-            Report saved = invocation.getArgument(0);
-            ReflectionTestUtils.setField(saved, "id", 101L);
-            return saved;
-        });
 
         // when
         // 게시글 신고를 접수한다.
@@ -77,35 +68,24 @@ class ReportServiceTest {
 
         // then
         // trim된 메시지와 RECEIVED 상태로 저장되어야 한다.
-        assertThat(reportId).isEqualTo(101L);
-
-        ArgumentCaptor<Report> reportCaptor = ArgumentCaptor.forClass(Report.class);
-        then(reportRepository).should().save(reportCaptor.capture());
-        Report savedReport = reportCaptor.getValue();
-        assertThat(ReflectionTestUtils.getField(savedReport, "targetType")).isEqualTo(ReportTargetType.POST);
-        assertThat(ReflectionTestUtils.getField(savedReport, "targetId")).isEqualTo(10L);
-        assertThat(ReflectionTestUtils.getField(savedReport, "message")).isEqualTo("광고성 도배입니다");
-        assertThat(ReflectionTestUtils.getField(savedReport, "status")).isEqualTo(ReportStatus.RECEIVED);
-        assertThat(ReflectionTestUtils.getField(savedReport, "reporter")).isEqualTo(reporter);
+        assertThat(reportId).isNotNull();
+        Report savedReport = reportRepository.findAll().get(0);
+        assertThat(savedReport.getTargetType()).isEqualTo(ReportTargetType.POST);
+        assertThat(savedReport.getTargetId()).isEqualTo(10L);
+        assertThat(savedReport.getMessage()).isEqualTo("광고성 도배입니다");
+        assertThat(savedReport.getStatus()).isEqualTo(ReportStatus.RECEIVED);
+        assertThat(savedReport.getReporter()).isEqualTo(reporter);
     }
 
     @Test
     @DisplayName("활성 댓글을 신고하면 댓글 대상 신고를 저장한다")
     void savesReceivedReportForComment() {
         // given
-        // 활성 댓글과 신고자를 준비한다.
-        Post post = PostFixture.post(10L);
+        // 신고 대상 댓글과 신고자를 준비한다.
         Member reporter = MemberFixture.member(1L, "reporter");
         given(commentQueryService.getActiveCommentOrThrow(20L))
-                .willReturn(CommentFixture.topLevelComment(20L, post, MemberFixture.member(2L, "writer"), "욕설 댓글", 0));
-        given(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.COMMENT, 20L))
-                .willReturn(false);
+                .willReturn(CommentFixture.topLevelComment(20L, PostFixture.post(10L), MemberFixture.member(2L, "writer"), "욕설 댓글", 0));
         given(memberService.findMemberOrThrow(1L)).willReturn(reporter);
-        given(reportRepository.save(any(Report.class))).willAnswer(invocation -> {
-            Report saved = invocation.getArgument(0);
-            ReflectionTestUtils.setField(saved, "id", 202L);
-            return saved;
-        });
 
         // when
         // 댓글 신고를 접수한다.
@@ -113,22 +93,19 @@ class ReportServiceTest {
 
         // then
         // 댓글 대상 신고 ID가 반환되어야 한다.
-        assertThat(reportId).isEqualTo(202L);
-
-        ArgumentCaptor<Report> reportCaptor = ArgumentCaptor.forClass(Report.class);
-        then(reportRepository).should().save(reportCaptor.capture());
-        assertThat(ReflectionTestUtils.getField(reportCaptor.getValue(), "targetType")).isEqualTo(ReportTargetType.COMMENT);
-        assertThat(ReflectionTestUtils.getField(reportCaptor.getValue(), "targetId")).isEqualTo(20L);
+        assertThat(reportId).isNotNull();
+        Report savedReport = reportRepository.findAll().get(0);
+        assertThat(savedReport.getTargetType()).isEqualTo(ReportTargetType.COMMENT);
+        assertThat(savedReport.getTargetId()).isEqualTo(20L);
     }
 
     @Test
     @DisplayName("같은 사용자가 같은 게시글을 다시 신고하면 CONFLICT를 반환한다")
     void throwsWhenDuplicateReportExists() {
         // given
-        // 동일 대상에 대한 기존 신고가 이미 있는 상황을 준비한다.
+        // 동일 대상에 대한 기존 신고를 저장소에 미리 등록한다.
+        reportRepository.save(Report.create(MemberFixture.member(1L, "reporter"), ReportTargetType.POST, 10L, "기존 신고"));
         given(postService.getActivePostOrThrow(10L)).willReturn(PostFixture.post(10L));
-        given(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.POST, 10L))
-                .willReturn(true);
 
         // when & then
         // 중복 신고는 REPORT_ALREADY_EXISTS 예외가 발생해야 한다.
@@ -138,9 +115,9 @@ class ReportServiceTest {
                 .isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS);
 
         // then
-        // 회원 조회나 저장은 수행되지 않아야 한다.
+        // 회원 조회나 새 신고 저장은 수행되지 않아야 한다.
         then(memberService).shouldHaveNoInteractions();
-        then(reportRepository).should(never()).save(any());
+        assertThat(reportRepository.count()).isEqualTo(1);
     }
 
     @Test
@@ -149,8 +126,6 @@ class ReportServiceTest {
         // given
         // 활성 게시글과 신고자를 준비한다.
         given(postService.getActivePostOrThrow(10L)).willReturn(PostFixture.post(10L));
-        given(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.POST, 10L))
-                .willReturn(false);
         given(memberService.findMemberOrThrow(1L)).willReturn(MemberFixture.member(1L, "reporter"));
 
         // when & then
@@ -162,19 +137,17 @@ class ReportServiceTest {
 
         // then
         // 잘못된 메시지는 저장되지 않아야 한다.
-        then(reportRepository).should(never()).save(any());
+        assertThat(reportRepository.count()).isEqualTo(0);
     }
 
     @Test
     @DisplayName("DB 유니크 제약 충돌도 중복 신고 예외로 변환한다")
     void convertsDataIntegrityViolationToDuplicateReportError() {
         // given
-        // 선행 중복 검사 통과 후 저장 단계에서 유니크 충돌이 나는 상황을 준비한다.
+        // 저장 단계에서 DB 유니크 제약 충돌이 발생하는 상황을 시뮬레이션한다.
+        reportRepository.onNextSaveThrow(duplicateKeyViolation());
         given(postService.getActivePostOrThrow(10L)).willReturn(PostFixture.post(10L));
-        given(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.POST, 10L))
-                .willReturn(false);
         given(memberService.findMemberOrThrow(1L)).willReturn(MemberFixture.member(1L, "reporter"));
-        given(reportRepository.save(any(Report.class))).willThrow(duplicateKeyViolation());
 
         // when & then
         // 저장 충돌도 REPORT_ALREADY_EXISTS로 노출되어야 한다.
@@ -188,12 +161,10 @@ class ReportServiceTest {
     @DisplayName("유니크 키가 아닌 무결성 오류는 그대로 전파한다")
     void propagatesNonDuplicateIntegrityViolations() {
         // given
-        // 중복 신고가 아닌 다른 DB 무결성 오류 상황을 준비한다.
+        // 중복 신고가 아닌 다른 DB 무결성 오류 상황을 시뮬레이션한다.
+        reportRepository.onNextSaveThrow(nonDuplicateIntegrityViolation());
         given(postService.getActivePostOrThrow(10L)).willReturn(PostFixture.post(10L));
-        given(reportRepository.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.POST, 10L))
-                .willReturn(false);
         given(memberService.findMemberOrThrow(1L)).willReturn(MemberFixture.member(1L, "reporter"));
-        given(reportRepository.save(any(Report.class))).willThrow(nonDuplicateIntegrityViolation());
 
         // when & then
         // 다른 무결성 오류는 REPORT_ALREADY_EXISTS로 숨기지 않아야 한다.
