@@ -1,10 +1,11 @@
-package kr.ac.knu.comit.notice.infrastructure.rag;
+package kr.ac.knu.comit.notice.infrastructure.rag.indexing;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeDocumentText;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;

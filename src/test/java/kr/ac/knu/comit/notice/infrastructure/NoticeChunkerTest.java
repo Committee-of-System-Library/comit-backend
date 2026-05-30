@@ -3,7 +3,7 @@ package kr.ac.knu.comit.notice.infrastructure;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import kr.ac.knu.comit.notice.infrastructure.rag.NoticeChunker;
+import kr.ac.knu.comit.notice.infrastructure.rag.indexing.NoticeChunker;
 import org.junit.jupiter.api.Test;
 
 class NoticeChunkerTest {

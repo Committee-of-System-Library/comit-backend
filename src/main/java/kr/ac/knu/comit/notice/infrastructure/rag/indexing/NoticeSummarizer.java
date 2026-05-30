@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.infrastructure.rag;
+package kr.ac.knu.comit.notice.infrastructure.rag.indexing;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Component;

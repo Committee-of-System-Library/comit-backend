@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.infrastructure.rag;
+package kr.ac.knu.comit.notice.infrastructure.rag.indexing;
 
 import java.util.ArrayList;
 import java.util.List;

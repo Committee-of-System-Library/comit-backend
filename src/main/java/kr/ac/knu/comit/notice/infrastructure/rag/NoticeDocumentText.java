@@ -1,11 +1,11 @@
 package kr.ac.knu.comit.notice.infrastructure.rag;
 
-final class NoticeDocumentText {
+public final class NoticeDocumentText {
 
     private NoticeDocumentText() {
     }
 
-    static String format(String title, String content) {
+    public static String format(String title, String content) {
         return """
                 제목: %s
                 
