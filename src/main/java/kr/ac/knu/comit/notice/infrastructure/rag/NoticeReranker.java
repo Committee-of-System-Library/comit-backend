@@ -11,6 +11,8 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -19,20 +21,13 @@ public class NoticeReranker {
 
     private static final int CONTEXT_NOTICE_COUNT = 5;
     private static final int RERANK_SUMMARY_PREVIEW_LENGTH = 180;
-    private static final String RERANK_PROMPT = """
-            당신은 경북대학교 컴퓨터학부 공지사항 검색 결과를 재정렬하는 평가자입니다.
-            사용자 질문과 직접 관련 있는 공지만 고르세요.
-            공지 제목, 요약, 기존 벡터 검색 점수를 참고하세요.
-            단어가 정확히 같지 않아도 같은 의미이면 관련 있다고 판단하세요.
-            관련 없는 공지는 제외하세요.
-            최대 5개까지 고르세요.
-            응답은 반드시 JSON만 출력하세요.
-            형식: {"noticeIds":[1,2,3]}
-            """;
 
     private final ChatClient chatClient;
     private final OfficialNoticeRepository noticeRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Value("classpath:prompts/notice-rerank.st")
+    private Resource rerankPrompt;
 
     public NoticeReranker(ChatClient.Builder builder, OfficialNoticeRepository noticeRepository) {
         this.chatClient = builder.build();
@@ -45,7 +40,7 @@ public class NoticeReranker {
         }
 
         ChatResponse response = chatClient.prompt()
-                .system(RERANK_PROMPT)
+                .system(rerankPrompt)
                 .user(buildUserPrompt(message, docs))
                 .call()
                 .chatResponse();

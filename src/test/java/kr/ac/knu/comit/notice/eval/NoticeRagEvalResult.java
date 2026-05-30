@@ -10,6 +10,7 @@ record NoticeRagEvalResult(
         List<String> expectedTitleContains,
         List<Long> retrievedNoticeIds,
         List<String> retrievedTitles,
+        List<Double> retrievedScores,
         List<Long> rerankedNoticeIds,
         List<Long> selectedNoticeIds,
         List<String> selectedTitles,

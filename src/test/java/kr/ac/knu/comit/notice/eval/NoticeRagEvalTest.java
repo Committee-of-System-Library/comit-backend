@@ -99,6 +99,7 @@ class NoticeRagEvalTest {
         List<Document> retrievedDocs = retrieve(transformedQuery.content());
         List<Long> retrievedNoticeIds = noticeIds(retrievedDocs);
         List<String> retrievedTitles = titles(retrievedDocs);
+        List<Double> retrievedScores = scores(retrievedDocs);
 
         RerankedNotices rerankedNotices = reranker.rerank(evalCase.question(), retrievedDocs);
         List<Document> selectedDocs = documentSelector.select(retrievedDocs, rerankedNotices.noticeIds());
@@ -126,6 +127,7 @@ class NoticeRagEvalTest {
                 evalCase.expectedTitleContains(),
                 retrievedNoticeIds,
                 retrievedTitles,
+                retrievedScores,
                 rerankedNotices.noticeIds(),
                 selectedNoticeIds,
                 selectedTitles,
@@ -240,6 +242,12 @@ class NoticeRagEvalTest {
     private List<String> titles(List<Document> docs) {
         return docs.stream()
                 .map(doc -> metadataValue(doc, "title"))
+                .toList();
+    }
+
+    private List<Double> scores(List<Document> docs) {
+        return docs.stream()
+                .map(doc -> doc.getScore() != null ? (double) doc.getScore() : null)
                 .toList();
     }
 
