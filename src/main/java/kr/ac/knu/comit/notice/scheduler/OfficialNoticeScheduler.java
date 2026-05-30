@@ -15,14 +15,13 @@ import kr.ac.knu.comit.notice.service.OfficialNoticeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@EnableConfigurationProperties(NoticeSchedulerProperties.class)
 @RequiredArgsConstructor
 public class OfficialNoticeScheduler {
 
@@ -33,6 +32,7 @@ public class OfficialNoticeScheduler {
     private final NoticeSummarizer summarizer;
     private final NoticeSchedulerProperties properties;
 
+    @Async
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         if (noticeRepository.count() == 0) {
