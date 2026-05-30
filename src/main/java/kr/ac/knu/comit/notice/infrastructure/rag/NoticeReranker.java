@@ -6,13 +6,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
-import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -31,11 +30,9 @@ public class NoticeReranker {
     @Value("classpath:prompts/notice-rerank.st")
     private Resource rerankPrompt;
 
-    public NoticeReranker(ChatClient.Builder builder, OfficialNoticeRepository noticeRepository,
-            NoticeRagProperties properties) {
-        this.chatClient = builder
-                .defaultOptions(OpenAiChatOptions.builder().model(properties.getRerankModel()))
-                .build();
+    public NoticeReranker(@Qualifier("rerankClient") ChatClient chatClient,
+            OfficialNoticeRepository noticeRepository) {
+        this.chatClient = chatClient;
         this.noticeRepository = noticeRepository;
     }
 

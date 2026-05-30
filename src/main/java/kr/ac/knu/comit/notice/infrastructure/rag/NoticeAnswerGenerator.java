@@ -2,12 +2,11 @@ package kr.ac.knu.comit.notice.infrastructure.rag;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -20,10 +19,8 @@ public class NoticeAnswerGenerator {
     @Value("classpath:prompts/notice-answer.st")
     private Resource answerPrompt;
 
-    public NoticeAnswerGenerator(ChatClient.Builder builder, NoticeRagProperties properties) {
-        this.chatClient = builder
-                .defaultOptions(OpenAiChatOptions.builder().model(properties.getAnswerModel()))
-                .build();
+    public NoticeAnswerGenerator(@Qualifier("answerClient") ChatClient chatClient) {
+        this.chatClient = chatClient;
     }
 
     public GeneratedAnswer generate(String message, List<Document> docs) {
