@@ -9,12 +9,10 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
-@EnableConfigurationProperties(NoticeRagProperties.class)
 public class NoticeAnswerGenerator {
 
     private final ChatClient chatClient;

@@ -14,13 +14,11 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@EnableConfigurationProperties(NoticeRagProperties.class)
 public class NoticeReranker {
 
     private static final int CONTEXT_NOTICE_COUNT = 5;

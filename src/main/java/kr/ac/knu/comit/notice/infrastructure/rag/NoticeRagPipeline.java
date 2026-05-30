@@ -7,11 +7,9 @@ import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@EnableConfigurationProperties(NoticeRagProperties.class)
 public class NoticeRagPipeline {
 
     private final VectorStore vectorStore;
