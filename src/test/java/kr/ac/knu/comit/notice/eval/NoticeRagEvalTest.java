@@ -33,7 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 @EnabledIfEnvironmentVariable(named = "RUN_NOTICE_RAG_EVAL", matches = "true")
 class NoticeRagEvalTest {
 
-    private static final int EVAL_TOP_K = 20;
+    private static final int EVAL_TOP_K = 10;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final NoticeRagEvalReportWriter REPORT_WRITER = new NoticeRagEvalReportWriter(OBJECT_MAPPER);
 
