@@ -2,24 +2,30 @@ package kr.ac.knu.comit.notice.infrastructure.rag;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
+@EnableConfigurationProperties(NoticeRagProperties.class)
 public class NoticeAnswerGenerator {
 
     private final ChatClient chatClient;
+    private final String model;
 
     @Value("classpath:prompts/notice-answer.st")
     private Resource answerPrompt;
 
-    public NoticeAnswerGenerator(ChatClient.Builder builder) {
+    public NoticeAnswerGenerator(ChatClient.Builder builder, NoticeRagProperties properties) {
         this.chatClient = builder.build();
+        this.model = properties.getAnswerModel();
     }
 
     public GeneratedAnswer generate(String message, List<Document> docs) {
@@ -28,6 +34,7 @@ public class NoticeAnswerGenerator {
                 .collect(Collectors.joining("\n\n---\n\n"));
 
         ChatResponse response = chatClient.prompt()
+                .options(OpenAiChatOptions.builder().model(model))
                 .system(s -> s.text(answerPrompt).param("context", context))
                 .user(message)
                 .call()

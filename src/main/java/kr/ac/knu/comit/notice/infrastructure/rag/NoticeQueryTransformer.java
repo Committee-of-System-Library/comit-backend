@@ -1,26 +1,33 @@
 package kr.ac.knu.comit.notice.infrastructure.rag;
 
+import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
+@EnableConfigurationProperties(NoticeRagProperties.class)
 public class NoticeQueryTransformer {
 
     private final ChatClient chatClient;
+    private final String model;
 
     @Value("classpath:prompts/notice-query-transform.st")
     private Resource queryTransformPrompt;
 
-    public NoticeQueryTransformer(ChatClient.Builder builder) {
+    public NoticeQueryTransformer(ChatClient.Builder builder, NoticeRagProperties properties) {
         this.chatClient = builder.build();
+        this.model = properties.getQueryTransformModel();
     }
 
     public TransformedQuery transform(String message) {
         ChatResponse response = chatClient.prompt()
+                .options(OpenAiChatOptions.builder().model(model))
                 .system(queryTransformPrompt)
                 .user(message)
                 .call()
