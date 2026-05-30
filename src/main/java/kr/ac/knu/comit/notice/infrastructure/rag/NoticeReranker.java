@@ -11,7 +11,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -30,9 +29,9 @@ public class NoticeReranker {
     @Value("classpath:prompts/notice-rerank.st")
     private Resource rerankPrompt;
 
-    public NoticeReranker(@Qualifier("rerankClient") ChatClient chatClient,
+    public NoticeReranker(ChatClient rerankClient,
             OfficialNoticeRepository noticeRepository) {
-        this.chatClient = chatClient;
+        this.chatClient = rerankClient;
         this.noticeRepository = noticeRepository;
     }
 

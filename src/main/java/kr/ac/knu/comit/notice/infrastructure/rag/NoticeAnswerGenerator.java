@@ -6,7 +6,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -19,8 +18,8 @@ public class NoticeAnswerGenerator {
     @Value("classpath:prompts/notice-answer.st")
     private Resource answerPrompt;
 
-    public NoticeAnswerGenerator(@Qualifier("answerClient") ChatClient chatClient) {
-        this.chatClient = chatClient;
+    public NoticeAnswerGenerator(ChatClient answerClient) {
+        this.chatClient = answerClient;
     }
 
     public GeneratedAnswer generate(String message, List<Document> docs) {

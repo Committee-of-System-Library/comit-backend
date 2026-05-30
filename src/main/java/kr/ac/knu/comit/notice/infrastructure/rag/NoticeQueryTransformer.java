@@ -3,7 +3,6 @@ package kr.ac.knu.comit.notice.infrastructure.rag;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -16,8 +15,8 @@ public class NoticeQueryTransformer {
     @Value("classpath:prompts/notice-query-transform.st")
     private Resource queryTransformPrompt;
 
-    public NoticeQueryTransformer(@Qualifier("queryTransformClient") ChatClient chatClient) {
-        this.chatClient = chatClient;
+    public NoticeQueryTransformer(ChatClient queryTransformClient) {
+        this.chatClient = queryTransformClient;
     }
 
     public TransformedQuery transform(String message) {
