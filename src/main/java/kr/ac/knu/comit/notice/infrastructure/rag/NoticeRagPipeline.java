@@ -3,6 +3,7 @@ package kr.ac.knu.comit.notice.infrastructure.rag;
 import java.util.List;
 import java.util.Objects;
 import kr.ac.knu.comit.notice.dto.NoticeSource;
+import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
