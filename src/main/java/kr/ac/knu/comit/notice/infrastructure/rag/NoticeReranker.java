@@ -78,8 +78,7 @@ public class NoticeReranker {
                 continue;
             }
 
-            builder.append("rank=").append(i + 1).append('\n')
-                    .append("noticeId=").append(noticeId).append('\n')
+            builder.append("noticeId=").append(noticeId).append('\n')
                     .append("score=").append(doc.getScore()).append('\n')
                     .append("title=").append(NoticeDocumentMetadata.title(doc)).append('\n')
                     .append("summary=").append(preview(summaries.get(noticeId))).append("\n\n");

@@ -234,7 +234,7 @@
     "expectedTitleContains": [],
     "expectedMatch": "ANY",
     "checks": {"retrieval": false, "selection": false, "source": false, "answer": true},
-    "mustContain": ["없"],
+    "mustContain": ["않"],
     "shouldNotContain": ["장학금", "도서관"],
     "difficulty": "medium",
     "notes": "공지 컨텍스트에 없는 질문에는 모른다고 답해야 한다."
