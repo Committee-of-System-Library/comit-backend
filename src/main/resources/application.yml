@@ -127,6 +127,7 @@ comit:
       query-transform-model: ${NOTICE_QUERY_TRANSFORM_MODEL:gpt-4o-mini}
       rerank-model: ${NOTICE_RERANK_MODEL:gpt-4o}
       answer-model: ${NOTICE_ANSWER_MODEL:gpt-4o}
+      summarizer-model: ${NOTICE_SUMMARIZER_MODEL:gpt-4o-mini}
     scheduler:
       enabled: ${NOTICE_SCHEDULER_ENABLED:true}
       initial-sync-max: ${NOTICE_INITIAL_SYNC_MAX:200}

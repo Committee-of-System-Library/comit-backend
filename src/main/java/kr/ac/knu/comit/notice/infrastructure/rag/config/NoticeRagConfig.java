@@ -32,4 +32,12 @@ public class NoticeRagConfig {
                 .defaultOptions(OpenAiChatOptions.builder().model(properties.getAnswerModel()))
                 .build();
     }
+
+    @Bean
+    @Qualifier("summarizerClient")
+    public ChatClient summarizerClient(ChatClient.Builder builder, NoticeRagProperties properties) {
+        return builder
+                .defaultOptions(OpenAiChatOptions.builder().model(properties.getSummarizerModel()))
+                .build();
+    }
 }
