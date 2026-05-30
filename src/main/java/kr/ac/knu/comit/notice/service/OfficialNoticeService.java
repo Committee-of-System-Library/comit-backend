@@ -43,12 +43,15 @@ public class OfficialNoticeService {
 
     public OfficialNoticeSearchResponse searchNotices(String query, int size) {
         int topK = Math.min(size <= 0 ? MAX_SEARCH_SIZE : size, MAX_SEARCH_SIZE);
+        int searchTopK = topK * 3;
 
         List<Long> noticeIds = vectorStore.similaritySearch(
-                        SearchRequest.builder().query(query).topK(topK).build()
+                        SearchRequest.builder().query(query).topK(searchTopK).build()
                 ).stream()
                 .map(doc -> parseNoticeId(doc.getMetadata().get("noticeId")))
                 .filter(Objects::nonNull)
+                .distinct()
+                .limit(topK)
                 .toList();
 
         Map<Long, OfficialNotice> noticeMap = officialNoticeRepository.findAllById(noticeIds).stream()
