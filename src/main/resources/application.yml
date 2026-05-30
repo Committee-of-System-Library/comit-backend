@@ -123,6 +123,7 @@ comit:
       excluded-board-types: ${COMIT_POST_HOT_EXCLUDED_BOARD_TYPES:NOTICE,EVENT}
   notice:
     scheduler:
+      enabled: ${NOTICE_SCHEDULER_ENABLED:true}
       initial-sync-max: ${NOTICE_INITIAL_SYNC_MAX:200}
       latest-sync-max-pages: ${NOTICE_LATEST_SYNC_MAX_PAGES:3}
       reindex-embeddings-on-startup: ${NOTICE_REINDEX_EMBEDDINGS_ON_STARTUP:false}

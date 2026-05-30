@@ -31,4 +31,25 @@ public interface OfficialNoticeRepository extends JpaRepository<OfficialNotice, 
             ORDER BY n.id DESC
             """)
     List<OfficialNotice> findByCursor(@Param("cursorId") Long cursorId, Pageable pageable);
+
+    @Query("""
+            SELECT n FROM OfficialNotice n
+            WHERE n.deletedAt IS NULL
+            ORDER BY n.id ASC
+            """)
+    List<OfficialNotice> findAllActive();
+
+    @Query("""
+            SELECT n.id AS id, n.summary AS summary
+            FROM OfficialNotice n
+            WHERE n.deletedAt IS NULL
+              AND n.id IN :ids
+            """)
+    List<NoticeSummaryView> findSummariesByIds(@Param("ids") List<Long> ids);
+
+    interface NoticeSummaryView {
+        Long getId();
+
+        String getSummary();
+    }
 }
