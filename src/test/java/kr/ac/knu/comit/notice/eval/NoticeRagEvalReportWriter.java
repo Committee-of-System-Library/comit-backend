@@ -33,16 +33,23 @@ class NoticeRagEvalReportWriter {
                 .append("- pass: ").append(results.stream().filter(result -> result.status() == NoticeRagEvalResult.EvalStatus.PASS).count()).append('\n')
                 .append("- passWithWarning: ").append(results.stream().filter(result -> result.status() == NoticeRagEvalResult.EvalStatus.PASS_WITH_WARNING).count()).append('\n')
                 .append("- fail: ").append(failCount).append("\n\n")
-                .append("| caseId | status | transformedQuery | selectedSourceCount | appliedLimit | answerSourceCount | answerSources | answerTokens | warnings | failReason |\n")
-                .append("|---|---|---|---:|---:|---:|---|---:|---|---|\n");
+                .append("| caseId | status | transformedQuery | topScore | selectedSourceCount | appliedLimit | answerSourceCount | answerSources | answerTokens | warnings | failReason |\n")
+                .append("|---|---|---|---:|---:|---:|---:|---|---:|---|---|\n");
 
         for (NoticeRagEvalResult result : results) {
+            double topScore = result.retrievedScores().stream()
+                    .filter(s -> s != null)
+                    .mapToDouble(Double::doubleValue)
+                    .max()
+                    .orElse(0.0);
             builder.append("| ")
                     .append(escape(result.caseId()))
                     .append(" | ")
                     .append(result.status())
                     .append(" | ")
                     .append(escape(result.transformedQuery()))
+                    .append(" | ")
+                    .append("%.4f".formatted(topScore))
                     .append(" | ")
                     .append(result.selectedNoticeIds().size())
                     .append(" | ")
