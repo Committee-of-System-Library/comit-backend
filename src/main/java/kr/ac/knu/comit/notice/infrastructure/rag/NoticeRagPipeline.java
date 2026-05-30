@@ -46,12 +46,20 @@ public class NoticeRagPipeline {
         String traceId = ragTracer.createTraceId();
         ragTracer.queryReceived(traceId, message, topK, NoticeDocumentSelector.SIMILARITY_THRESHOLD);
 
-        TransformedQuery transformedQuery = queryTransformer.transform(message);
-        ragTracer.queryTransformed(traceId, transformedQuery);
-
         List<Document> retrievedDocs = vectorStore.similaritySearch(
-                SearchRequest.builder().query(transformedQuery.content()).topK(topK).build()
+                SearchRequest.builder().query(message).topK(topK).build()
         );
+
+        TransformedQuery transformedQuery;
+        if (topScore(retrievedDocs) >= properties.getQueryTransformThreshold()) {
+            transformedQuery = TransformedQuery.skipped(message);
+        } else {
+            transformedQuery = queryTransformer.transform(message);
+            retrievedDocs = vectorStore.similaritySearch(
+                    SearchRequest.builder().query(transformedQuery.content()).topK(topK).build()
+            );
+        }
+        ragTracer.queryTransformed(traceId, transformedQuery);
         ragTracer.retrievedDocuments(traceId, retrievedDocs);
 
         RerankedNotices rerankedNotices = reranker.rerank(message, retrievedDocs);
@@ -71,6 +79,13 @@ public class NoticeRagPipeline {
         ragTracer.answerGenerated(traceId, generatedAnswer, sources);
 
         return new ChatResult(generatedAnswer.content(), sources);
+    }
+
+    private double topScore(List<Document> docs) {
+        return docs.stream()
+                .mapToDouble(doc -> doc.getScore() != null ? doc.getScore() : 0.0)
+                .max()
+                .orElse(0.0);
     }
 
     private List<NoticeSource> toSources(List<Document> docs) {
