@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.infrastructure.rag;
+package kr.ac.knu.comit.notice.infrastructure.rag.config;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
