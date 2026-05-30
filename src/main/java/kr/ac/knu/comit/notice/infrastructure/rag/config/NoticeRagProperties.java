@@ -10,4 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class NoticeRagProperties {
 
     private final int retrievalTopK;
+    private final String queryTransformModel;
+    private final String rerankModel;
+    private final String answerModel;
 }

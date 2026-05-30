@@ -6,31 +6,38 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
+import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@EnableConfigurationProperties(NoticeRagProperties.class)
 public class NoticeReranker {
 
     private static final int CONTEXT_NOTICE_COUNT = 5;
     private static final int RERANK_SUMMARY_PREVIEW_LENGTH = 180;
 
     private final ChatClient chatClient;
+    private final String model;
     private final OfficialNoticeRepository noticeRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("classpath:prompts/notice-rerank.st")
     private Resource rerankPrompt;
 
-    public NoticeReranker(ChatClient.Builder builder, OfficialNoticeRepository noticeRepository) {
+    public NoticeReranker(ChatClient.Builder builder, OfficialNoticeRepository noticeRepository,
+            NoticeRagProperties properties) {
         this.chatClient = builder.build();
+        this.model = properties.getRerankModel();
         this.noticeRepository = noticeRepository;
     }
 
@@ -40,6 +47,7 @@ public class NoticeReranker {
         }
 
         ChatResponse response = chatClient.prompt()
+                .options(OpenAiChatOptions.builder().model(model))
                 .system(rerankPrompt)
                 .user(buildUserPrompt(message, docs))
                 .call()
