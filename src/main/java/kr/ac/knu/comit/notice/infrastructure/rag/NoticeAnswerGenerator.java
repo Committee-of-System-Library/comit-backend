@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.infrastructure;
+package kr.ac.knu.comit.notice.infrastructure.rag;
 
 import java.util.List;
 import java.util.stream.Collectors;

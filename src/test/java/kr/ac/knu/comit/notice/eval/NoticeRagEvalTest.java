@@ -5,17 +5,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import kr.ac.knu.comit.notice.dto.NoticeSource;
 import kr.ac.knu.comit.notice.eval.NoticeRagEvalCase.ExpectedNoticeMatch;
-import kr.ac.knu.comit.notice.infrastructure.GeneratedAnswer;
-import kr.ac.knu.comit.notice.infrastructure.NoticeAnswerGenerator;
-import kr.ac.knu.comit.notice.infrastructure.NoticeDocumentSelector;
-import kr.ac.knu.comit.notice.infrastructure.NoticeQueryTransformer;
-import kr.ac.knu.comit.notice.infrastructure.NoticeQueryTypeClassifier;
-import kr.ac.knu.comit.notice.infrastructure.NoticeReranker;
-import kr.ac.knu.comit.notice.infrastructure.RerankedNotices;
-import kr.ac.knu.comit.notice.infrastructure.TransformedQuery;
+import kr.ac.knu.comit.notice.infrastructure.rag.GeneratedAnswer;
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeAnswerGenerator;
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeDocumentSelector;
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeQueryTransformer;
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeQueryTypeClassifier;
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeReranker;
+import kr.ac.knu.comit.notice.infrastructure.rag.RerankedNotices;
+import kr.ac.knu.comit.notice.infrastructure.rag.TransformedQuery;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.ai.document.Document;
@@ -54,7 +57,7 @@ class NoticeRagEvalTest {
 
     @Test
     void evaluateNoticeRagCases() throws Exception {
-        List<NoticeRagEvalCase> cases = loadCases();
+        List<NoticeRagEvalCase> cases = filterCases(loadCases());
 
         List<NoticeRagEvalResult> results = cases.stream()
                 .map(this::evaluate)
@@ -73,6 +76,22 @@ class NoticeRagEvalTest {
             return OBJECT_MAPPER.readValue(inputStream, new TypeReference<>() {
             });
         }
+    }
+
+    private List<NoticeRagEvalCase> filterCases(List<NoticeRagEvalCase> cases) {
+        String caseIds = System.getenv("NOTICE_RAG_EVAL_CASES");
+        if (caseIds == null || caseIds.isBlank()) {
+            return cases;
+        }
+
+        Set<String> enabledCaseIds = Arrays.stream(caseIds.split(","))
+                .map(String::strip)
+                .filter(id -> !id.isBlank())
+                .collect(Collectors.toSet());
+
+        return cases.stream()
+                .filter(evalCase -> enabledCaseIds.contains(evalCase.id()))
+                .toList();
     }
 
     private NoticeRagEvalResult evaluate(NoticeRagEvalCase evalCase) {

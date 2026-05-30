@@ -1,8 +1,11 @@
-package kr.ac.knu.comit.notice.infrastructure;
+package kr.ac.knu.comit.notice.infrastructure.rag;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
@@ -15,11 +18,11 @@ import org.springframework.stereotype.Component;
 public class NoticeReranker {
 
     private static final int CONTEXT_NOTICE_COUNT = 5;
-    private static final int RERANK_CONTENT_PREVIEW_LENGTH = 300;
+    private static final int RERANK_SUMMARY_PREVIEW_LENGTH = 180;
     private static final String RERANK_PROMPT = """
             당신은 경북대학교 컴퓨터학부 공지사항 검색 결과를 재정렬하는 평가자입니다.
             사용자 질문과 직접 관련 있는 공지만 고르세요.
-            공지 제목, 본문 일부, 기존 벡터 검색 점수를 참고하세요.
+            공지 제목, 요약, 기존 벡터 검색 점수를 참고하세요.
             단어가 정확히 같지 않아도 같은 의미이면 관련 있다고 판단하세요.
             관련 없는 공지는 제외하세요.
             최대 5개까지 고르세요.
@@ -28,10 +31,12 @@ public class NoticeReranker {
             """;
 
     private final ChatClient chatClient;
+    private final OfficialNoticeRepository noticeRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public NoticeReranker(ChatClient.Builder builder) {
+    public NoticeReranker(ChatClient.Builder builder, OfficialNoticeRepository noticeRepository) {
         this.chatClient = builder.build();
+        this.noticeRepository = noticeRepository;
     }
 
     public RerankedNotices rerank(String message, List<Document> docs) {
@@ -57,16 +62,17 @@ public class NoticeReranker {
     }
 
     private String buildUserPrompt(String message, List<Document> docs) {
+        List<Document> candidateDocs = NoticeDocumentMetadata.distinctByNoticeId(docs);
         return """
                 [사용자 질문]
                 %s
                 
                 [검색 후보]
                 %s
-                """.formatted(message, buildCandidates(docs));
+                """.formatted(message, buildCandidates(candidateDocs, findSummaries(candidateDocs)));
     }
 
-    private String buildCandidates(List<Document> docs) {
+    private String buildCandidates(List<Document> docs, Map<Long, String> summaries) {
         StringBuilder builder = new StringBuilder();
 
         for (int i = 0; i < docs.size(); i++) {
@@ -80,10 +86,25 @@ public class NoticeReranker {
                     .append("noticeId=").append(noticeId).append('\n')
                     .append("score=").append(doc.getScore()).append('\n')
                     .append("title=").append(NoticeDocumentMetadata.title(doc)).append('\n')
-                    .append("contentPreview=").append(preview(doc.getText())).append("\n\n");
+                    .append("summary=").append(preview(summaries.get(noticeId))).append("\n\n");
         }
 
         return builder.toString();
+    }
+
+    private Map<Long, String> findSummaries(List<Document> docs) {
+        List<Long> noticeIds = NoticeDocumentMetadata.noticeIds(docs);
+        if (noticeIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return noticeRepository.findSummariesByIds(noticeIds).stream()
+                .filter(summary -> summary.getSummary() != null && !summary.getSummary().isBlank())
+                .collect(Collectors.toMap(
+                        OfficialNoticeRepository.NoticeSummaryView::getId,
+                        OfficialNoticeRepository.NoticeSummaryView::getSummary,
+                        (left, right) -> left
+                ));
     }
 
     private List<Long> parseNoticeIds(String content) {
@@ -124,10 +145,10 @@ public class NoticeReranker {
         }
 
         String normalizedContent = content.replaceAll("\\s+", " ").strip();
-        if (normalizedContent.length() <= RERANK_CONTENT_PREVIEW_LENGTH) {
+        if (normalizedContent.length() <= RERANK_SUMMARY_PREVIEW_LENGTH) {
             return normalizedContent;
         }
-        return normalizedContent.substring(0, RERANK_CONTENT_PREVIEW_LENGTH);
+        return normalizedContent.substring(0, RERANK_SUMMARY_PREVIEW_LENGTH);
     }
 
     private record RerankResponse(List<Long> noticeIds) {

@@ -1,6 +1,8 @@
-package kr.ac.knu.comit.notice.infrastructure;
+package kr.ac.knu.comit.notice.infrastructure.rag;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import org.springframework.ai.document.Document;
 
@@ -33,6 +35,17 @@ final class NoticeDocumentMetadata {
 
     static String originalUrl(Document doc) {
         return (String) doc.getMetadata().get("originalUrl");
+    }
+
+    static List<Document> distinctByNoticeId(List<Document> docs) {
+        Map<Long, Document> documentsByNoticeId = new LinkedHashMap<>();
+        for (Document doc : docs) {
+            Long noticeId = parseNoticeId(doc);
+            if (noticeId != null) {
+                documentsByNoticeId.putIfAbsent(noticeId, doc);
+            }
+        }
+        return List.copyOf(documentsByNoticeId.values());
     }
 
     static List<Long> noticeIds(List<Document> docs) {

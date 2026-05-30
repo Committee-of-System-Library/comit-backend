@@ -1,7 +1,7 @@
 package kr.ac.knu.comit.notice.service;
 
 import kr.ac.knu.comit.notice.dto.NoticeChatResponse;
-import kr.ac.knu.comit.notice.infrastructure.NoticeChatClient;
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeChatClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
