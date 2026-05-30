@@ -2,6 +2,7 @@ package kr.ac.knu.comit.notice.infrastructure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeQueryTypeClassifier;
 import org.junit.jupiter.api.Test;
 
 class NoticeQueryTypeClassifierTest {
