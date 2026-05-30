@@ -6,4 +6,8 @@ public record TransformedQuery(
         Integer completionTokens,
         Integer totalTokens
 ) {
+
+    public static TransformedQuery skipped(String originalQuery) {
+        return new TransformedQuery(originalQuery, null, null, null);
+    }
 }
