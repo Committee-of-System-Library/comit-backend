@@ -13,8 +13,8 @@ public class NoticeSummarizer {
     @Value("classpath:prompts/notice-summarize.st")
     private Resource summarizePrompt;
 
-    public NoticeSummarizer(ChatClient.Builder builder) {
-        this.chatClient = builder.build();
+    public NoticeSummarizer(ChatClient summarizerClient) {
+        this.chatClient = summarizerClient;
     }
 
     public String generate(String title, String content) {

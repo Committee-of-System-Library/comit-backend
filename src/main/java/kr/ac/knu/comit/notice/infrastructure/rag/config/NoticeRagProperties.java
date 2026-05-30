@@ -13,4 +13,5 @@ public class NoticeRagProperties {
     private final String queryTransformModel;
     private final String rerankModel;
     private final String answerModel;
+    private final String summarizerModel;
 }
