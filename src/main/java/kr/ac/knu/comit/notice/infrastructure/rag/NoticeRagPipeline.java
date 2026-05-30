@@ -6,12 +6,12 @@ import kr.ac.knu.comit.notice.dto.NoticeSource;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-public class NoticeChatClient {
-
-    private static final int TRACE_RETRIEVAL_COUNT = 10;
+@EnableConfigurationProperties(NoticeRagProperties.class)
+public class NoticeRagPipeline {
 
     private final VectorStore vectorStore;
     private final NoticeQueryTransformer queryTransformer;
@@ -20,16 +20,17 @@ public class NoticeChatClient {
     private final NoticeQueryTypeClassifier queryTypeClassifier;
     private final NoticeAnswerGenerator answerGenerator;
     private final NoticeRagTracer ragTracer;
-    private final SearchRequest traceSearchRequest;
+    private final NoticeRagProperties properties;
 
-    public NoticeChatClient(
+    public NoticeRagPipeline(
             VectorStore vectorStore,
             NoticeQueryTransformer queryTransformer,
             NoticeReranker reranker,
             NoticeDocumentSelector documentSelector,
             NoticeQueryTypeClassifier queryTypeClassifier,
             NoticeAnswerGenerator answerGenerator,
-            NoticeRagTracer ragTracer
+            NoticeRagTracer ragTracer,
+            NoticeRagProperties properties
     ) {
         this.vectorStore = vectorStore;
         this.queryTransformer = queryTransformer;
@@ -38,24 +39,20 @@ public class NoticeChatClient {
         this.queryTypeClassifier = queryTypeClassifier;
         this.answerGenerator = answerGenerator;
         this.ragTracer = ragTracer;
-        this.traceSearchRequest = SearchRequest.builder()
-                .topK(TRACE_RETRIEVAL_COUNT)
-                .build();
+        this.properties = properties;
     }
 
     public ChatResult chat(String message) {
+        int topK = properties.getRetrievalTopK();
         String traceId = ragTracer.createTraceId();
-        ragTracer.queryReceived(
-                traceId,
-                message,
-                TRACE_RETRIEVAL_COUNT,
-                NoticeDocumentSelector.SIMILARITY_THRESHOLD
-        );
+        ragTracer.queryReceived(traceId, message, topK, NoticeDocumentSelector.SIMILARITY_THRESHOLD);
 
         TransformedQuery transformedQuery = queryTransformer.transform(message);
         ragTracer.queryTransformed(traceId, transformedQuery);
 
-        List<Document> retrievedDocs = searchRelatedNotices(transformedQuery.content());
+        List<Document> retrievedDocs = vectorStore.similaritySearch(
+                SearchRequest.builder().query(transformedQuery.content()).topK(topK).build()
+        );
         ragTracer.retrievedDocuments(traceId, retrievedDocs);
 
         RerankedNotices rerankedNotices = reranker.rerank(message, retrievedDocs);
@@ -75,12 +72,6 @@ public class NoticeChatClient {
         ragTracer.answerGenerated(traceId, generatedAnswer, sources);
 
         return new ChatResult(generatedAnswer.content(), sources);
-    }
-
-    private List<Document> searchRelatedNotices(String query) {
-        return vectorStore.similaritySearch(
-                SearchRequest.from(traceSearchRequest).query(query).build()
-        );
     }
 
     private List<NoticeSource> toSources(List<Document> docs) {
