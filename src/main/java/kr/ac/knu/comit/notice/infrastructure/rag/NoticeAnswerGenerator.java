@@ -16,14 +16,14 @@ import org.springframework.stereotype.Component;
 public class NoticeAnswerGenerator {
 
     private final ChatClient chatClient;
-    private final String model;
 
     @Value("classpath:prompts/notice-answer.st")
     private Resource answerPrompt;
 
     public NoticeAnswerGenerator(ChatClient.Builder builder, NoticeRagProperties properties) {
-        this.chatClient = builder.build();
-        this.model = properties.getAnswerModel();
+        this.chatClient = builder
+                .defaultOptions(OpenAiChatOptions.builder().model(properties.getAnswerModel()))
+                .build();
     }
 
     public GeneratedAnswer generate(String message, List<Document> docs) {
@@ -32,7 +32,6 @@ public class NoticeAnswerGenerator {
                 .collect(Collectors.joining("\n\n---\n\n"));
 
         ChatResponse response = chatClient.prompt()
-                .options(OpenAiChatOptions.builder().model(model))
                 .system(s -> s.text(answerPrompt).param("context", context))
                 .user(message)
                 .call()

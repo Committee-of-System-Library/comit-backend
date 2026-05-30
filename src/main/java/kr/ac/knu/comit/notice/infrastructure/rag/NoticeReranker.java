@@ -25,7 +25,6 @@ public class NoticeReranker {
     private static final int RERANK_SUMMARY_PREVIEW_LENGTH = 180;
 
     private final ChatClient chatClient;
-    private final String model;
     private final OfficialNoticeRepository noticeRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -34,8 +33,9 @@ public class NoticeReranker {
 
     public NoticeReranker(ChatClient.Builder builder, OfficialNoticeRepository noticeRepository,
             NoticeRagProperties properties) {
-        this.chatClient = builder.build();
-        this.model = properties.getRerankModel();
+        this.chatClient = builder
+                .defaultOptions(OpenAiChatOptions.builder().model(properties.getRerankModel()))
+                .build();
         this.noticeRepository = noticeRepository;
     }
 
@@ -45,7 +45,6 @@ public class NoticeReranker {
         }
 
         ChatResponse response = chatClient.prompt()
-                .options(OpenAiChatOptions.builder().model(model))
                 .system(rerankPrompt)
                 .user(buildUserPrompt(message, docs))
                 .call()
@@ -67,7 +66,7 @@ public class NoticeReranker {
         return """
                 [사용자 질문]
                 %s
-                
+
                 [검색 후보]
                 %s
                 """.formatted(message, buildCandidates(candidateDocs, findSummaries(candidateDocs)));

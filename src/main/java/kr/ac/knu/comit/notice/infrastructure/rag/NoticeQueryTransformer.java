@@ -13,19 +13,18 @@ import org.springframework.stereotype.Component;
 public class NoticeQueryTransformer {
 
     private final ChatClient chatClient;
-    private final String model;
 
     @Value("classpath:prompts/notice-query-transform.st")
     private Resource queryTransformPrompt;
 
     public NoticeQueryTransformer(ChatClient.Builder builder, NoticeRagProperties properties) {
-        this.chatClient = builder.build();
-        this.model = properties.getQueryTransformModel();
+        this.chatClient = builder
+                .defaultOptions(OpenAiChatOptions.builder().model(properties.getQueryTransformModel()))
+                .build();
     }
 
     public TransformedQuery transform(String message) {
         ChatResponse response = chatClient.prompt()
-                .options(OpenAiChatOptions.builder().model(model))
                 .system(queryTransformPrompt)
                 .user(message)
                 .call()
