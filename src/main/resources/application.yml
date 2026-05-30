@@ -125,7 +125,7 @@ comit:
     rag:
       retrieval-top-k: ${NOTICE_RETRIEVAL_TOP_K:10}
       query-transform-model: ${NOTICE_QUERY_TRANSFORM_MODEL:gpt-4o-mini}
-      rerank-model: ${NOTICE_RERANK_MODEL:gpt-4o-mini}
+      rerank-model: ${NOTICE_RERANK_MODEL:gpt-4o}
       answer-model: ${NOTICE_ANSWER_MODEL:gpt-4o}
     scheduler:
       enabled: ${NOTICE_SCHEDULER_ENABLED:true}
