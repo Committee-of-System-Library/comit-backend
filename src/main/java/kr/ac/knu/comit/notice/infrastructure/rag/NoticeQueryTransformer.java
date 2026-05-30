@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.infrastructure;
+package kr.ac.knu.comit.notice.infrastructure.rag;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;

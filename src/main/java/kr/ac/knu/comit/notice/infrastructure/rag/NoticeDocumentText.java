@@ -1,4 +1,4 @@
-package kr.ac.knu.comit.notice.infrastructure;
+package kr.ac.knu.comit.notice.infrastructure.rag;
 
 final class NoticeDocumentText {
 
