@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class NoticeChatClient {
 
-    private static final int TRACE_RETRIEVAL_COUNT = 20;
+    private static final int TRACE_RETRIEVAL_COUNT = 10;
 
     private final VectorStore vectorStore;
     private final NoticeQueryTransformer queryTransformer;
