@@ -122,6 +122,8 @@ comit:
       limit: ${COMIT_POST_HOT_LIMIT:5}
       excluded-board-types: ${COMIT_POST_HOT_EXCLUDED_BOARD_TYPES:NOTICE,EVENT}
   notice:
+    rag:
+      retrieval-top-k: ${NOTICE_RETRIEVAL_TOP_K:10}
     scheduler:
       enabled: ${NOTICE_SCHEDULER_ENABLED:true}
       initial-sync-max: ${NOTICE_INITIAL_SYNC_MAX:200}
