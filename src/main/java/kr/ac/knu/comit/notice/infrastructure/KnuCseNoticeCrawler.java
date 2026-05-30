@@ -24,42 +24,48 @@ public class KnuCseNoticeCrawler {
     private static final DateTimeFormatter DETAIL_DATE_FORMAT =
             DateTimeFormatter.ofPattern("yy-MM-dd HH:mm");
 
-    public List<NoticeListItem> crawlListPage(int page) throws IOException {
+    public List<NoticeListItem> crawlListPage(int page) {
         String url = BASE_URL + "?bo_table=" + BOARD_TABLE + "&page=" + page;
+        try {
+            Document doc = Jsoup.connect(url)
+                    .userAgent(USER_AGENT)
+                    .timeout(TIMEOUT_MS)
+                    .get();
 
-        Document doc = Jsoup.connect(url)
-                .userAgent(USER_AGENT)
-                .timeout(TIMEOUT_MS)
-                .get();
-
-        Elements rows = doc.select("#bo_list tbody tr");
-        return rows.stream()
-                .map(this::parseListItem)
-                .filter(Objects::nonNull)
-                .toList();
+            Elements rows = doc.select("#bo_list tbody tr");
+            return rows.stream()
+                    .map(this::parseListItem)
+                    .filter(Objects::nonNull)
+                    .toList();
+        } catch (IOException e) {
+            throw new NoticeCrawlException("목록 크롤링 실패: page=" + page, e);
+        }
     }
 
-    public NoticeDetail crawlDetail(String wrId) throws IOException {
+    public NoticeDetail crawlDetail(String wrId) {
         String url = BASE_URL + "?bo_table=" + BOARD_TABLE + "&wr_id=" + wrId;
+        try {
+            Document doc = Jsoup.connect(url)
+                    .userAgent(USER_AGENT)
+                    .timeout(TIMEOUT_MS)
+                    .get();
 
-        Document doc = Jsoup.connect(url)
-                .userAgent(USER_AGENT)
-                .timeout(TIMEOUT_MS)
-                .get();
+            Element contentEl = doc.selectFirst("#bo_v_con");
+            String content = contentEl != null ? contentEl.text() : "";
 
-        Element contentEl = doc.selectFirst("#bo_v_con");
-        String content = contentEl != null ? contentEl.text() : "";
-
-        Element dateEl = doc.selectFirst("#bo_v_info strong.if_date");
-        LocalDateTime postedAt = null;
-        if (dateEl != null) {
-            try {
-                postedAt = LocalDateTime.parse(dateEl.text().strip(), DETAIL_DATE_FORMAT);
-            } catch (Exception ignored) {
+            Element dateEl = doc.selectFirst("#bo_v_info strong.if_date");
+            LocalDateTime postedAt = null;
+            if (dateEl != null) {
+                try {
+                    postedAt = LocalDateTime.parse(dateEl.text().strip(), DETAIL_DATE_FORMAT);
+                } catch (Exception ignored) {
+                }
             }
-        }
 
-        return new NoticeDetail(content, postedAt);
+            return new NoticeDetail(content, postedAt);
+        } catch (IOException e) {
+            throw new NoticeCrawlException("상세 크롤링 실패: wrId=" + wrId, e);
+        }
     }
 
     private NoticeListItem parseListItem(Element row) {
