@@ -87,7 +87,7 @@ public class OfficialNoticeScheduler {
         NoticeDetail detail = crawler.crawlDetail(item.wrId());
         LocalDateTime postedAt = resolvePostedAt(detail, item);
 
-        String summary = summarizer.summarize(item.title(), detail.content());
+        String summary = summarizer.generate(item.title(), detail.content());
         Long noticeId = noticeService.createNotice(
                 item.wrId(), item.title(), detail.content(),
                 item.author(), item.originalUrl(), postedAt, summary

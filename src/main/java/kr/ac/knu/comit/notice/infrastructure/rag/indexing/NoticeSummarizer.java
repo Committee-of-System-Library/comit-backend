@@ -12,7 +12,7 @@ public class NoticeSummarizer {
         this.chatClient = builder.build();
     }
 
-    public String summarize(String title, String content) {
+    public String generate(String title, String content) {
         return chatClient.prompt()
                 .system("""
                         당신은 대학교 공지사항을 간결하게 요약하는 도우미입니다.
