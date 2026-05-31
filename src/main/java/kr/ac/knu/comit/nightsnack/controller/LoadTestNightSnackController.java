@@ -3,6 +3,7 @@ package kr.ac.knu.comit.nightsnack.controller;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import kr.ac.knu.comit.global.domain.Period;
 import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
@@ -33,6 +34,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class LoadTestNightSnackController {
 
+    /** 신청 객체의 고유 학번 생성용. (night_snack_id, student_number) 유니크를 통과시킨다. */
+    private static final AtomicLong SEQ = new AtomicLong();
+
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
 
@@ -57,7 +61,9 @@ public class LoadTestNightSnackController {
     }
 
     /**
-     * 부하 테스트 신청. member/auth 없이 decrementRemaining 원자적 UPDATE만 수행한다.
+     * 부하 테스트 신청. 실제 신청 플로우처럼 decrementRemaining 원자적 UPDATE + NightSnackApplication
+     * INSERT를 같은 트랜잭션에서 수행한다(슬롯 선점과 신청 기록 INSERT 부하를 함께 측정).
+     * member/auth는 생략하고, 신청 객체는 회원 없이 고유 학번만으로 만든다.
      * K6 VU가 그냥 POST 요청만 보내면 된다 — 헤더/바디 불필요.
      */
     @PostMapping("/night-snacks/{nightSnackId}/apply")
@@ -73,6 +79,12 @@ public class LoadTestNightSnackController {
             }
             throw new BusinessException(NightSnackErrorCode.EVENT_SOLD_OUT);
         }
+
+        // 실제 신청처럼 application 기록을 INSERT (decrement와 같은 트랜잭션 → 실패 시 슬롯 복구)
+        String studentNumber = "lt" + SEQ.incrementAndGet(); // 고유, VARCHAR(20) 이내
+        NightSnackApplication application = NightSnackApplication.reserved(nightSnack, studentNumber);
+        nightSnackApplicationRepository.save(application);
+
         return ResponseEntity.ok(ApiResponse.success());
     }
 
