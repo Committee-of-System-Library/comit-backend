@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import kr.ac.knu.comit.global.domain.Period;
 import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
@@ -31,15 +32,9 @@ public class AdminNightSnackService {
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
 
-    /** 예약분 없는 야식 마차(전량 일반 선착순). */
     @Transactional
-    public Long createNightSnack(LocalDate nightSnackDate, int capacity) {
-        return createNightSnack(nightSnackDate, capacity, 0);
-    }
-
-    @Transactional
-    public Long createNightSnack(LocalDate nightSnackDate, int capacity, int reservedCapacity) {
-        NightSnack nightSnack = NightSnack.create(nightSnackDate, capacity, reservedCapacity);
+    public Long createNightSnack(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period) {
+        NightSnack nightSnack = NightSnack.create(nightSnackDate, capacity, reservedCapacity, period);
         return nightSnackRepository.save(nightSnack).getId();
     }
 

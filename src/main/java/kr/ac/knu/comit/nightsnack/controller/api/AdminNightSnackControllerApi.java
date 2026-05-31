@@ -32,6 +32,8 @@ public interface AdminNightSnackControllerApi {
                     @FieldDesc(name = "nightSnackDate", value = "야식 마차 날짜입니다. (yyyy-MM-dd)"),
                     @FieldDesc(name = "capacity", value = "전체 정원입니다. 1 이상의 정수입니다."),
                     @FieldDesc(name = "reservedCapacity", value = "사전신청용 예약 정원입니다. 0 이상 capacity 이하이며, 생략 시 0(전량 일반 선착순)입니다. (권장: 정원의 10%)"),
+                    @FieldDesc(name = "openAt", value = "신청 오픈 시각입니다. (yyyy-MM-ddTHH:mm:ss)"),
+                    @FieldDesc(name = "closeAt", value = "신청 마감 시각입니다. openAt 이후여야 합니다. (yyyy-MM-ddTHH:mm:ss)"),
                     @FieldDesc(name = "nightSnackId", value = "생성된 야식 마차 ID입니다.")
             },
             errors = {
@@ -43,7 +45,9 @@ public interface AdminNightSnackControllerApi {
                             {
                               "nightSnackDate": "2026-05-20",
                               "capacity": 100,
-                              "reservedCapacity": 10
+                              "reservedCapacity": 10,
+                              "openAt": "2026-05-20T17:30:00",
+                              "closeAt": "2026-05-20T18:30:00"
                             }
                             """,
                     response = """
