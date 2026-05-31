@@ -2,40 +2,30 @@ package kr.ac.knu.comit.nightsnack.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import kr.ac.knu.comit.global.domain.Period;
 import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
-import kr.ac.knu.comit.nightsnack.dto.ApplyResponse;
-import kr.ac.knu.comit.nightsnack.service.NightSnackApplicationService;
 import kr.ac.knu.comit.global.exception.ApiResponse;
-import kr.ac.knu.comit.member.domain.Member;
-import kr.ac.knu.comit.member.domain.MemberRepository;
+import kr.ac.knu.comit.global.exception.BusinessException;
+import kr.ac.knu.comit.global.exception.NightSnackErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 부하 테스트 전용 Mock 컨트롤러. {@code comit.load-test.enabled=true} 일 때만 활성화.
+ * 부하 테스트 전용 컨트롤러. {@code comit.load-test.enabled=true} 일 때만 활성화.
  *
- * <p><b>staging 환경 전용</b> — production 배포 시에는 절대 활성화하지 않는다.
- *
- * <p>엔드포인트:
- * <ul>
- *   <li>{@code POST /load-test/setup} — 테스트용 야식 마차 생성 + 회원 시드 → nightSnackId/memberIds 반환</li>
- *   <li>{@code POST /load-test/night-snacks/{nightSnackId}/apply} — 인증 우회 신청 (X-Load-Test-Member-Id 헤더)</li>
- * </ul>
+ * <p>목적: decrementRemaining 원자적 UPDATE가 대규모 동시 요청에서 정확히 동작하는지 측정한다.
+ * member/auth를 완전히 제거해 순수 DB 동시성만 테스트한다.
  */
 @ConditionalOnProperty("comit.load-test.enabled")
 @RestController
@@ -43,25 +33,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class LoadTestNightSnackController {
 
-    private static final AtomicLong MEMBER_SEQ = new AtomicLong(System.currentTimeMillis());
-
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
-    private final NightSnackApplicationService nightSnackApplicationService;
-    private final MemberRepository memberRepository;
 
     /**
-     * 테스트 픽스처 생성. K6 setup() 단계에서 1번 호출한다.
-     *
-     * @param capacity      야식 마차 전체 정원 (기본 100)
-     * @param memberCount   시드할 테스트 회원 수 (기본 500 — capacity 초과 요청을 재현하기 위해 넉넉하게)
-     * @return nightSnackId와 memberIds 목록
+     * 야식 마차 생성 + 오픈. K6 setup()에서 1번 호출한다.
+     * member 시딩 없음 — apply()가 DB 신청 기록 없이 decrementRemaining만 호출하므로 불필요.
      */
     @PostMapping("/setup")
     @Transactional
     public ResponseEntity<ApiResponse<SetupResult>> setup(
-            @RequestParam(defaultValue = "100") int capacity,
-            @RequestParam(defaultValue = "500") int memberCount
+            @RequestParam(defaultValue = "100") int capacity
     ) {
         Period period = Period.of(
                 LocalDateTime.now().minusMinutes(1),
@@ -71,45 +53,30 @@ public class LoadTestNightSnackController {
         nightSnackRepository.save(nightSnack);
         nightSnack.open();
 
-        List<Long> memberIds = new ArrayList<>(memberCount);
-        for (int i = 0; i < memberCount; i++) {
-            long seq = MEMBER_SEQ.getAndIncrement();
-            Member member = Member.create(
-                    "load-test-sso-" + seq,
-                    "부하테스트",
-                    "010-0000-0000",
-                    "lt" + seq,
-                    String.format("9999%06d", seq % 1_000_000),
-                    null,
-                    null,
-                    LocalDateTime.now()
-            );
-            memberIds.add(memberRepository.save(member).getId());
-        }
-
-        return ResponseEntity.ok(ApiResponse.success(new SetupResult(nightSnack.getId(), memberIds)));
+        return ResponseEntity.ok(ApiResponse.success(new SetupResult(nightSnack.getId())));
     }
 
     /**
-     * 인증을 우회한 신청. X-Load-Test-Member-Id 헤더에 회원 ID를 넣으면 된다.
-     * K6의 400명 동시 스파이크 대상 엔드포인트.
-     */
-    /**
-     * 인증을 우회한 신청. X-Load-Test-Member-Id 헤더에 회원 ID를 넣으면 된다.
-     * BusinessException(409 sold-out 등)은 전역 핸들러가 처리하므로 K6에서 상태 코드로 구분 가능.
+     * 부하 테스트 신청. member/auth 없이 decrementRemaining 원자적 UPDATE만 수행한다.
+     * K6 VU가 그냥 POST 요청만 보내면 된다 — 헤더/바디 불필요.
      */
     @PostMapping("/night-snacks/{nightSnackId}/apply")
-    public ResponseEntity<ApiResponse<ApplyResponse>> apply(
-            @PathVariable Long nightSnackId,
-            @RequestHeader("X-Load-Test-Member-Id") Long memberId
-    ) {
-        ApplyResponse response = nightSnackApplicationService.apply(nightSnackId, memberId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+    @Transactional
+    public ResponseEntity<ApiResponse<Void>> apply(@PathVariable Long nightSnackId) {
+        NightSnack nightSnack = nightSnackRepository.findById(nightSnackId)
+                .orElseThrow(() -> new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND));
+
+        int updated = nightSnackRepository.decrementRemaining(nightSnackId);
+        if (updated == 0) {
+            if (!nightSnack.isOpen()) {
+                throw new BusinessException(NightSnackErrorCode.EVENT_NOT_OPEN);
+            }
+            throw new BusinessException(NightSnackErrorCode.EVENT_SOLD_OUT);
+        }
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
-    /**
-     * 테스트 데이터 초기화. 다음 테스트 실행 전 호출하면 이전 신청을 모두 지운다.
-     */
+    /** 테스트 데이터 초기화. 다음 테스트 실행 전 호출한다. */
     @PostMapping("/cleanup/{nightSnackId}")
     @Transactional
     public ResponseEntity<ApiResponse<Void>> cleanup(@PathVariable Long nightSnackId) {
@@ -122,5 +89,5 @@ public class LoadTestNightSnackController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
-    public record SetupResult(Long nightSnackId, List<Long> memberIds) {}
+    public record SetupResult(Long nightSnackId) {}
 }
