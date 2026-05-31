@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.nightsnack.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import kr.ac.knu.comit.global.domain.Period;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 
@@ -20,6 +22,9 @@ import kr.ac.knu.comit.global.exception.CommonErrorCode;
  * <p>동시성 처리는 "방안 1 — DB 원자적 UPDATE 선점"을 따른다. 즉 잔여 수량 감소는
  * 엔티티 setter가 아니라 {@link NightSnackRepository#decrementRemaining(Long)} 의 단일
  * 원자적 UPDATE로 처리한다. 이 엔티티의 {@code remaining} 필드는 조회/표시용 스냅샷이다.
+ *
+ * <p>{@link Period}는 오픈·마감 시각을 담는다. 스케줄러 또는 관리자가 이 시각을 기준으로
+ * {@link #open()}/{@link #close()}를 호출해 상태를 전이한다.
  */
 @Entity
 @Table(name = "night_snack")
@@ -47,6 +52,10 @@ public class NightSnack {
     @Column(name = "reserved_remaining", nullable = false)
     private int reservedRemaining;
 
+    /** 오픈·마감 시각. 스케줄러 또는 관리자가 이 시각을 기준으로 상태 전이를 수행한다. */
+    @Embedded
+    private Period period;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private NightSnackStatus status;
@@ -57,18 +66,25 @@ public class NightSnack {
     protected NightSnack() {
     }
 
-    /** 예약분 없는 야식 마차(전량 일반 선착순). */
-    public static NightSnack create(LocalDate nightSnackDate, int capacity) {
-        return create(nightSnackDate, capacity, 0);
+    /**
+     * 예약분 없는 야식 마차(전량 일반 선착순).
+     *
+     * @param period 오픈·마감 시각 ({@link Period#of(LocalDateTime, LocalDateTime)} 로 생성)
+     */
+    public static NightSnack create(LocalDate nightSnackDate, int capacity, Period period) {
+        return create(nightSnackDate, capacity, 0, period);
     }
 
     /**
      * 정원을 예약분(사전신청)과 일반분(선착순)으로 나눠 생성한다(요구사항 4-3).
      *
      * @param reservedCapacity 사전신청용 예약 정원. {@code 0 <= reservedCapacity <= capacity} 여야 한다.
+     * @param period           오픈·마감 시각
      */
-    public static NightSnack create(LocalDate nightSnackDate, int capacity, int reservedCapacity) {
-        if (nightSnackDate == null || capacity <= 0 || reservedCapacity < 0 || reservedCapacity > capacity) {
+    public static NightSnack create(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period) {
+        if (nightSnackDate == null || capacity <= 0
+                || reservedCapacity < 0 || reservedCapacity > capacity
+                || period == null) {
             throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
         }
         NightSnack nightSnack = new NightSnack();
@@ -76,15 +92,16 @@ public class NightSnack {
         nightSnack.capacity = capacity;
         nightSnack.reservedCapacity = reservedCapacity;
         nightSnack.reservedRemaining = reservedCapacity;
-        nightSnack.remaining = capacity - reservedCapacity; // 일반분 잔여
+        nightSnack.remaining = capacity - reservedCapacity;
+        nightSnack.period = period;
         nightSnack.status = NightSnackStatus.SCHEDULED;
         nightSnack.createdAt = LocalDateTime.now();
         return nightSnack;
     }
 
     /**
-     * 신청 오픈. 17:30 정각에 누가 호출할지(관리자 토글 vs 스케줄러)는 미확정 — 초안에서는
-     * 상태 전이 규칙만 도메인에 둔다.
+     * 신청 오픈. SCHEDULED → OPEN 전이.
+     * 스케줄러가 {@code period.openAt} 시각에 호출하거나, 관리자가 수동으로 호출한다.
      */
     public void open() {
         if (this.status != NightSnackStatus.SCHEDULED) {
@@ -153,6 +170,10 @@ public class NightSnack {
 
     public int getReservedRemaining() {
         return reservedRemaining;
+    }
+
+    public Period getPeriod() {
+        return period;
     }
 
     public NightSnackStatus getStatus() {
