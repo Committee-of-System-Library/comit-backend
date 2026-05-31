@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import kr.ac.knu.comit.global.domain.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -96,14 +97,17 @@ class NightSnackConcurrencyIntegrationTest {
         // OPEN 상태의 정원 100 야식 마차와, 서로 다른 300명의 신청자를 준비한다.
         int capacity = 100;
         int contenders = 300;
-        Long nightSnackId = openNightSnack(LocalDate.of(2026, 5, 20), capacity);
+        Long nightSnackId = openNightSnack(LocalDate.now().plusDays(1), capacity);
         List<Long> memberIds = seedMembers(contenders);
 
         AtomicInteger success = new AtomicInteger();
         AtomicInteger soldOut = new AtomicInteger();
         AtomicInteger other = new AtomicInteger();
 
-        ExecutorService pool = Executors.newFixedThreadPool(32);
+        // 풀 크기를 contenders와 동일하게 설정해야 한다.
+        // newFixedThreadPool(32)이면 32개 스레드가 start.await()에서 블로킹되어
+        // 나머지 268개가 ready.countDown()에 도달하지 못하고 deadlock이 발생한다.
+        ExecutorService pool = Executors.newFixedThreadPool(contenders);
         CountDownLatch ready = new CountDownLatch(contenders);
         CountDownLatch start = new CountDownLatch(1);
         CountDownLatch done = new CountDownLatch(contenders);
@@ -130,9 +134,10 @@ class NightSnackConcurrencyIntegrationTest {
                 }
             });
         }
-        ready.await(10, TimeUnit.SECONDS);
+        // 타임아웃 시 불완전한 데이터로 assertion이 우연히 통과하는 것을 방지한다.
+        assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
         start.countDown();
-        done.await(60, TimeUnit.SECONDS);
+        assertThat(done.await(60, TimeUnit.SECONDS)).isTrue();
         pool.shutdownNow();
 
         // then
@@ -151,7 +156,7 @@ class NightSnackConcurrencyIntegrationTest {
         // given
         // 정원이 충분한 야식 마차에 한 회원이 20번 동시 신청을 시도한다.
         int attempts = 20;
-        Long nightSnackId = openNightSnack(LocalDate.of(2026, 5, 21), 100);
+        Long nightSnackId = openNightSnack(LocalDate.now().plusDays(2), 100);
         Long memberId = seedMembers(1).get(0);
 
         AtomicInteger success = new AtomicInteger();
@@ -180,7 +185,7 @@ class NightSnackConcurrencyIntegrationTest {
             });
         }
         start.countDown();
-        done.await(30, TimeUnit.SECONDS);
+        assertThat(done.await(30, TimeUnit.SECONDS)).isTrue();
         pool.shutdownNow();
 
         // then
@@ -191,7 +196,8 @@ class NightSnackConcurrencyIntegrationTest {
     }
 
     private Long openNightSnack(LocalDate date, int capacity) {
-        Long nightSnackId = adminNightSnackService.createNightSnack(date, capacity);
+        Period period = Period.of(date.atTime(17, 30), date.atTime(18, 30));
+        Long nightSnackId = adminNightSnackService.createNightSnack(date, capacity, 0, period);
         adminNightSnackService.open(nightSnackId);
         return nightSnackId;
     }

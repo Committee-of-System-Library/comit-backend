@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import kr.ac.knu.comit.global.domain.Period;
 import java.util.concurrent.atomic.AtomicInteger;
 import kr.ac.knu.comit.ComitApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnack;
@@ -91,7 +92,9 @@ class NightSnackReservationIntegrationTest {
     void preRegistrationConsumesReservedPoolOnly() {
         // given
         // 정원 20, 예약분 5 → 일반분 15.
-        Long nightSnackId = adminNightSnackService.createNightSnack(LocalDate.of(2026, 6, 1), 20, 5);
+        LocalDate date1 = LocalDate.now().plusDays(3);
+        Period period1 = Period.of(date1.atTime(17, 30), date1.atTime(18, 30));
+        Long nightSnackId = adminNightSnackService.createNightSnack(date1, 20, 5, period1);
         List<String> studentNumbers = List.of(uniqueStudentNumber(), uniqueStudentNumber());
 
         // when
@@ -121,7 +124,9 @@ class NightSnackReservationIntegrationTest {
         // 정원 10, 예약분 3 → 일반분 7. 회원 10명이 일반 신청한다.
         int capacity = 10;
         int reserved = 3;
-        Long nightSnackId = adminNightSnackService.createNightSnack(LocalDate.of(2026, 6, 2), capacity, reserved);
+        LocalDate date2 = LocalDate.now().plusDays(4);
+        Period period2 = Period.of(date2.atTime(17, 30), date2.atTime(18, 30));
+        Long nightSnackId = adminNightSnackService.createNightSnack(date2, capacity, reserved, period2);
         adminNightSnackService.open(nightSnackId);
 
         int success = 0;
@@ -152,7 +157,9 @@ class NightSnackReservationIntegrationTest {
         // given
         // 같은 학번을 가진 회원을 만들고, 그 학번을 먼저 사전신청해 둔다.
         String studentNumber = uniqueStudentNumber();
-        Long nightSnackId = adminNightSnackService.createNightSnack(LocalDate.of(2026, 6, 3), 10, 3);
+        LocalDate date3 = LocalDate.now().plusDays(5);
+        Period period3 = Period.of(date3.atTime(17, 30), date3.atTime(18, 30));
+        Long nightSnackId = adminNightSnackService.createNightSnack(date3, 10, 3, period3);
         adminNightSnackService.reserve(nightSnackId, List.of(studentNumber));
         adminNightSnackService.open(nightSnackId);
 
