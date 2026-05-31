@@ -1,0 +1,36 @@
+name: Validate API Docs
+
+on:
+  pull_request:
+
+jobs:
+  validate-api-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Generate API docs
+        run: ./gradlew generateApiDocs
+
+      - name: Verify generated docs are committed
+        run: |
+          status_output="$(git status --porcelain -- docs/api)"
+          if [[ -n "$status_output" ]]; then
+            echo "=== git status --porcelain -- docs/api ==="
+            echo "$status_output"
+            echo "::error::API 문서가 업데이트되지 않았습니다."
+            echo "::error::로컬에서 ./gradlew generateApiDocs 실행 후 커밋하세요."
+            exit 1
+          fi
