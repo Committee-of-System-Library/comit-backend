@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MainControllerApi</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --panel-soft: #f9fbff;
+            --text: #1b2a41;
+            --muted: #607086;
+            --line: #d8e2ef;
+            --accent: #3182f6;
+            --accent-soft: #e9f2ff;
+            --success-bg: #effaf5;
+            --success-text: #0f8a5f;
+            --code: #0f172a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "SUIT", "Pretendard", system-ui, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(49, 130, 246, 0.14), transparent 36%),
+                linear-gradient(180deg, #fafdff 0%, var(--bg) 45%, #edf3fa 100%);
+        }
+        a { color: inherit; }
+        .layout {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 32px 20px 72px;
+            display: grid;
+            gap: 24px;
+            grid-template-columns: 280px minmax(0, 1fr);
+        }
+        .sidebar {
+            position: sticky;
+            top: 24px;
+            height: fit-content;
+            padding: 24px;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        }
+        .sidebar h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+        }
+        .sidebar p {
+            margin: 0 0 20px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .sidebar nav {
+            display: grid;
+            gap: 10px;
+        }
+        .sidebar nav a {
+            padding: 14px;
+            border-radius: 18px;
+            text-decoration: none;
+            background: var(--panel-soft);
+            border: 1px solid transparent;
+        }
+        .sidebar nav a:hover {
+            border-color: rgba(49,130,246,0.3);
+            background: var(--accent-soft);
+        }
+        .sidebar nav strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+        .sidebar nav span {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+        .content {
+            display: grid;
+            gap: 18px;
+        }
+        .endpoint {
+            padding: 28px;
+            border-radius: 28px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,0.92);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 700;
+        }
+        .endpoint h2 {
+            margin: 0 0 8px;
+            font-size: clamp(1.4rem, 2vw, 1.8rem);
+        }
+        .endpoint p {
+            margin: 0 0 18px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .path-box {
+            margin-bottom: 18px;
+            padding: 16px 18px;
+            border-radius: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            overflow: auto;
+        }
+        .method {
+            color: #8bc4ff;
+            font-weight: 800;
+            margin-right: 10px;
+        }
+        .section-grid {
+            display: grid;
+            gap: 18px;
+        }
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            padding: 20px;
+            background: var(--panel-soft);
+        }
+        .card h3 {
+            margin: 0 0 14px;
+            font-size: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        td code {
+            color: var(--code);
+            font-family: "SFMono-Regular", "Menlo", monospace;
+        }
+        .type-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .type-string {
+            background: #fff1e8;
+            border-color: #ffd8bf;
+            color: #c25b12;
+        }
+        .type-number {
+            background: #edf7ff;
+            border-color: #cfe7ff;
+            color: #1565c0;
+        }
+        .type-boolean {
+            background: #eefcf4;
+            border-color: #cfeeda;
+            color: #1f7a4d;
+        }
+        .type-datetime {
+            background: #f3efff;
+            border-color: #ddd2ff;
+            color: #6b46c1;
+        }
+        .type-collection {
+            background: #ecfbff;
+            border-color: #c8edf6;
+            color: #0f6e83;
+        }
+        .type-custom {
+            background: #f5f7fa;
+            border-color: #dde4ee;
+            color: #43536a;
+        }
+        .badge-required {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+        .badge-optional {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #eef2f7;
+            color: #556274;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+        pre {
+            margin: 0;
+            padding: 18px;
+            overflow: auto;
+            border-radius: 18px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .empty {
+            color: var(--muted);
+            margin: 0;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 18px;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 700;
+        }
+        @media (max-width: 960px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="layout">
+        <aside class="sidebar">
+            <a class="back-link" href="../index.html">← API Index</a>
+            <h1>MainControllerApi</h1>
+            <p>인터페이스 기반으로 추출한 엔드포인트 문서입니다.</p>
+            <nav><a href="#getMainPage">
+    <strong>메인 페이지 조회</strong>
+    <span>GET /main</span>
+</a>
+</nav>
+        </aside>
+        <section class="content"><article class="endpoint" id="getMainPage">
+    <div class="eyebrow">GET</div>
+    <h2>메인 페이지 조회</h2>
+    <p>비로그인 사용자를 포함한 모든 방문자가 메인 페이지에서 QNA, INFO, FREE 최신 게시글 5개와 NOTICE, EVENT 최신 게시글 3개, 인기글을 한 번에 조회합니다.</p>
+    <div class="path-box"><span class="method">GET</span>/main</div>
+    <div class="section-grid"><section class="card">
+    <h3>응답 바디 필드</h3>
+    <table>
+    <thead>
+        <tr>
+            <th>필드명</th>
+            <th>타입</th>
+            <th>필수 여부</th>
+            <th>설명</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+    <td><code>event</code></td>
+    <td><span class="type-chip type-collection">List&lt;PostSummaryResponse&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>EVENT 게시판의 최신 3개 게시글 요약 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>free</code></td>
+    <td><span class="type-chip type-collection">List&lt;PostSummaryResponse&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>FREE 게시판의 최신 5개 게시글 요약 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>hotPosts</code></td>
+    <td><span class="type-chip type-collection">List&lt;HotPostResponse&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>최근 7일 기준 반응 점수가 높은 인기글 5개 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>info</code></td>
+    <td><span class="type-chip type-collection">List&lt;PostSummaryResponse&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>INFO 게시판의 최신 5개 게시글 요약 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>notice</code></td>
+    <td><span class="type-chip type-collection">List&lt;PostSummaryResponse&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>NOTICE 게시판의 최신 3개 게시글 요약 목록입니다.</td>
+</tr>
+<tr>
+    <td><code>qna</code></td>
+    <td><span class="type-chip type-collection">List&lt;PostSummaryResponse&gt;</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>QNA 게시판의 최신 5개 게시글 요약 목록입니다.</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section class="card">
+    <h3>응답 예시</h3>
+    <pre><code>{
+  &quot;result&quot; : &quot;SUCCESS&quot;,
+  &quot;data&quot; : {
+    &quot;qna&quot; : [ {
+      &quot;id&quot; : 101,
+      &quot;boardType&quot; : &quot;QNA&quot;,
+      &quot;title&quot; : &quot;JPA fetch join 질문&quot;,
+      &quot;contentPreview&quot; : &quot;join fetch와 entity graph 차이가 궁금합니다.&quot;,
+      &quot;authorNickname&quot; : &quot;backend-dev&quot;,
+      &quot;likeCount&quot; : 3,
+      &quot;commentCount&quot; : 2,
+      &quot;tags&quot; : [ &quot;spring&quot;, &quot;jpa&quot; ],
+      &quot;imageUrls&quot; : [ &quot;https://cdn.example.com/posts/101-1.png&quot; ],
+      &quot;createdAt&quot; : &quot;2026-03-24T10:00:00&quot;
+    } ],
+    &quot;info&quot; : [ ],
+    &quot;free&quot; : [ ],
+    &quot;notice&quot; : [ {
+      &quot;id&quot; : 201,
+      &quot;boardType&quot; : &quot;NOTICE&quot;,
+      &quot;title&quot; : &quot;개강 안내&quot;,
+      &quot;contentPreview&quot; : &quot;2026년 1학기 개강 일정 안내입니다.&quot;,
+      &quot;authorNickname&quot; : &quot;admin&quot;,
+      &quot;likeCount&quot; : 0,
+      &quot;commentCount&quot; : 0,
+      &quot;tags&quot; : [ ],
+      &quot;imageUrls&quot; : [ ],
+      &quot;createdAt&quot; : &quot;2026-03-23T09:00:00&quot;
+    } ],
+    &quot;event&quot; : [ ],
+    &quot;hotPosts&quot; : [ {
+      &quot;rank&quot; : 1,
+      &quot;id&quot; : 101,
+      &quot;boardType&quot; : &quot;QNA&quot;,
+      &quot;title&quot; : &quot;JPA fetch join 질문&quot;,
+      &quot;authorNickname&quot; : &quot;backend-dev&quot;,
+      &quot;likeCount&quot; : 3,
+      &quot;commentCount&quot; : 2,
+      &quot;tags&quot; : [ &quot;spring&quot;, &quot;jpa&quot; ],
+      &quot;createdAt&quot; : &quot;2026-03-24T10:00:00&quot;
+    } ]
+  }
+}</code></pre>
+</section>
+</div>
+</article>
+</section>
+    </main>
+</body>
+</html>

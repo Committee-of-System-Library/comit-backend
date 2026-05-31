@@ -1,0 +1,126 @@
+package kr.ac.knu.comit.comment.domain;
+
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface CommentRepository extends JpaRepository<Comment, Long>, CommentRepositoryCustom {
+
+    @Query("""
+            SELECT c FROM Comment c
+            JOIN FETCH c.member
+            WHERE c.id = :commentId
+              AND c.deletedAt IS NULL
+              AND c.hiddenByAdmin = false
+            """)
+    Optional<Comment> findActiveById(@Param("commentId") Long commentId);
+
+    @Query("""
+            SELECT c FROM Comment c
+            JOIN FETCH c.member
+            WHERE c.post.id = :postId
+              AND c.deletedAt IS NULL
+              AND c.hiddenByAdmin = false
+              AND c.parentComment IS NULL
+            ORDER BY c.likeCount DESC, c.id ASC
+            """)
+    List<Comment> findActiveTopLevelByPostId(@Param("postId") Long postId);
+
+    @Query("""
+            SELECT c FROM Comment c
+            JOIN FETCH c.member
+            JOIN FETCH c.parentComment parent
+            WHERE c.post.id = :postId
+              AND c.deletedAt IS NULL
+              AND c.hiddenByAdmin = false
+              AND parent.deletedAt IS NULL
+              AND parent.hiddenByAdmin = false
+            ORDER BY parent.id ASC, c.id ASC
+            """)
+    List<Comment> findActiveRepliesByPostId(@Param("postId") Long postId);
+
+    @Query("""
+            SELECT c FROM Comment c
+            WHERE c.parentComment.id = :parentCommentId
+              AND c.deletedAt IS NULL
+              AND c.hiddenByAdmin = false
+            ORDER BY c.id ASC
+            """)
+    List<Comment> findActiveRepliesByParentCommentId(@Param("parentCommentId") Long parentCommentId);
+
+    /**
+     * Admin: 숨김 포함, 삭제 제외한 전체 댓글을 페이징 조회한다.
+     */
+    @Query("""
+            SELECT c FROM Comment c
+            JOIN FETCH c.member
+            WHERE c.deletedAt IS NULL
+              AND (:postId IS NULL OR c.post.id = :postId)
+            ORDER BY c.id DESC
+            """)
+    Page<Comment> findAllActiveForAdmin(
+            @Param("postId") Long postId,
+            Pageable pageable
+    );
+
+    /**
+     * Admin: 숨김 포함한 단건 댓글을 조회한다.
+     */
+    @Query("""
+            SELECT c FROM Comment c
+            JOIN FETCH c.member
+            WHERE c.id = :commentId
+              AND c.deletedAt IS NULL
+            """)
+    Optional<Comment> findActiveByIdForAdmin(@Param("commentId") Long commentId);
+
+    @Query("""
+            SELECT c.post.id AS postId, COUNT(c) AS commentCount
+            FROM Comment c
+            WHERE c.post.id IN :postIds
+              AND c.deletedAt IS NULL
+            GROUP BY c.post.id
+            """)
+    List<CommentCountView> countActiveByPostIds(@Param("postIds") List<Long> postIds);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            UPDATE Comment c
+            SET c.deletedAt = :now
+            WHERE c.parentComment.id = :parentCommentId
+              AND c.deletedAt IS NULL
+            """)
+    void softDeleteRepliesByParentCommentId(
+            @Param("parentCommentId") Long parentCommentId,
+            @Param("now") java.time.LocalDateTime now
+    );
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            UPDATE Comment c
+            SET c.likeCount = c.likeCount + 1
+            WHERE c.id = :commentId
+              AND c.deletedAt IS NULL
+            """)
+    void incrementLikeCount(@Param("commentId") Long commentId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            UPDATE Comment c
+            SET c.likeCount = c.likeCount - 1
+            WHERE c.id = :commentId
+              AND c.deletedAt IS NULL
+              AND c.likeCount > 0
+            """)
+    void decrementLikeCount(@Param("commentId") Long commentId);
+
+    interface CommentCountView {
+        Long getPostId();
+        long getCommentCount();
+    }
+}

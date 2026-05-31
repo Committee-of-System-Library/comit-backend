@@ -1,0 +1,1585 @@
+<!--
+  Comit 백엔드의 아키텍처, 도메인 관계, 요청 흐름, 상태 전이, 설계 의도를
+  한 파일에서 빠르게 설명하기 위한 문서형 시각화 HTML.
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comit 백엔드 구조 시각화</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #dbe3ee;
+      --text: #1f2937;
+      --muted: #5b6472;
+      --presentation: #dbeafe;
+      --application: #dcfce7;
+      --domain: #fef3c7;
+      --infra: #fde2e4;
+      --global: #ede9fe;
+      --external: #e5e7eb;
+      --accent: #1d4ed8;
+      --danger: #b91c1c;
+      --success: #166534;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+      --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+      --sans: "Pretendard Variable", "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
+    body { min-width: 1280px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 270px minmax(780px, 1fr) 360px;
+      min-height: 100vh;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .sidebar, .detail {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    h1, h2, h3, h4, p { margin: 0; }
+
+    .brand {
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand h1 { font-size: 24px; line-height: 1.2; }
+    .brand p { margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    .toc-group { margin-bottom: 18px; }
+    .toc-group h3 { font-size: 13px; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    .toc {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toc button {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .toc button.active {
+      background: #eaf1ff;
+      border-color: #bdd2ff;
+      color: #123c9b;
+      font-weight: 700;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(15, 23, 42, .12);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .panel-header h2 {
+      font-size: 20px;
+      line-height: 1.3;
+    }
+
+    .panel-header p {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    .diagram-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .layer-stack {
+      display: grid;
+      gap: 14px;
+      transform-origin: top left;
+      transition: transform .15s ease;
+    }
+
+    .layer {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .layer-title {
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(15, 23, 42, .08);
+    }
+
+    .layer.presentation .layer-title { background: var(--presentation); }
+    .layer.application .layer-title { background: var(--application); }
+    .layer.domain .layer-title { background: var(--domain); }
+    .layer.infrastructure .layer-title { background: var(--infra); }
+    .layer.global .layer-title { background: var(--global); }
+
+    .layer-body {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .node {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+
+    .node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+      border-color: #b9cae1;
+    }
+
+    .node.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, .14);
+    }
+
+    .node .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .node h4 {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .node p {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #f1f5f9;
+      font-size: 11px;
+      color: #334155;
+      font-family: var(--mono);
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 22px;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .flow-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .sequence {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .sequence-header {
+      padding: 14px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .sequence-header h3 { font-size: 17px; }
+    .sequence-header p { margin-top: 6px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    .steps {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .step .no {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      background: #eff6ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: #1d4ed8;
+      flex-shrink: 0;
+    }
+
+    .step.fail .no {
+      background: #fff1f2;
+      color: #b91c1c;
+    }
+
+    .step h4 {
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .step p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .step.ok { border-left: 4px solid var(--success); }
+    .step.fail { border-left: 4px solid var(--danger); }
+
+    .state-board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .state-box {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+      position: relative;
+    }
+
+    .state-box h3 {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .state-box p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .transitions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .transition-list {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .transition-list h3 { font-size: 16px; margin-bottom: 10px; }
+    .transition-list ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .detail .placeholder {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .detail-card {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .detail-card.active { display: flex; }
+
+    .detail-card h2 {
+      font-size: 22px;
+      line-height: 1.3;
+    }
+
+    .detail-card p {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .detail-block {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .detail-block h4 {
+      font-size: 13px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+
+    .detail-block ul {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.8;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .tooltip {
+      position: fixed;
+      z-index: 99;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .12s ease, transform .12s ease;
+      background: rgba(15, 23, 42, .92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.4;
+      padding: 8px 10px;
+      border-radius: 10px;
+      max-width: 280px;
+      box-shadow: var(--shadow);
+    }
+
+    .tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .collapsible {
+      margin-bottom: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .collapsible > button {
+      width: 100%;
+      border: none;
+      background: #f8fafc;
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .collapsible > button .collapse-icon {
+      font-size: 12px;
+      color: var(--muted);
+      transition: transform .2s ease;
+      flex-shrink: 0;
+    }
+
+    .collapsible > button.collapsed .collapse-icon {
+      transform: rotate(-90deg);
+    }
+
+    .collapsible-content {
+      padding: 16px;
+      display: block;
+    }
+
+    .hidden { display: none !important; }
+
+    .code-note {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      line-height: 1.8;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .mono { font-family: var(--mono); }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>Comit 백엔드 구조</h1>
+        <p>경북대학교 컴퓨터학부 인증 기반 커뮤니티 플랫폼 백엔드의 계층, 도메인, 요청 흐름, 상태 전이를 한 파일에서 설명하는 문서형 시각화입니다.</p>
+      </div>
+
+      <div class="toc-group">
+        <h3>섹션</h3>
+        <div class="toc">
+          <button class="tab-btn active" data-tab="architecture">전체 구조</button>
+          <button class="tab-btn" data-tab="domain">도메인 관계</button>
+          <button class="tab-btn" data-tab="flows">요청 흐름</button>
+          <button class="tab-btn" data-tab="state">상태 전이</button>
+          <button class="tab-btn" data-tab="intent">설계 의도</button>
+        </div>
+      </div>
+
+      <div class="toc-group">
+        <h3>범례</h3>
+        <div class="legend">
+          <div class="legend-item"><span class="swatch" style="background: var(--presentation)"></span>Presentation</div>
+          <div class="legend-item"><span class="swatch" style="background: var(--application)"></span>Application</div>
+          <div class="legend-item"><span class="swatch" style="background: var(--domain)"></span>Domain</div>
+          <div class="legend-item"><span class="swatch" style="background: var(--infra)"></span>Infrastructure</div>
+          <div class="legend-item"><span class="swatch" style="background: var(--global)"></span>Global</div>
+          <div class="legend-item"><span class="swatch" style="background: var(--external)"></span>External</div>
+        </div>
+      </div>
+
+      <div class="toc-group">
+        <h3>빠른 설명</h3>
+        <div class="code-note">
+          <div><span class="mono">controller/api</span> 가 계약과 문서를 소유합니다.</div>
+          <div><span class="mono">service</span> 가 유스케이스, 권한, 트랜잭션 경계를 가집니다.</div>
+          <div><span class="mono">entity</span> 가 생성 규칙과 상태 전이를 직접 가집니다.</div>
+          <div><span class="mono">soft delete</span> 는 <span class="mono">deletedAt</span> 기준입니다.</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Comit 문서형 시각화</h2>
+            <p>프로젝트 구조를 처음 보는 사람이 빠르게 설명 가능한 수준까지 이해하도록 설계된 요약 뷰입니다. 각 박스를 클릭하면 우측 패널에서 상세 설계를 확인할 수 있습니다.</p>
+          </div>
+          <div class="toolbar">
+            <button id="zoomOutBtn">−</button>
+            <span id="zoomLabel" style="font-size:12px;color:var(--muted);min-width:36px;text-align:center;">100%</span>
+            <button id="zoomInBtn">+</button>
+            <button id="zoomResetBtn" style="margin-left:4px;">초기화</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="architecture" class="tab-section active">
+            <div class="collapsible">
+              <button type="button" data-collapse-target="arch-overview">
+                <span>1. 전체 아키텍처 개요</span>
+                <span class="collapse-icon">▼</span>
+              </button>
+              <div id="arch-overview" class="collapsible-content">
+                <div class="layer-stack" id="zoomableArea">
+                  <div class="layer presentation">
+                    <div class="layer-title">Presentation — HTTP 계약과 진입점</div>
+                    <div class="layer-body">
+                      <div class="node" data-detail="controller-api" data-tooltip="라우팅, 파라미터, 문서 계약을 인터페이스에 모읍니다.">
+                        <div class="eyebrow">Presentation · Contract</div>
+                        <h4>controller/api</h4>
+                        <p>라우팅, `@ApiDoc`, 인증 파라미터, 요청·응답 계약을 소유합니다. 구현 컨트롤러는 이 계약을 구현만 합니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">PostControllerApi</span>
+                          <span class="chip">CommentControllerApi</span>
+                          <span class="chip">SsoAuthControllerApi</span>
+                        </div>
+                      </div>
+                      <div class="arrow">→</div>
+                      <div class="node" data-detail="controller-impl" data-tooltip="얇은 컨트롤러는 서비스 호출과 응답 wrapping만 담당합니다.">
+                        <div class="eyebrow">Presentation · Implementation</div>
+                        <h4>controller</h4>
+                        <p>실제 컨트롤러 구현입니다. `ApiResponse` wrapping, 서비스 호출, HTTP status 결정 정도만 담당합니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">PostController</span>
+                          <span class="chip">CommentController</span>
+                          <span class="chip">AdminReportController</span>
+                          <span class="chip">AdminPostController</span>
+                          <span class="chip">AdminCommentController</span>
+                          <span class="chip">AdminMemberController</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="layer application">
+                    <div class="layer-title">Application — 유스케이스, 권한 검증, 트랜잭션</div>
+                    <div class="layer-body">
+                      <div class="node" data-detail="service-layer" data-tooltip="유스케이스 단위 비즈니스 로직과 트랜잭션 경계가 모입니다.">
+                        <div class="eyebrow">Application</div>
+                        <h4>service</h4>
+                        <p>유스케이스를 실행하고, 중복/권한/소유권을 검증하며, 다른 도메인 서비스와 협력합니다. 기본 트랜잭션 경계도 여기에 있습니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">PostService</span>
+                          <span class="chip">CommentService</span>
+                          <span class="chip">ReportService</span>
+                          <span class="chip">MemberService</span>
+                          <span class="chip">AdminReportService</span>
+                          <span class="chip">AdminPostService</span>
+                          <span class="chip">AdminCommentService</span>
+                          <span class="chip">AdminMemberService</span>
+                        </div>
+                      </div>
+                      <div class="arrow">↓</div>
+                      <div class="node" data-detail="cross-service" data-tooltip="도메인 간 직접 repository 접근 대신 service를 통해 규칙을 재사용합니다.">
+                        <div class="eyebrow">Application · Cross-domain</div>
+                        <h4>service → other service</h4>
+                        <p>예를 들어 신고 생성은 `PostService`로 활성 게시글을 확인하고, `MemberService`로 신고자를 조회합니다. 도메인 규칙을 한 곳에 모으기 위한 선택입니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">ReportService → PostService</span>
+                          <span class="chip">ReportService → MemberService</span>
+                          <span class="chip">SsoAuthService → MemberService</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="layer domain">
+                    <div class="layer-title">Domain — 엔티티, 상태 전이, 생성 규칙</div>
+                    <div class="layer-body">
+                      <div class="node" data-detail="domain-entities" data-tooltip="엔티티는 create/review/delete 같은 상태 메서드를 직접 가집니다.">
+                        <div class="eyebrow">Domain · Entity</div>
+                        <h4>domain</h4>
+                        <p>엔티티는 생성 규칙과 상태 전이를 직접 가집니다. soft delete도 `deletedAt`을 통해 도메인 메서드로 변경합니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">Member</span>
+                          <span class="chip">Post</span>
+                          <span class="chip">Comment</span>
+                          <span class="chip">Report</span>
+                        </div>
+                      </div>
+                      <div class="arrow">→</div>
+                      <div class="node" data-detail="domain-repository" data-tooltip="Repository는 엔티티 저장소이며, DB 의존 조회 규칙을 캡슐화합니다.">
+                        <div class="eyebrow">Domain · Repository</div>
+                        <h4>repository</h4>
+                        <p>JPA Repository가 도메인 패키지 안에 위치합니다. 활성 데이터 조회, 정렬, 필터, 집계는 repository에서 정의합니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">PostRepository</span>
+                          <span class="chip">CommentRepository</span>
+                          <span class="chip">ReportRepository</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="layer infrastructure">
+                    <div class="layer-title">Infrastructure — DB, 외부 인증, 구현체</div>
+                    <div class="layer-body">
+                      <div class="node" data-detail="infra-db" data-tooltip="JPA/MySQL/Flyway가 persistence 구현체를 이룹니다.">
+                        <div class="eyebrow">Infrastructure · Persistence</div>
+                        <h4>MySQL / JPA / Flyway</h4>
+                        <p>DB는 MySQL, ORM은 Spring Data JPA, 스키마 변경은 Flyway migration으로 관리합니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">MySQL</span>
+                          <span class="chip">JpaRepository</span>
+                          <span class="chip">V8__create_report.sql</span>
+                        </div>
+                      </div>
+                      <div class="arrow">→</div>
+                      <div class="node" data-detail="infra-auth" data-tooltip="외부 SSO 공급자 구현은 port 뒤에 숨깁니다.">
+                        <div class="eyebrow">Infrastructure · Auth</div>
+                        <h4>CustomJwtExternalAuthClient</h4>
+                        <p>외부 SSO JWT 검증 구현체입니다. `ExternalAuthClient` 포트를 구현해 공급자 교체 비용을 낮춥니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">auth/port</span>
+                          <span class="chip">auth/infrastructure</span>
+                          <span class="chip">HMAC JWT verify</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="layer global">
+                    <div class="layer-title">Cross-cutting / Global — 인증 주입, 예외 응답, 문서 생성</div>
+                    <div class="layer-body">
+                      <div class="node" data-detail="global-auth" data-tooltip="필터와 argument resolver가 인증 정보를 컨트롤러로 연결합니다.">
+                        <div class="eyebrow">Global · Auth</div>
+                        <h4>global.auth</h4>
+                        <p>`SsoAuthenticationFilter`, `MemberAuthenticationFilter`, `MemberArgumentResolver`가 인증 상태를 `@AuthenticatedMember`로 연결합니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">Filter</span>
+                          <span class="chip">ArgumentResolver</span>
+                          <span class="chip">MemberPrincipal</span>
+                        </div>
+                      </div>
+                      <div class="node" data-detail="global-exception" data-tooltip="ProblemDetail과 ErrorCode 체계를 공통 처리합니다.">
+                        <div class="eyebrow">Global · Exception</div>
+                        <h4>global.exception</h4>
+                        <p>`BusinessException + ErrorCode + ProblemDetail` 조합으로 외부 에러 응답을 통일합니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">ProblemDetail</span>
+                          <span class="chip">CommonErrorCode</span>
+                          <span class="chip">ReportErrorCode</span>
+                        </div>
+                      </div>
+                      <div class="node" data-detail="global-docs" data-tooltip="controller/api 계약으로 docs/api HTML을 자동 생성합니다.">
+                        <div class="eyebrow">Global · Docs</div>
+                        <h4>global.docs</h4>
+                        <p>`@ApiContract`를 스캔해 `docs/api/`를 생성합니다. 계약 변경 시 산출물 재생성이 필요합니다.</p>
+                        <div class="chip-row">
+                          <span class="chip">ApiDocGenerator</span>
+                          <span class="chip">docs/api</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="domain" class="tab-section">
+            <div class="collapsible">
+              <button type="button" data-collapse-target="domain-map">
+                <span>2. 핵심 도메인 관계도</span>
+                <span class="collapse-icon">▼</span>
+              </button>
+              <div id="domain-map" class="collapsible-content">
+                <div class="diagram-grid">
+                  <div class="node" data-detail="member-domain" data-tooltip="SSO 사용자와 로컬 커뮤니티 정체성을 연결하는 도메인입니다.">
+                    <div class="eyebrow">Domain</div>
+                    <h4>Member</h4>
+                    <p>인증된 사용자. SSO 식별자와 Comit 전용 정보(닉네임, 학번, 계정 상태 등)를 관리합니다.</p>
+                    <div class="chip-row">
+                      <span class="chip">ssoSub</span>
+                      <span class="chip">nickname</span>
+                      <span class="chip">studentNumber</span>
+                      <span class="chip">status</span>
+                      <span class="chip">suspendedUntil</span>
+                      <span class="chip">deletedAt</span>
+                    </div>
+                  </div>
+                  <div class="arrow">↓</div>
+                  <div class="node" data-detail="post-domain" data-tooltip="커뮤니티의 핵심 콘텐츠 단위입니다.">
+                    <div class="eyebrow">Domain</div>
+                    <h4>Post</h4>
+                    <p>Q&A / 자유 게시글. 태그, 좋아요 수, 인기글 집계, 관리자 숨김, soft delete를 가집니다.</p>
+                    <div class="chip-row">
+                      <span class="chip">boardType</span>
+                      <span class="chip">title</span>
+                      <span class="chip">likeCount</span>
+                      <span class="chip">hiddenByAdmin</span>
+                      <span class="chip">deletedAt</span>
+                    </div>
+                  </div>
+
+                  <div class="arrow">↘</div>
+                  <div class="node" data-detail="comment-domain" data-tooltip="게시글 토론 흐름을 계층적으로 쌓습니다.">
+                    <div class="eyebrow">Domain</div>
+                    <h4>Comment</h4>
+                    <p>댓글과 대댓글. <span class="mono">parentComment</span> 자기참조로 1단 중첩을 구현하고, helpful, 관리자 숨김, soft delete를 관리합니다.</p>
+                    <div class="chip-row">
+                      <span class="chip">parentComment</span>
+                      <span class="chip">helpfulCount</span>
+                      <span class="chip">hiddenByAdmin</span>
+                      <span class="chip">deletedAt</span>
+                    </div>
+                  </div>
+
+                  <div class="arrow">↘</div>
+                  <div class="node" data-detail="report-domain" data-tooltip="게시글/댓글에 대한 신고 접수와 상태 전이를 관리합니다.">
+                    <div class="eyebrow">Domain</div>
+                    <h4>Report</h4>
+                    <p>게시글/댓글 신고. 신고 대상 타입, 대상 ID, 메시지, 상태, 처리 관리자 정보를 갖습니다.</p>
+                    <div class="chip-row">
+                      <span class="chip">targetType</span>
+                      <span class="chip">targetId</span>
+                      <span class="chip">message</span>
+                      <span class="chip">status</span>
+                      <span class="chip">reviewedAt</span>
+                      <span class="chip">deletedAt</span>
+                    </div>
+                  </div>
+
+                  <div class="node" data-detail="auth-domain" data-tooltip="외부 SSO와 로컬 회원 시스템 사이를 연결합니다.">
+                    <div class="eyebrow">Auth / External</div>
+                    <h4>Auth / SSO</h4>
+                    <p>로그인 시작, callback, 외부 JWT 검증, local member 연결, cookie 기반 인증 상태를 담당합니다.</p>
+                    <div class="chip-row">
+                      <span class="chip">SsoAuthController</span>
+                      <span class="chip">ExternalAuthClient</span>
+                      <span class="chip">SsoAuthenticationFilter</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="code-note" style="margin-top: 16px;">
+                  관계 요약: <span class="mono">Member</span> 는 글, 댓글, 신고의 주체입니다. <span class="mono">Post</span> 는 <span class="mono">Comment</span> 를 자식으로 갖고, <span class="mono">Comment</span> 는 대댓글 구조를 위해 자기 자신을 부모로 참조합니다. <span class="mono">Report</span> 는 다형성 타깃을 직접 연관 대신 <span class="mono">targetType + targetId</span> 로 표현해 게시글/댓글 신고를 공통화합니다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="flows" class="tab-section">
+            <div class="flow-grid">
+              <div class="sequence">
+                <div class="sequence-header">
+                  <h3>A. 게시글 신고 API</h3>
+                  <p><span class="mono">POST /posts/{postId}/reports</span> 요청이 들어왔을 때의 정상 흐름과 실패 분기입니다.</p>
+                </div>
+                <div class="steps">
+                  <div class="step ok">
+                    <div class="no">1</div>
+                    <div>
+                      <h4>PostController</h4>
+                      <p>인증된 <span class="mono">@AuthenticatedMember</span>를 받고, 신고 메시지를 request DTO에서 꺼내 <span class="mono">ReportService</span>에 전달합니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">2</div>
+                    <div>
+                      <h4>ReportService</h4>
+                      <p>같은 사용자와 같은 대상 조합이 이미 신고되었는지 먼저 확인합니다. 빠른 중복 차단과 DB unique 보장을 함께 사용합니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">3</div>
+                    <div>
+                      <h4>PostService</h4>
+                      <p>대상 게시글이 존재하고 soft delete 되지 않았는지 확인합니다. 없으면 <span class="mono">POST_NOT_FOUND</span> 입니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">4</div>
+                    <div>
+                      <h4>MemberService</h4>
+                      <p>신고자를 로컬 회원으로 조회합니다. 이후 <span class="mono">Report.create(...)</span> 로 도메인 규칙을 통과한 신고를 생성합니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">5</div>
+                    <div>
+                      <h4>ReportRepository + DB</h4>
+                      <p>신고를 저장합니다. race condition은 DB unique constraint로 최종 차단하고 duplicate key는 <span class="mono">REPORT_ALREADY_EXISTS</span> 로 변환합니다.</p>
+                    </div>
+                  </div>
+                  <div class="step fail">
+                    <div class="no">!</div>
+                    <div>
+                      <h4>예외 흐름</h4>
+                      <p>중복 신고 → <span class="mono">409 REPORT_ALREADY_EXISTS</span>, 대상 없음 → <span class="mono">404 POST_NOT_FOUND</span>, 공백/500자 초과 → <span class="mono">400 INVALID_REQUEST</span>.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sequence">
+                <div class="sequence-header">
+                  <h3>B. 관리자 신고 상태 변경 API</h3>
+                  <p><span class="mono">PATCH /admin/reports/{reportId}/status</span> 에서 관리자 권한, 활성 신고 조회, 상태 전이가 어떻게 동작하는지 보여줍니다.</p>
+                </div>
+                <div class="steps">
+                  <div class="step ok">
+                    <div class="no">1</div>
+                    <div>
+                      <h4>AdminReportController</h4>
+                      <p>현재 principal이 admin인지 확인합니다. 아니면 즉시 <span class="mono">FORBIDDEN</span> 입니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">2</div>
+                    <div>
+                      <h4>AdminReportService</h4>
+                      <p>soft delete 되지 않은 신고만 조회합니다. 삭제된 신고나 없는 신고는 <span class="mono">REPORT_NOT_FOUND</span> 입니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">3</div>
+                    <div>
+                      <h4>Report.review(...)</h4>
+                      <p>현재 상태가 <span class="mono">RECEIVED</span> 인지 확인하고, 새 상태가 <span class="mono">REVIEWED</span>, <span class="mono">DISMISSED</span>, <span class="mono">ACTIONED</span> 중 하나인지 검증합니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">4</div>
+                    <div>
+                      <h4>상태 반영</h4>
+                      <p>상태를 바꾸고 <span class="mono">reviewedAt</span>, <span class="mono">reviewedBy</span> 를 기록합니다.</p>
+                    </div>
+                  </div>
+                  <div class="step fail">
+                    <div class="no">!</div>
+                    <div>
+                      <h4>예외 흐름</h4>
+                      <p>관리자 아님 → <span class="mono">403 FORBIDDEN</span>, 신고 없음 → <span class="mono">404 REPORT_NOT_FOUND</span>, 이미 처리됨 → <span class="mono">409 REPORT_ALREADY_REVIEWED</span>, <span class="mono">RECEIVED</span> 재요청 → <span class="mono">400 INVALID_REQUEST</span>.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sequence">
+                <div class="sequence-header">
+                  <h3>C. SSO 로그인 흐름</h3>
+                  <p><span class="mono">/auth/sso/login → auth server → /auth/sso/callback</span> 으로 이어지는 외부 인증 연결 구조입니다.</p>
+                </div>
+                <div class="steps">
+                  <div class="step ok">
+                    <div class="no">1</div>
+                    <div>
+                      <h4>브라우저 → Comit Backend</h4>
+                      <p><span class="mono">/auth/sso/login</span> 으로 들어오면 state를 만들고 auth server 로그인 URL로 redirect 합니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">2</div>
+                    <div>
+                      <h4>Auth Server</h4>
+                      <p>사용자 인증을 마친 뒤 <span class="mono">callback?state=...&token=...</span> 형태로 custom JWT를 돌려줍니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">3</div>
+                    <div>
+                      <h4>CustomJwtExternalAuthClient</h4>
+                      <p>외부 JWT를 검증하고 <span class="mono">ExternalIdentity</span> 로 변환합니다. 이 구현은 port 뒤에 숨겨져 있습니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">4</div>
+                    <div>
+                      <h4>MemberService</h4>
+                      <p>외부 사용자 정보를 로컬 회원과 연결하거나 최초 생성합니다.</p>
+                    </div>
+                  </div>
+                  <div class="step ok">
+                    <div class="no">5</div>
+                    <div>
+                      <h4>Cookie + Filter</h4>
+                      <p>인증 cookie를 발급하고, 이후 요청마다 <span class="mono">SsoAuthenticationFilter</span> 와 <span class="mono">MemberArgumentResolver</span> 가 <span class="mono">@AuthenticatedMember</span> 를 주입합니다.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="state" class="tab-section">
+            <div class="collapsible">
+              <button type="button" data-collapse-target="state-report">
+                <span>4. 상태 전이 다이어그램</span>
+                <span class="collapse-icon">▼</span>
+              </button>
+              <div id="state-report" class="collapsible-content">
+                <div class="state-board">
+                  <div class="state-box">
+                    <h3>RECEIVED</h3>
+                    <p>신고가 막 접수된 상태입니다. 관리자 처리 전의 기본 상태입니다.</p>
+                  </div>
+                  <div class="state-box">
+                    <h3>REVIEWED</h3>
+                    <p>관리자가 확인한 상태입니다. 추가 조치가 없더라도 검토 사실이 남습니다.</p>
+                  </div>
+                  <div class="state-box">
+                    <h3>DISMISSED</h3>
+                    <p>조치 없이 종료된 상태입니다. 신고는 유효하지만 처리 결과가 종료입니다.</p>
+                  </div>
+                  <div class="state-box">
+                    <h3>ACTIONED</h3>
+                    <p>실제 조치가 반영된 상태입니다. 이후 재검토용으로 되돌리지 않습니다.</p>
+                  </div>
+                </div>
+
+                <div class="transitions">
+                  <div class="transition-list">
+                    <h3>허용 전이</h3>
+                    <ul>
+                      <li><span class="mono">RECEIVED → REVIEWED</span></li>
+                      <li><span class="mono">RECEIVED → DISMISSED</span></li>
+                      <li><span class="mono">RECEIVED → ACTIONED</span></li>
+                      <li>처리 시 <span class="mono">reviewedAt</span>, <span class="mono">reviewedBy</span> 가 함께 기록됩니다.</li>
+                    </ul>
+                  </div>
+                  <div class="transition-list">
+                    <h3>금지 전이</h3>
+                    <ul>
+                      <li><span class="mono">RECEIVED → RECEIVED</span></li>
+                      <li><span class="mono">REVIEWED → ACTIONED</span></li>
+                      <li><span class="mono">DISMISSED → REVIEWED</span></li>
+                      <li><span class="mono">ACTIONED → REVIEWED</span></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="transition-list" style="margin-top: 18px;">
+                  <h3>Soft delete 개념</h3>
+                  <ul>
+                    <li><span class="mono">ACTIVE → DELETED</span> 로만 이동합니다.</li>
+                    <li>삭제 후 일반 조회와 관리자 조회 모두 기본적으로 active-only 경계를 따릅니다.</li>
+                    <li><span class="mono">deletedAt IS NULL</span> 조건이 repository 조회의 핵심 기준입니다.</li>
+                  </ul>
+                </div>
+
+                <div style="margin-top: 28px; border-top: 1px solid var(--line); padding-top: 20px;">
+                  <h3 style="font-size: 16px; margin-bottom: 14px;">회원 계정 상태 (MemberStatus)</h3>
+                  <div class="state-board" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+                    <div class="state-box" style="border-left: 4px solid #166534;">
+                      <h3>ACTIVE</h3>
+                      <p>정상 계정 상태입니다. 로그인, 글 작성, 댓글 등 모든 기능을 사용할 수 있습니다.</p>
+                    </div>
+                    <div class="state-box" style="border-left: 4px solid #b45309;">
+                      <h3>SUSPENDED</h3>
+                      <p>일시 정지 상태입니다. <span class="mono">suspendedUntil</span> 이전까지 로그인이 차단됩니다.</p>
+                    </div>
+                    <div class="state-box" style="border-left: 4px solid #b91c1c;">
+                      <h3>BANNED</h3>
+                      <p>영구 차단 상태입니다. 기간 제한 없이 로그인이 차단됩니다.</p>
+                    </div>
+                  </div>
+                  <div class="transitions">
+                    <div class="transition-list">
+                      <h3>허용 전이</h3>
+                      <ul>
+                        <li><span class="mono">ACTIVE → SUSPENDED</span> (기간 지정)</li>
+                        <li><span class="mono">ACTIVE → BANNED</span></li>
+                        <li><span class="mono">SUSPENDED → ACTIVE</span> (해제)</li>
+                        <li><span class="mono">BANNED → ACTIVE</span> (해제)</li>
+                      </ul>
+                    </div>
+                    <div class="transition-list">
+                      <h3>적용 범위</h3>
+                      <ul>
+                        <li><span class="mono">MemberAuthenticationFilter</span> — Bridge 인증 시 차단</li>
+                        <li><span class="mono">SsoAuthenticationFilter</span> — SSO 인증 시 차단 (<span class="mono">BusinessException</span> re-throw)</li>
+                        <li>차단 시 <span class="mono">403 MEMBER_SUSPENDED / MEMBER_BANNED</span> 응답</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top: 28px; border-top: 1px solid var(--line); padding-top: 20px;">
+                  <h3 style="font-size: 16px; margin-bottom: 14px;">게시글 · 댓글 가시성 (hiddenByAdmin)</h3>
+                  <div class="transitions">
+                    <div class="transition-list">
+                      <h3>플래그 전이</h3>
+                      <ul>
+                        <li><span class="mono">hiddenByAdmin = false → true</span> (숨김)</li>
+                        <li><span class="mono">hiddenByAdmin = true → false</span> (복구)</li>
+                        <li>soft delete와 독립적으로 동작합니다.</li>
+                      </ul>
+                    </div>
+                    <div class="transition-list">
+                      <h3>조회 경계</h3>
+                      <ul>
+                        <li>일반 사용자 쿼리: <span class="mono">hiddenByAdmin = false AND deletedAt IS NULL</span></li>
+                        <li>관리자 쿼리: <span class="mono">deletedAt IS NULL</span> 만 적용 (숨김 포함)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="intent" class="tab-section">
+            <div class="collapsible">
+              <button type="button" data-collapse-target="design-intent">
+                <span>5. 설계 의도 설명</span>
+                <span class="collapse-icon">▼</span>
+              </button>
+              <div id="design-intent" class="collapsible-content">
+                <div class="transition-list" style="margin-bottom: 16px;">
+                  <h3>왜 controller/api와 구현 컨트롤러를 분리했는가</h3>
+                  <ul>
+                    <li>라우팅과 문서 계약을 인터페이스에 모아 API 산출물을 자동화하기 쉽습니다.</li>
+                    <li>구현 컨트롤러는 얇게 유지되어 테스트와 리뷰 범위가 줄어듭니다.</li>
+                  </ul>
+                </div>
+                <div class="transition-list" style="margin-bottom: 16px;">
+                  <h3>왜 DTO와 Entity를 분리했는가</h3>
+                  <ul>
+                    <li>Request DTO는 운반만, Entity는 도메인 규칙과 상태를 담당하게 역할이 명확해집니다.</li>
+                    <li>외부 계약과 내부 모델을 분리해 API 변화가 엔티티 설계를 직접 흔들지 않게 합니다.</li>
+                  </ul>
+                </div>
+                <div class="transition-list" style="margin-bottom: 16px;">
+                  <h3>왜 service가 비즈니스 규칙과 트랜잭션 경계를 가지는가</h3>
+                  <ul>
+                    <li>중복 검사, 소유권 검사, 권한 판단, 도메인 간 협력을 유스케이스 단위로 묶기 위함입니다.</li>
+                    <li>Controller는 HTTP, Entity는 상태, Service는 실행 흐름이라는 분담이 명확해집니다.</li>
+                  </ul>
+                </div>
+                <div class="transition-list" style="margin-bottom: 16px;">
+                  <h3>왜 entity가 create/review/delete 메서드를 직접 가지는가</h3>
+                  <ul>
+                    <li>생성 규칙과 상태 전이를 엔티티 내부에 모아 invalid state를 만들기 어렵게 합니다.</li>
+                    <li>예: `Report.review(...)`는 가능한 상태 전이만 허용해야 합니다.</li>
+                  </ul>
+                </div>
+                <div class="transition-list" style="margin-bottom: 16px;">
+                  <h3>왜 soft delete를 쓰는가</h3>
+                  <ul>
+                    <li>커뮤니티 운영에서 삭제 이력과 관계 보존이 중요하기 때문입니다.</li>
+                    <li>다만 soft delete를 넣는 순간 조회 경계도 active-only 기준으로 같이 바뀌어야 합니다.</li>
+                  </ul>
+                </div>
+                <div class="transition-list">
+                  <h3>왜 외부 인증은 port 뒤에 숨기는가</h3>
+                  <ul>
+                    <li>현재는 custom JWT 구현이지만, 나중에 starter나 다른 구현으로 바꿔도 app 내부 코드를 덜 흔들기 위해서입니다.</li>
+                    <li>즉, 공급자 변경 가능성이 있는 경계를 먼저 추상화한 구조입니다.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="detail">
+      <div class="placeholder" id="detailPlaceholder">
+        왼쪽 다이어그램의 박스를 클릭하면 상세 설명이 열립니다.
+        <br /><br />
+        여기서는 다음을 보여줍니다.
+        <ul>
+          <li>왜 이 컴포넌트가 필요한지</li>
+          <li>어떤 책임을 가지는지</li>
+          <li>어디와 연결되는지</li>
+          <li>변경 시 영향 범위</li>
+          <li>실무적으로 주의할 설계 포인트</li>
+        </ul>
+      </div>
+
+      <div class="detail-card" id="detailCard"></div>
+    </aside>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <script>
+    const details = {
+      "controller-api": {
+        title: "controller/api",
+        summary: "HTTP 계약, 문서, 파라미터 구조를 인터페이스로 분리하는 Comit 고유 패턴입니다.",
+        why: "라우팅과 문서 정의를 구현체에서 분리하면 API 계약이 눈에 잘 들어오고, `generateApiDocs` 자동 생성이 가능해집니다.",
+        responsibilities: [
+          "매핑 어노테이션과 설명을 보관한다",
+          "인증 파라미터와 request/response shape를 선언한다",
+          "API 문서 생성의 source of truth 역할을 한다"
+        ],
+        connections: [
+          "구현 컨트롤러가 이 인터페이스를 implements 한다",
+          "global.docs 가 이를 스캔해 docs/api를 생성한다"
+        ],
+        cautions: [
+          "계약이 바뀌면 docs/api 재생성이 필수",
+          "비즈니스 로직을 여기에 넣지 말아야 한다"
+        ],
+        impact: "엔드포인트, 응답 JSON, validation이 바뀌면 이 층부터 수정됩니다."
+      },
+      "controller-impl": {
+        title: "controller",
+        summary: "얇은 HTTP 어댑터입니다.",
+        why: "요청/응답 처리와 유스케이스 실행을 분리하면 테스트와 리뷰가 쉬워집니다.",
+        responsibilities: [
+          "service 호출",
+          "HTTP status 결정",
+          "ApiResponse wrapping"
+        ],
+        connections: [
+          "controller/api 계약을 구현한다",
+          "service와 직접 연결된다"
+        ],
+        cautions: [
+          "조건 분기나 도메인 규칙을 많이 담기 시작하면 설계가 무너집니다"
+        ],
+        impact: "응답 상태 코드나 컨트롤러 wiring 변경 시 영향이 큽니다."
+      },
+      "service-layer": {
+        title: "service",
+        summary: "유스케이스의 실제 실행 층입니다.",
+        why: "권한, 중복, 소유권, 트랜잭션 경계를 한 곳에 모아야 도메인 협력이 읽힙니다.",
+        responsibilities: [
+          "유스케이스 실행",
+          "권한/중복/존재 여부 검사",
+          "트랜잭션 경계 설정"
+        ],
+        connections: [
+          "controller에서 호출된다",
+          "repository와 다른 domain service를 조합한다"
+        ],
+        cautions: [
+          "repository 직접 호출보다 service 경유가 우선인 도메인 간 관계가 많습니다",
+          "public 메서드는 컨트롤러 유스케이스 단위가 좋습니다"
+        ],
+        impact: "기능 확장과 권한 정책 변경은 대부분 service 층에서 시작됩니다."
+      },
+      "cross-service": {
+        title: "service → other service",
+        summary: "도메인 간 규칙을 중복하지 않기 위한 협력 패턴입니다.",
+        why: "타 도메인 repository를 직접 건드리기보다 해당 도메인의 규칙을 service에 재사용시키기 위함입니다.",
+        responsibilities: [
+          "활성 게시글/댓글 조회 위임",
+          "로컬 회원 조회/생성 위임"
+        ],
+        connections: [
+          "ReportService → PostService / CommentQueryService / MemberService",
+          "Auth 흐름 → MemberService"
+        ],
+        cautions: [
+          "과도한 순환 의존은 피해야 합니다"
+        ],
+        impact: "도메인 규칙이 바뀌면 연결된 서비스들이 같이 영향을 받습니다."
+      },
+      "domain-entities": {
+        title: "domain entity",
+        summary: "Comit의 핵심 규칙이 가장 응축된 층입니다.",
+        why: "무효한 상태를 만들지 않게 하려면 엔티티가 생성 규칙과 상태 메서드를 직접 가져야 합니다.",
+        responsibilities: [
+          "create() 검증",
+          "review(), delete() 같은 상태 전이",
+          "soft delete 표준화"
+        ],
+        connections: [
+          "service가 entity 메서드를 호출한다",
+          "repository가 저장/조회한다"
+        ],
+        cautions: [
+          "setter 남발은 금지",
+          "검증 규칙은 request DTO가 아니라 entity에도 있어야 합니다"
+        ],
+        impact: "상태 전이 규칙 하나가 여러 API 동작을 함께 바꿉니다."
+      },
+      "domain-repository": {
+        title: "repository",
+        summary: "DB 의존 조회 규칙과 저장소 경계입니다.",
+        why: "active-only 조회, 정렬, 필터, cursor, unique constraint 같은 persistence 규칙은 repository가 명시적으로 가져야 합니다.",
+        responsibilities: [
+          "엔티티 저장",
+          "활성 데이터 조회",
+          "필터/정렬/집계 쿼리 보유"
+        ],
+        connections: [
+          "service에서 호출",
+          "JPA/MySQL 구현과 연결"
+        ],
+        cautions: [
+          "soft delete 도입 시 deletedAt 조건을 빠뜨리기 쉽습니다"
+        ],
+        impact: "쿼리 변경은 성능, 목록 정렬, 관리자 조회에 직접 영향이 갑니다."
+      },
+      "infra-db": {
+        title: "MySQL / JPA / Flyway",
+        summary: "Comit의 영속성 구현체입니다.",
+        why: "엔티티 저장과 migration 관리가 프로젝트 전체 안정성을 좌우합니다.",
+        responsibilities: [
+          "테이블/컬럼 스키마 관리",
+          "JPA 기반 CRUD와 쿼리 실행",
+          "migration 버전 관리"
+        ],
+        connections: [
+          "repository",
+          "Flyway migration 파일"
+        ],
+        cautions: [
+          "migration 추가 시 통합 테스트와 문서가 함께 맞아야 합니다"
+        ],
+        impact: "unique constraint와 soft delete 조회 경계는 이 층과 직접 연결됩니다."
+      },
+      "infra-auth": {
+        title: "CustomJwtExternalAuthClient",
+        summary: "외부 SSO JWT를 검증하는 현재 구현체입니다.",
+        why: "인증 공급자에 대한 구현 세부를 앱 내부와 분리해야 교체 비용이 줄어듭니다.",
+        responsibilities: [
+          "외부 JWT 서명/iss/aud 검증",
+          "ExternalIdentity 생성",
+          "auth server login URL 생성"
+        ],
+        connections: [
+          "ExternalAuthClient 포트",
+          "SsoAuthService / SsoAuthenticationFilter"
+        ],
+        cautions: [
+          "startup misconfig와 bad cookie 처리까지 같이 보아야 합니다"
+        ],
+        impact: "SSO 공급자 스펙 변경 시 가장 먼저 수정될 영역입니다."
+      },
+      "global-auth": {
+        title: "global.auth",
+        summary: "인증 상태를 컨트롤러 파라미터로 연결하는 접착층입니다.",
+        why: "컨트롤러마다 인증 해석을 반복하지 않기 위함입니다.",
+        responsibilities: [
+          "filter에서 인증 상태 생성",
+          "request attribute에 principal 주입",
+          "@AuthenticatedMember 해석"
+        ],
+        connections: [
+          "SsoAuthenticationFilter",
+          "MemberAuthenticationFilter",
+          "MemberArgumentResolver"
+        ],
+        cautions: [
+          "stale cookie 정리와 bridge fallback 순서를 주의해야 합니다"
+        ],
+        impact: "인증 실패 방식과 컨트롤러 파라미터 주입이 모두 이곳에 달려 있습니다."
+      },
+      "global-exception": {
+        title: "global.exception",
+        summary: "문제 응답 포맷과 에러 코드를 통일하는 층입니다.",
+        why: "도메인별 예외를 외부에서는 일관된 ProblemDetail로 내려줘야 합니다.",
+        responsibilities: [
+          "BusinessException 처리",
+          "ProblemDetail 직렬화",
+          "ErrorCode registry 관리"
+        ],
+        connections: [
+          "모든 service/controller",
+          "docs/api 에러 코드 문서"
+        ],
+        cautions: [
+          "문서에 선언한 error code와 실제 registry를 같이 맞춰야 합니다"
+        ],
+        impact: "외부 에러 계약이 바뀌면 프론트와 문서가 함께 영향을 받습니다."
+      },
+      "global-docs": {
+        title: "global.docs",
+        summary: "API 계약을 HTML 문서로 재생성하는 자동화 층입니다.",
+        why: "문서 drift를 줄이고 `controller/api`가 실제 source of truth가 되게 하기 위함입니다.",
+        responsibilities: [
+          "@ApiContract 스캔",
+          "docs/api HTML 생성",
+          "에러 코드/필드 설명 introspection"
+        ],
+        connections: [
+          "controller/api",
+          "ErrorCodeRegistry",
+          "docs/api"
+        ],
+        cautions: [
+          "새 API 추가 후 generateApiDocs를 빼먹으면 CI가 깨집니다"
+        ],
+        impact: "문서화 품질과 외부 설명 가능성이 여기에 좌우됩니다."
+      },
+      "member-domain": {
+        title: "Member 도메인",
+        summary: "SSO 외부 사용자와 Comit 내부 사용자를 연결하는 핵심 주체입니다.",
+        why: "외부 인증 정보만으로는 커뮤니티 내부 식별자, 설정, 제재 상태를 충분히 표현할 수 없기 때문입니다.",
+        responsibilities: [
+          "SSO sub와 로컬 member 매핑",
+          "닉네임/학번 관리",
+          "계정 상태 관리: ACTIVE / SUSPENDED / BANNED",
+          "suspend(until) · ban() · activate() 상태 전이",
+          "soft delete"
+        ],
+        connections: [
+          "Post 작성자",
+          "Comment 작성자",
+          "Report 신고자/처리자",
+          "MemberAuthenticationFilter / SsoAuthenticationFilter (정지·차단 차단 검사)"
+        ],
+        cautions: [
+          "닉네임 중복과 registration race를 주의해야 합니다",
+          "SsoAuthenticationFilter의 catch(Exception) 블록이 BusinessException을 삼키지 않도록 re-throw 처리가 필요합니다",
+          "suspendedUntil이 null이면 무기한 정지로 동작합니다"
+        ],
+        impact: "로그인, 작성자 표시, 관리자 판정, 계정 제재 모두 Member에 연결됩니다."
+      },
+      "post-domain": {
+        title: "Post 도메인",
+        summary: "Q&A와 자유 게시판을 표현하는 핵심 콘텐츠 단위입니다.",
+        why: "Comit의 기본 문제 정의인 정보 축적과 질의응답이 Post에서 시작됩니다.",
+        responsibilities: [
+          "게시글 생성/수정/삭제",
+          "좋아요 수·조회수 관리",
+          "태그/인기글 집계 기반 데이터 제공",
+          "관리자 숨김 처리: hideByAdmin() / restoreByAdmin()"
+        ],
+        connections: [
+          "Member (작성자)",
+          "Comment (자식)",
+          "Report (신고 대상)"
+        ],
+        cautions: [
+          "hiddenByAdmin = true인 게시글은 일반 사용자 쿼리에서 자동 필터링됩니다",
+          "삭제(soft delete)와 숨김(hiddenByAdmin)은 독립적으로 동작합니다",
+          "인기글 집계 쿼리는 hiddenByAdmin 필터를 별도로 고려해야 합니다"
+        ],
+        impact: "커뮤니티의 거의 모든 메인 플로우가 Post를 지나갑니다."
+      },
+      "comment-domain": {
+        title: "Comment 도메인",
+        summary: "질문과 답변, 대화를 축적하는 계층형 토론 모델입니다.",
+        why: "Q&A 특성상 댓글과 대댓글 맥락 보존이 중요하기 때문입니다.",
+        responsibilities: [
+          "댓글/대댓글 생성 (parentComment 자기참조, 1단 중첩만 허용)",
+          "helpfulCount 관리",
+          "관리자 숨김: hideByAdmin() / restoreByAdmin()",
+          "soft delete 및 부모 삭제 시 대댓글 cascade"
+        ],
+        connections: [
+          "Post (부모)",
+          "Member (작성자)",
+          "parent Comment (대댓글 구조)"
+        ],
+        cautions: [
+          "depth 필드는 존재하지 않습니다 — 중첩은 parentComment IS NULL 여부로 판단합니다",
+          "hiddenByAdmin = true인 댓글은 일반 사용자 쿼리에서 자동 필터링됩니다",
+          "부모 댓글 soft delete 시 자식(대댓글)도 cascade soft delete됩니다"
+        ],
+        impact: "게시글 상세 응답 구조와 정렬에 직접 영향을 줍니다."
+      },
+      "report-domain": {
+        title: "Report 도메인",
+        summary: "게시글/댓글 신고 접수와 관리자 검토 상태를 공통화합니다.",
+        why: "게시글과 댓글을 같은 정책으로 신고하되, 도메인 분기를 최소화하기 위함입니다.",
+        responsibilities: [
+          "신고 생성",
+          "상태 전이",
+          "reviewedAt/reviewedBy 기록",
+          "soft delete"
+        ],
+        connections: [
+          "Member",
+          "Post 또는 Comment(targetType + targetId)"
+        ],
+        cautions: [
+          "RECEIVED 자기 전이 금지",
+          "soft delete 후 관리자 조회 제외"
+        ],
+        impact: "운영 정책과 moderation 흐름이 이 도메인에 집중됩니다."
+      },
+      "auth-domain": {
+        title: "Auth / SSO",
+        summary: "외부 인증 서버와 Comit 내부 회원 시스템 사이를 잇는 흐름입니다.",
+        why: "Comit은 자체 계정 시스템이 아니라 KNU CSE SSO에 의존하기 때문입니다.",
+        responsibilities: [
+          "로그인 시작/redirect",
+          "callback token 검증",
+          "local member 연결",
+          "cookie 발급과 재인증"
+        ],
+        connections: [
+          "Auth server",
+          "ExternalAuthClient",
+          "MemberService",
+          "global.auth"
+        ],
+        cautions: [
+          "브라우저 callback, bad cookie, 외부 사용자 차단 정책을 같이 고려해야 합니다"
+        ],
+        impact: "인증이 깨지면 거의 모든 보호된 API가 영향을 받습니다."
+      }
+    };
+
+    const tooltip = document.getElementById("tooltip");
+    const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+    const tabSections = Array.from(document.querySelectorAll(".tab-section"));
+    const detailCard = document.getElementById("detailCard");
+    const detailPlaceholder = document.getElementById("detailPlaceholder");
+    const nodes = Array.from(document.querySelectorAll(".node"));
+    const collapsibleButtons = Array.from(document.querySelectorAll("[data-collapse-target]"));
+    const zoomableArea = document.getElementById("zoomableArea");
+
+    let zoomLevel = 1;
+
+    function renderDetail(key) {
+      const info = details[key];
+      if (!info) return;
+
+      detailPlaceholder.classList.add("hidden");
+      detailCard.classList.add("active");
+      detailCard.innerHTML = `
+        <h2>${info.title}</h2>
+        <p>${info.summary}</p>
+        <div class="detail-block">
+          <h4>왜 필요한가</h4>
+          <p>${info.why}</p>
+        </div>
+        <div class="detail-block">
+          <h4>책임</h4>
+          <ul>${info.responsibilities.map(item => `<li>${item}</li>`).join("")}</ul>
+        </div>
+        <div class="detail-block">
+          <h4>연결</h4>
+          <ul>${info.connections.map(item => `<li>${item}</li>`).join("")}</ul>
+        </div>
+        <div class="detail-block">
+          <h4>주의 포인트</h4>
+          <ul>${info.cautions.map(item => `<li>${item}</li>`).join("")}</ul>
+        </div>
+        <div class="detail-block">
+          <h4>실무적 의미</h4>
+          <p>${info.impact}</p>
+        </div>
+      `;
+    }
+
+    function setActiveTab(tab) {
+      tabButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
+      tabSections.forEach(section => section.classList.toggle("active", section.id === tab));
+    }
+
+    tabButtons.forEach(button => {
+      button.addEventListener("click", () => setActiveTab(button.dataset.tab));
+    });
+
+    nodes.forEach(node => {
+      node.addEventListener("click", () => {
+        nodes.forEach(n => n.classList.remove("selected"));
+        node.classList.add("selected");
+        renderDetail(node.dataset.detail);
+      });
+
+      node.addEventListener("mouseenter", event => {
+        tooltip.textContent = node.dataset.tooltip || "";
+        tooltip.classList.add("show");
+        tooltip.style.left = `${event.clientX + 12}px`;
+        tooltip.style.top = `${event.clientY + 12}px`;
+      });
+
+      node.addEventListener("mousemove", event => {
+        tooltip.style.left = `${event.clientX + 12}px`;
+        tooltip.style.top = `${event.clientY + 12}px`;
+      });
+
+      node.addEventListener("mouseleave", () => {
+        tooltip.classList.remove("show");
+      });
+    });
+
+    collapsibleButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        const target = document.getElementById(button.dataset.collapseTarget);
+        const isHidden = target.classList.toggle("hidden");
+        button.classList.toggle("collapsed", isHidden);
+      });
+    });
+
+    const zoomLabel = document.getElementById("zoomLabel");
+
+    function applyZoom() {
+      zoomableArea.style.transform = `scale(${zoomLevel})`;
+      if (zoomLabel) zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
+    }
+
+    document.getElementById("zoomInBtn").addEventListener("click", () => {
+      zoomLevel = Math.min(1.35, zoomLevel + 0.05);
+      applyZoom();
+    });
+
+    document.getElementById("zoomOutBtn").addEventListener("click", () => {
+      zoomLevel = Math.max(0.8, zoomLevel - 0.05);
+      applyZoom();
+    });
+
+    document.getElementById("zoomResetBtn").addEventListener("click", () => {
+      zoomLevel = 1;
+      applyZoom();
+    });
+  </script>
+</body>
+</html>
