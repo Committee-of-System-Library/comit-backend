@@ -29,7 +29,7 @@ public class NoticeQueryTypeClassifier {
             "학위논문 제출", "수강신청", "수강변경"
     );
 
-    NoticeQueryType classify(String query) {
+    public NoticeQueryType classify(String query) {
         String normalized = normalize(query);
 
         if (containsAny(normalized, OUT_OF_SCOPE_KEYWORDS)) {

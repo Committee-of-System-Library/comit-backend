@@ -74,7 +74,7 @@ public class NoticeRagPipeline {
                 .toList();
         ragTracer.queryClassified(traceId, queryType, selectedDocs, answerDocs);
 
-        GeneratedAnswer generatedAnswer = answerGenerator.generate(message, answerDocs);
+        GeneratedAnswer generatedAnswer = answerGenerator.generate(message, answerDocs, queryType.answerTier());
         List<NoticeSource> sources = toSources(answerDocs);
         ragTracer.answerGenerated(traceId, generatedAnswer, sources);
 

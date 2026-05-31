@@ -13,6 +13,8 @@ public class NoticeRagProperties {
     private final double queryTransformThreshold;
     private final String queryTransformModel;
     private final String rerankModel;
+    private final String answerNanoModel;
+    private final String answerMiniModel;
     private final String answerModel;
     private final String summarizerModel;
 }

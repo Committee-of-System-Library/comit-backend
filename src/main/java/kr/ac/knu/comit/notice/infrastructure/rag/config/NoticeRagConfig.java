@@ -26,6 +26,22 @@ public class NoticeRagConfig {
     }
 
     @Bean
+    @Qualifier("answerNanoClient")
+    public ChatClient answerNanoClient(ChatClient.Builder builder, NoticeRagProperties properties) {
+        return builder
+                .defaultOptions(OpenAiChatOptions.builder().model(properties.getAnswerNanoModel()))
+                .build();
+    }
+
+    @Bean
+    @Qualifier("answerMiniClient")
+    public ChatClient answerMiniClient(ChatClient.Builder builder, NoticeRagProperties properties) {
+        return builder
+                .defaultOptions(OpenAiChatOptions.builder().model(properties.getAnswerMiniModel()))
+                .build();
+    }
+
+    @Bean
     @Qualifier("answerClient")
     public ChatClient answerClient(ChatClient.Builder builder, NoticeRagProperties properties) {
         return builder

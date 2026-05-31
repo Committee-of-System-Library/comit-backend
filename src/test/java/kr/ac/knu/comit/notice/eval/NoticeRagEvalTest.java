@@ -15,6 +15,7 @@ import kr.ac.knu.comit.notice.infrastructure.rag.GeneratedAnswer;
 import kr.ac.knu.comit.notice.infrastructure.rag.NoticeAnswerGenerator;
 import kr.ac.knu.comit.notice.infrastructure.rag.NoticeDocumentSelector;
 import kr.ac.knu.comit.notice.infrastructure.rag.NoticeQueryTransformer;
+import kr.ac.knu.comit.notice.infrastructure.rag.NoticeQueryType;
 import kr.ac.knu.comit.notice.infrastructure.rag.NoticeQueryTypeClassifier;
 import kr.ac.knu.comit.notice.infrastructure.rag.NoticeReranker;
 import kr.ac.knu.comit.notice.infrastructure.rag.RerankedNotices;
@@ -105,12 +106,13 @@ class NoticeRagEvalTest {
         List<Document> selectedDocs = documentSelector.select(retrievedDocs, rerankedNotices.noticeIds());
         List<Long> selectedNoticeIds = noticeIds(selectedDocs);
         List<String> selectedTitles = titles(selectedDocs);
-        int appliedSourceLimit = queryTypeClassifier.maxSources(evalCase.question());
+        NoticeQueryType queryType = queryTypeClassifier.classify(evalCase.question());
+        int appliedSourceLimit = queryType.maxSources();
         List<Document> answerDocs = selectedDocs.stream()
                 .limit(appliedSourceLimit)
                 .toList();
 
-        GeneratedAnswer generatedAnswer = answerGenerator.generate(evalCase.question(), answerDocs);
+        GeneratedAnswer generatedAnswer = answerGenerator.generate(evalCase.question(), answerDocs, queryType.answerTier());
         List<NoticeSource> sources = toSources(answerDocs);
         List<Long> sourceNoticeIds = sources.stream()
                 .map(NoticeSource::noticeId)

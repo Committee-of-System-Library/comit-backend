@@ -13,19 +13,33 @@ import org.springframework.stereotype.Component;
 @Component
 public class NoticeAnswerGenerator {
 
-    private final ChatClient chatClient;
+    private final ChatClient nanoClient;
+    private final ChatClient miniClient;
+    private final ChatClient fullClient;
 
     @Value("classpath:prompts/notice-answer.st")
     private Resource answerPrompt;
 
-    public NoticeAnswerGenerator(ChatClient answerClient) {
-        this.chatClient = answerClient;
+    public NoticeAnswerGenerator(
+            ChatClient answerNanoClient,
+            ChatClient answerMiniClient,
+            ChatClient answerClient
+    ) {
+        this.nanoClient = answerNanoClient;
+        this.miniClient = answerMiniClient;
+        this.fullClient = answerClient;
     }
 
-    public GeneratedAnswer generate(String message, List<Document> docs) {
+    public GeneratedAnswer generate(String message, List<Document> docs, AnswerTier tier) {
         String context = docs.stream()
                 .map(Document::getText)
                 .collect(Collectors.joining("\n\n---\n\n"));
+
+        ChatClient chatClient = switch (tier) {
+            case NANO -> nanoClient;
+            case MINI -> miniClient;
+            case FULL -> fullClient;
+        };
 
         ChatResponse response = chatClient.prompt()
                 .system(s -> s.text(answerPrompt).param("context", context))
