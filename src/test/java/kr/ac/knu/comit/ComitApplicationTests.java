@@ -5,6 +5,8 @@ import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.comment.service.CommentService;
 import kr.ac.knu.comit.main.service.MainPageQueryService;
 import kr.ac.knu.comit.main.service.MainService;
+import kr.ac.knu.comit.nightsnack.service.AdminNightSnackService;
+import kr.ac.knu.comit.nightsnack.service.NightSnackApplicationService;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.ac.knu.comit.member.service.MemberActivityService;
 import kr.ac.knu.comit.member.domain.MemberRepository;
@@ -81,6 +83,12 @@ class ComitApplicationTests {
 
     @MockitoBean
     MainPageQueryService mainPageQueryService;
+
+    @MockitoBean
+    AdminNightSnackService adminNightSnackService;
+
+    @MockitoBean
+    NightSnackApplicationService nightSnackApplicationService;
 
     @Test
     void contextLoads() {
