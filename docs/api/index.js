@@ -70,6 +70,20 @@ window.API_DOCS = [
   sectionPath: "member"
 },
 {
+  title: "AdminNightSnackControllerApi",
+  summary: "관리자가 선착순 야식 마차를 생성합니다. 생성 직후 상태는 SCHEDULED이며, 별도 오픈 요청으로 신청을 받기 시작합니다. 정원은 사전신청용 예약분(reservedCapacity)과 일반 선착순분(capacity - reservedCapacity)으로 나뉩니다.",
+  href: "./nightsnack/AdminNightSnackControllerApi.html",
+  endpointCount: 3,
+  sectionPath: "nightsnack"
+},
+{
+  title: "NightSnackApplicationControllerApi",
+  summary: "지정한 야식 마차에 선착순 신청합니다. 신청 성공 시 QR 수령 티켓 토큰과 신청 순번을 반환합니다. 동일 야식 마차에 1인 1회만 신청할 수 있습니다.",
+  href: "./nightsnack/NightSnackApplicationControllerApi.html",
+  endpointCount: 1,
+  sectionPath: "nightsnack"
+},
+{
   title: "AdminPostControllerApi",
   summary: "관리자가 NOTICE, EVENT, INFO 게시판에 게시글을 작성합니다. QNA, FREE 게시판에는 작성할 수 없습니다.",
   href: "./post/AdminPostControllerApi.html",
