@@ -291,10 +291,22 @@
     <td>전체 정원입니다. 1 이상의 정수입니다.</td>
 </tr>
 <tr>
+    <td><code>closeAt</code></td>
+    <td><span class="type-chip type-datetime">LocalDateTime</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>신청 마감 시각입니다. openAt 이후여야 합니다. (yyyy-MM-ddTHH:mm:ss)</td>
+</tr>
+<tr>
     <td><code>nightSnackDate</code></td>
     <td><span class="type-chip type-datetime">LocalDate</span></td>
     <td><span class="badge-required">required</span></td>
     <td>야식 마차 날짜입니다. (yyyy-MM-dd)</td>
+</tr>
+<tr>
+    <td><code>openAt</code></td>
+    <td><span class="type-chip type-datetime">LocalDateTime</span></td>
+    <td><span class="badge-required">required</span></td>
+    <td>신청 오픈 시각입니다. (yyyy-MM-ddTHH:mm:ss)</td>
 </tr>
 <tr>
     <td><code>reservedCapacity</code></td>
@@ -438,7 +450,9 @@
     <pre><code>{
   &quot;nightSnackDate&quot; : &quot;2026-05-20&quot;,
   &quot;capacity&quot; : 100,
-  &quot;reservedCapacity&quot; : 10
+  &quot;reservedCapacity&quot; : 10,
+  &quot;openAt&quot; : &quot;2026-05-20T17:30:00&quot;,
+  &quot;closeAt&quot; : &quot;2026-05-20T18:30:00&quot;
 }</code></pre>
 </section>
 <section class="card">
