@@ -17,25 +17,35 @@ public class NoticeChunker {
             return List.of();
         }
 
-        if (normalized.length() <= CHUNK_SIZE + MIN_TAIL_SIZE) {
+        if (isSmall(normalized)) {
             return List.of(normalized);
         }
 
+        return split(normalized);
+    }
+
+    private boolean isSmall(String content) {
+        return content.length() <= CHUNK_SIZE + MIN_TAIL_SIZE;
+    }
+
+    private List<String> split(String content) {
         List<String> chunks = new ArrayList<>();
         int startIndex = 0;
-        while (startIndex < normalized.length()) {
-            int endIndex = Math.min(startIndex + CHUNK_SIZE, normalized.length());
-            if (normalized.length() - endIndex < MIN_TAIL_SIZE) {
-                endIndex = normalized.length();
+
+        while (startIndex < content.length()) {
+            int endIndex = Math.min(startIndex + CHUNK_SIZE, content.length());
+            if (content.length() - endIndex < MIN_TAIL_SIZE) {
+                endIndex = content.length();
             }
 
-            chunks.add(normalized.substring(startIndex, endIndex).strip());
-            if (endIndex == normalized.length()) {
+            chunks.add(content.substring(startIndex, endIndex).strip());
+            if (endIndex == content.length()) {
                 break;
             }
 
             startIndex = endIndex - CHUNK_OVERLAP;
         }
+
         return chunks;
     }
 
