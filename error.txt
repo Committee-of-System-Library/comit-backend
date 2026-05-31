@@ -1,8 +1,0 @@
-{detaiL: "회원가입을 완료해야 합니다.", instance: "/comit-staging/api/members/nicknames/check", s
-detail: "회원가입을 완료해야 합니다."
-errorCode: "REGISTRATION_REQUIRED"
-instance: "/comit-staging/api/members/nicknames/check"
-status: 403
-timestamp: "2026-04-16T01:31:41.0152419392"
-title: "Forbidden"
-type: "/problems/member/registration-required"
