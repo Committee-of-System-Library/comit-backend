@@ -43,17 +43,26 @@ public class LoadTestNightSnackController {
     /**
      * 야식 마차 생성 + 오픈. K6 setup()에서 1번 호출한다.
      * member 시딩 없음 — apply()가 DB 신청 기록 없이 decrementRemaining만 호출하므로 불필요.
+     *
+     * <p>night_snack_date 에 unique 제약이 있어 같은 날 반복 setup 시 충돌하므로,
+     * 기존에 가장 늦은 날짜 다음 날로 매번 고유 날짜를 부여해 반복 실행을 가능하게 한다.
      */
     @PostMapping("/setup")
     @Transactional
     public ResponseEntity<ApiResponse<SetupResult>> setup(
             @RequestParam(defaultValue = "100") int capacity
     ) {
+        LocalDate date = nightSnackRepository.findAll().stream()
+                .map(NightSnack::getNightSnackDate)
+                .max(LocalDate::compareTo)
+                .map(latest -> latest.plusDays(1))
+                .orElse(LocalDate.now());
+
         Period period = Period.of(
                 LocalDateTime.now().minusMinutes(1),
                 LocalDateTime.now().plusHours(2)
         );
-        NightSnack nightSnack = NightSnack.create(LocalDate.now(), capacity, period);
+        NightSnack nightSnack = NightSnack.create(date, capacity, period);
         nightSnackRepository.save(nightSnack);
         nightSnack.open();
 
