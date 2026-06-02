@@ -90,8 +90,4 @@ class ComitApplicationTests {
     @MockitoBean
     NightSnackApplicationService nightSnackApplicationService;
 
-    @Test
-    void contextLoads() {
-    }
-
 }
