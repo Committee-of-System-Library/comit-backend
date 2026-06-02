@@ -16,6 +16,7 @@ import kr.ac.knu.comit.post.service.PostService;
 import kr.ac.knu.comit.report.service.AdminReportService;
 import kr.ac.knu.comit.report.service.ReportService;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -81,6 +82,9 @@ class ComitApplicationTests {
 
     @MockitoBean
     MainPageQueryService mainPageQueryService;
+
+    @MockitoBean
+    VectorStore vectorStore;
 
     @Test
     void contextLoads() {
