@@ -3,11 +3,13 @@ package kr.ac.knu.comit.global.persistence;
 import kr.ac.knu.comit.ComitApplication;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -33,6 +35,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 )
 @DisplayName("Flyway 마이그레이션")
 class FlywayMigrationIntegrationTest {
+
+    @MockitoBean
+    private VectorStore vectorStore;
 
     @Container
     static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.36")
