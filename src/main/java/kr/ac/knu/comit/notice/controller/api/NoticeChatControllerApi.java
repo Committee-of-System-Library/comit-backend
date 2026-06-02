@@ -1,5 +1,8 @@
 package kr.ac.knu.comit.notice.controller.api;
 
+import jakarta.validation.Valid;
+import kr.ac.knu.comit.global.auth.AuthenticatedMember;
+import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.docs.annotation.ApiContract;
 import kr.ac.knu.comit.global.docs.annotation.ApiDoc;
 import kr.ac.knu.comit.global.docs.annotation.Example;
@@ -35,5 +38,7 @@ public interface NoticeChatControllerApi {
             )
     )
     @PostMapping("/chat")
-    ResponseEntity<ApiResponse<NoticeChatResponse>> chat(@RequestBody NoticeChatRequest request);
+    ResponseEntity<ApiResponse<NoticeChatResponse>> chat(
+            @AuthenticatedMember MemberPrincipal principal,
+            @Valid @RequestBody NoticeChatRequest request);
 }

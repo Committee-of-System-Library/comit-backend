@@ -1,5 +1,7 @@
 package kr.ac.knu.comit.notice.controller;
 
+import kr.ac.knu.comit.global.auth.AuthenticatedMember;
+import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.ApiResponse;
 import kr.ac.knu.comit.notice.controller.api.NoticeChatControllerApi;
 import kr.ac.knu.comit.notice.dto.NoticeChatRequest;
@@ -16,7 +18,9 @@ public class NoticeChatController implements NoticeChatControllerApi {
     private final NoticeChatService noticeChatService;
 
     @Override
-    public ResponseEntity<ApiResponse<NoticeChatResponse>> chat(NoticeChatRequest request) {
+    public ResponseEntity<ApiResponse<NoticeChatResponse>> chat(
+            @AuthenticatedMember MemberPrincipal principal,
+            NoticeChatRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 noticeChatService.chat(request.message())));
     }
