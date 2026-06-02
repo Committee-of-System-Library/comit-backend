@@ -11,6 +11,9 @@ import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.service.AdminMemberService;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
+import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
+import kr.ac.knu.comit.notice.service.NoticeChatService;
+import kr.ac.knu.comit.notice.service.OfficialNoticeService;
 import kr.ac.knu.comit.post.service.AdminPostService;
 import kr.ac.knu.comit.post.service.PostService;
 import kr.ac.knu.comit.report.service.AdminReportService;
@@ -87,6 +90,15 @@ class ComitApplicationTests {
 
     @MockitoBean
     VectorStore vectorStore;
+
+    @MockitoBean
+    NoticeChatService noticeChatService;
+
+    @MockitoBean
+    OfficialNoticeService officialNoticeService;
+
+    @MockitoBean
+    OfficialNoticeRepository officialNoticeRepository;
 
     @Test
     void contextLoads() {
