@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.concurrent.CompletableFuture;
+
 @RestController
 @RequiredArgsConstructor
 public class NoticeChatController implements NoticeChatControllerApi {
@@ -18,10 +20,10 @@ public class NoticeChatController implements NoticeChatControllerApi {
     private final NoticeChatService noticeChatService;
 
     @Override
-    public ResponseEntity<ApiResponse<NoticeChatResponse>> chat(
+    public CompletableFuture<ResponseEntity<ApiResponse<NoticeChatResponse>>> chat(
             @AuthenticatedMember MemberPrincipal principal,
             NoticeChatRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(
-                noticeChatService.chat(request.message())));
+        return noticeChatService.chat(request.message())
+                .thenApply(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 }

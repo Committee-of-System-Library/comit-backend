@@ -43,7 +43,7 @@ spring:
         use_sql_comments: false
   threads:
     virtual:
-      enabled: true
+      enabled: ${VIRTUAL_THREADS_ENABLED:false}
   task:
     execution:
       pool:

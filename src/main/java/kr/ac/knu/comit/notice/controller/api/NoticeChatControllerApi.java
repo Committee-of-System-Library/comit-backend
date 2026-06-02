@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.concurrent.CompletableFuture;
+
 @ApiContract
 @RequestMapping("/official-notices")
 public interface NoticeChatControllerApi {
@@ -38,7 +40,7 @@ public interface NoticeChatControllerApi {
             )
     )
     @PostMapping("/chat")
-    ResponseEntity<ApiResponse<NoticeChatResponse>> chat(
+    CompletableFuture<ResponseEntity<ApiResponse<NoticeChatResponse>>> chat(
             @AuthenticatedMember MemberPrincipal principal,
             @Valid @RequestBody NoticeChatRequest request);
 }
