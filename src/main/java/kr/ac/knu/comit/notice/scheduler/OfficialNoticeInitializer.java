@@ -1,0 +1,76 @@
+package kr.ac.knu.comit.notice.scheduler;
+
+import java.util.List;
+import kr.ac.knu.comit.notice.domain.OfficialNotice;
+import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
+import kr.ac.knu.comit.notice.infrastructure.crawler.NoticeListItem;
+import kr.ac.knu.comit.notice.infrastructure.rag.indexing.NoticeEmbedder;
+import kr.ac.knu.comit.notice.scheduler.config.NoticeSchedulerProperties;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+
+import kr.ac.knu.comit.notice.infrastructure.crawler.KnuCseNoticeCrawler;
+
+@Component
+@RequiredArgsConstructor
+public class OfficialNoticeInitializer {
+
+    private final KnuCseNoticeCrawler crawler;
+    private final OfficialNoticeRepository noticeRepository;
+    private final NoticeEmbedder embedder;
+    private final NoticeProcessor noticeProcessor;
+    private final NoticeSchedulerProperties properties;
+
+    @Async
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        if (noticeRepository.count() == 0) {
+            syncInitial();
+        }
+
+        if (properties.isReindexEmbeddingsOnStartup()) {
+            reindexAll(properties.getReindexEmbeddingsLimit());
+        }
+    }
+
+    private void syncInitial() {
+        int page = 1;
+        int saved = 0;
+
+        while (saved < properties.getInitialSyncMax()) {
+            List<NoticeListItem> items = crawler.crawlListPage(page++);
+            if (items.isEmpty()) {
+                break;
+            }
+
+            for (NoticeListItem item : items) {
+                if (saved >= properties.getInitialSyncMax()) {
+                    break;
+                }
+
+                noticeProcessor.process(item);
+                saved++;
+            }
+        }
+    }
+
+    private void reindexAll(int limit) {
+        List<OfficialNotice> notices = noticeRepository.findAllActive();
+        if (limit > 0) {
+            notices = notices.stream().limit(limit).toList();
+        }
+
+        for (OfficialNotice notice : notices) {
+            embedder.embed(
+                    notice.getId(),
+                    notice.getWrId(),
+                    notice.getTitle(),
+                    notice.getContent(),
+                    notice.getOriginalUrl()
+            );
+        }
+    }
+}

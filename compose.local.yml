@@ -19,5 +19,15 @@ services:
     volumes:
       - comit-local-mysql:/var/lib/mysql
 
+  qdrant:
+    image: qdrant/qdrant:v1.12.5
+    container_name: comit-local-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - comit-local-qdrant:/qdrant/storage
+
 volumes:
   comit-local-mysql:
+  comit-local-qdrant:
