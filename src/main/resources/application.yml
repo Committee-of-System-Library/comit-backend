@@ -8,9 +8,6 @@ server:
         same-site: strict
   tomcat:
     max-connections: ${TOMCAT_MAX_CONNECTIONS:20000}
-    threads:
-      max: ${TOMCAT_MAX_THREADS:600}
-      min-spare: ${TOMCAT_MIN_SPARE_THREADS:100}
 
 spring:
   datasource:
@@ -43,13 +40,7 @@ spring:
         use_sql_comments: false
   threads:
     virtual:
-      enabled: ${VIRTUAL_THREADS_ENABLED:false}
-  task:
-    execution:
-      pool:
-        core-size: ${ASYNC_CORE_POOL_SIZE:5}
-        max-size: ${ASYNC_MAX_POOL_SIZE:5}
-        queue-capacity: ${ASYNC_QUEUE_CAPACITY:100}
+      enabled: true
   devtools:
     restart:
       enabled: false
