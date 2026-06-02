@@ -31,10 +31,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
         "S3_REGION=ap-northeast-2",
         "S3_ACCESS_KEY=test",
         "S3_SECRET_KEY=test",
+        "spring.ai.openai.api-key=dummy-for-test",
         "spring.autoconfigure.exclude="
                 + "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
                 + "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,"
-                + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration"
+                + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,"
+                + "org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration"
 })
 class ComitApplicationTests {
 

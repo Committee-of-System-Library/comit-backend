@@ -1,8 +1,0 @@
-spring:
-  ai:
-    vectorstore:
-      qdrant:
-        initialize-schema: false
-  autoconfigure:
-    exclude:
-      - org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration

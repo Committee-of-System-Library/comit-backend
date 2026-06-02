@@ -30,7 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "S3_BUCKET_NAME=test-bucket",
                 "S3_REGION=ap-northeast-2",
                 "S3_ACCESS_KEY=test",
-                "S3_SECRET_KEY=test"
+                "S3_SECRET_KEY=test",
+                "spring.ai.openai.api-key=dummy-for-test",
+                "spring.autoconfigure.exclude=org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration"
         }
 )
 @DisplayName("Flyway 마이그레이션")
