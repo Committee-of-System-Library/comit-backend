@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,6 +25,7 @@ public class NoticeChatController implements NoticeChatControllerApi {
             @AuthenticatedMember MemberPrincipal principal,
             NoticeChatRequest request) {
         return noticeChatService.chat(request.message())
+                .orTimeout(30, TimeUnit.SECONDS)
                 .thenApply(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 }
