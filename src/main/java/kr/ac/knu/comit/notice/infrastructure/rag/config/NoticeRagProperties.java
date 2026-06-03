@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.notice.infrastructure.rag.config;
 
+import java.time.Duration;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -17,6 +18,7 @@ public class NoticeRagProperties {
     private final String answerMiniModel;
     private final String answerModel;
     private final String summarizerModel;
+    private final Duration chatOpenAiTimeout;
     private final int chatMaxConcurrency;
     private final int chatAcquireTimeoutSeconds;
     private final int chatResponseTimeoutSeconds;

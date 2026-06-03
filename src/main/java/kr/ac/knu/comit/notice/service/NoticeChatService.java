@@ -1,5 +1,9 @@
 package kr.ac.knu.comit.notice.service;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.NoticeErrorCode;
 import kr.ac.knu.comit.notice.dto.NoticeChatResponse;
@@ -7,11 +11,6 @@ import kr.ac.knu.comit.notice.infrastructure.rag.NoticeRagPipeline;
 import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class NoticeChatService {
@@ -33,25 +32,35 @@ public class NoticeChatService {
     }
 
     public CompletableFuture<NoticeChatResponse> chat(String message) {
-        return CompletableFuture.supplyAsync(() -> {
-            boolean acquired;
-            try {
-                acquired = ragSemaphore.tryAcquire(acquireTimeoutSeconds, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new BusinessException(NoticeErrorCode.CHAT_UNAVAILABLE);
-            }
+        return CompletableFuture.supplyAsync(() -> executeWithPermit(message), ragVirtualThreadExecutor);
+    }
 
-            if (!acquired) {
-                throw new BusinessException(NoticeErrorCode.CHAT_UNAVAILABLE);
-            }
+    private NoticeChatResponse executeWithPermit(String message) {
+        acquirePermit();
 
-            try {
-                NoticeRagPipeline.ChatResult result = noticeRagPipeline.chat(message);
-                return NoticeChatResponse.of(result.answer(), result.sources());
-            } finally {
-                ragSemaphore.release();
-            }
-        }, ragVirtualThreadExecutor);
+        try {
+            return generateResponse(message);
+        } finally {
+            ragSemaphore.release();
+        }
+    }
+
+    private void acquirePermit() {
+        boolean acquired;
+        try {
+            acquired = ragSemaphore.tryAcquire(acquireTimeoutSeconds, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BusinessException(NoticeErrorCode.CHAT_UNAVAILABLE);
+        }
+
+        if (!acquired) {
+            throw new BusinessException(NoticeErrorCode.CHAT_UNAVAILABLE);
+        }
+    }
+
+    private NoticeChatResponse generateResponse(String message) {
+        NoticeRagPipeline.ChatResult result = noticeRagPipeline.chat(message);
+        return NoticeChatResponse.of(result.answer(), result.sources());
     }
 }
