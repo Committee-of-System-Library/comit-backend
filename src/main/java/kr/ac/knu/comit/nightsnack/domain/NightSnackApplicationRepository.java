@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.nightsnack.domain;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 public interface NightSnackApplicationRepository extends JpaRepository<NightSnackApplication, Long> {
 
     boolean existsByMemberIdAndNightSnackId(Long memberId, Long nightSnackId);
+
+    Optional<NightSnackApplication> findByMemberIdAndNightSnackId(Long memberId, Long nightSnackId);
 
     long countByNightSnackId(Long nightSnackId);
 
