@@ -80,7 +80,7 @@ window.API_DOCS = [
   title: "NightSnackApplicationControllerApi",
   summary: "지정한 야식 마차에 선착순 신청합니다. 신청 성공 시 QR 수령 티켓 토큰과 신청 순번을 반환합니다. 동일 야식 마차에 1인 1회만 신청할 수 있습니다.",
   href: "./nightsnack/NightSnackApplicationControllerApi.html",
-  endpointCount: 1,
+  endpointCount: 3,
   sectionPath: "nightsnack"
 },
 {

@@ -297,6 +297,18 @@
     <td>신청 마감 시각입니다. openAt 이후여야 합니다. (yyyy-MM-ddTHH:mm:ss)</td>
 </tr>
 <tr>
+    <td><code>contents</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>야식 마차 안내 내용입니다. 생략 가능합니다.</td>
+</tr>
+<tr>
+    <td><code>menu</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>제공 메뉴입니다. 생략 가능합니다. (최대 500자, 예: 떡볶이, 순대)</td>
+</tr>
+<tr>
     <td><code>nightSnackDate</code></td>
     <td><span class="type-chip type-datetime">LocalDate</span></td>
     <td><span class="badge-required">required</span></td>
@@ -309,10 +321,34 @@
     <td>신청 오픈 시각입니다. (yyyy-MM-ddTHH:mm:ss)</td>
 </tr>
 <tr>
+    <td><code>pickupDeadline</code></td>
+    <td><span class="type-chip type-datetime">LocalDateTime</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>수령 마감 시각입니다. 신청 마감(closeAt)과 별개로 현장 수령 가능 시각 상한입니다. 생략 가능합니다. (yyyy-MM-ddTHH:mm:ss)</td>
+</tr>
+<tr>
+    <td><code>pickupLocation</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>수령 장소입니다. 생략 가능합니다. (최대 200자)</td>
+</tr>
+<tr>
+    <td><code>requiresStudentCouncilFee</code></td>
+    <td><span class="type-chip type-boolean">boolean</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>신청자격 — 학생회비 납부 여부입니다. 생략 시 false(자격 제한 없음)입니다.</td>
+</tr>
+<tr>
     <td><code>reservedCapacity</code></td>
     <td><span class="type-chip type-number">int</span></td>
     <td><span class="badge-optional">optional</span></td>
     <td>사전신청용 예약 정원입니다. 0 이상 capacity 이하이며, 생략 시 0(전량 일반 선착순)입니다. (권장: 정원의 10%)</td>
+</tr>
+<tr>
+    <td><code>title</code></td>
+    <td><span class="type-chip type-string">String</span></td>
+    <td><span class="badge-optional">optional</span></td>
+    <td>야식 마차 제목입니다. 생략 가능합니다. (최대 200자)</td>
 </tr>
 </tbody>
 </table>
@@ -452,7 +488,13 @@
   &quot;capacity&quot; : 100,
   &quot;reservedCapacity&quot; : 10,
   &quot;openAt&quot; : &quot;2026-05-20T17:30:00&quot;,
-  &quot;closeAt&quot; : &quot;2026-05-20T18:30:00&quot;
+  &quot;closeAt&quot; : &quot;2026-05-20T18:30:00&quot;,
+  &quot;title&quot; : &quot;5월 야식마차&quot;,
+  &quot;contents&quot; : &quot;선착순 100명에게 야식을 제공합니다.&quot;,
+  &quot;menu&quot; : &quot;떡볶이, 순대, 튀김&quot;,
+  &quot;pickupLocation&quot; : &quot;학생회관 1층 로비&quot;,
+  &quot;pickupDeadline&quot; : &quot;2026-05-20T18:30:00&quot;,
+  &quot;requiresStudentCouncilFee&quot; : true
 }</code></pre>
 </section>
 <section class="card">
