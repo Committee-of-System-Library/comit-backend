@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.notice.infrastructure.rag.config;
 
+import java.time.Duration;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,7 +14,7 @@ public class NoticeRagConfig {
     @Qualifier("queryTransformClient")
     public ChatClient queryTransformClient(ChatClient.Builder builder, NoticeRagProperties properties) {
         return builder
-                .defaultOptions(OpenAiChatOptions.builder().model(properties.getQueryTransformModel()))
+                .defaultOptions(chatOptions(properties.getQueryTransformModel(), properties.getChatOpenAiTimeout()))
                 .build();
     }
 
@@ -21,7 +22,7 @@ public class NoticeRagConfig {
     @Qualifier("rerankClient")
     public ChatClient rerankClient(ChatClient.Builder builder, NoticeRagProperties properties) {
         return builder
-                .defaultOptions(OpenAiChatOptions.builder().model(properties.getRerankModel()))
+                .defaultOptions(chatOptions(properties.getRerankModel(), properties.getChatOpenAiTimeout()))
                 .build();
     }
 
@@ -29,7 +30,7 @@ public class NoticeRagConfig {
     @Qualifier("answerNanoClient")
     public ChatClient answerNanoClient(ChatClient.Builder builder, NoticeRagProperties properties) {
         return builder
-                .defaultOptions(OpenAiChatOptions.builder().model(properties.getAnswerNanoModel()))
+                .defaultOptions(chatOptions(properties.getAnswerNanoModel(), properties.getChatOpenAiTimeout()))
                 .build();
     }
 
@@ -37,7 +38,7 @@ public class NoticeRagConfig {
     @Qualifier("answerMiniClient")
     public ChatClient answerMiniClient(ChatClient.Builder builder, NoticeRagProperties properties) {
         return builder
-                .defaultOptions(OpenAiChatOptions.builder().model(properties.getAnswerMiniModel()))
+                .defaultOptions(chatOptions(properties.getAnswerMiniModel(), properties.getChatOpenAiTimeout()))
                 .build();
     }
 
@@ -45,7 +46,7 @@ public class NoticeRagConfig {
     @Qualifier("answerClient")
     public ChatClient answerClient(ChatClient.Builder builder, NoticeRagProperties properties) {
         return builder
-                .defaultOptions(OpenAiChatOptions.builder().model(properties.getAnswerModel()))
+                .defaultOptions(chatOptions(properties.getAnswerModel(), properties.getChatOpenAiTimeout()))
                 .build();
     }
 
@@ -55,5 +56,11 @@ public class NoticeRagConfig {
         return builder
                 .defaultOptions(OpenAiChatOptions.builder().model(properties.getSummarizerModel()))
                 .build();
+    }
+
+    private OpenAiChatOptions.Builder chatOptions(String model, Duration timeout) {
+        return OpenAiChatOptions.builder()
+                .model(model)
+                .timeout(timeout);
     }
 }
