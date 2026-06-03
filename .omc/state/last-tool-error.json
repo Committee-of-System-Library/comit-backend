@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git add src/main/java/kr/ac/knu/comit/global/exception/ErrorCodeRegistry.java && \\\\\\ngit commit -m \\\"feat: 야식마차 선착순 신청 기능 추가\\n\\n- NightSnack 도메인: 부가 정보 필드(title, contents, menu, pickupLoca...",
-  "error": "Exit code 128\nerror: Committing is not possible because you have unmerged files.\nhint: Fix them up in the work tree, and then use 'git add/rm <file>'\nhint: as appropriate to mark resolution and make a commit.\nfatal: Exiting because of an unresolved conflict.\nU\t.gitignore\nU\tdocs/api/auth/RegisterControllerApi.html\nU\tdocs/api/comment/AdminCommentControllerApi.html\nU\tdocs/api/image/ImageControllerApi.html\nU\tdocs/api/index.js\nU\tdocs/api/main/MainControllerApi.html\nU\tdocs/api/member/AdminMemberContro...",
-  "timestamp": "2026-06-03T11:24:56.309Z",
-  "retry_count": 1
-}

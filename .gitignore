@@ -47,3 +47,5 @@ logs/*
 /load-test
 ### Claude ###
 .claude/
+.omc/
+error.txt
