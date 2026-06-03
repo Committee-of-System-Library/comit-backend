@@ -34,6 +34,12 @@ public interface AdminNightSnackControllerApi {
                     @FieldDesc(name = "reservedCapacity", value = "사전신청용 예약 정원입니다. 0 이상 capacity 이하이며, 생략 시 0(전량 일반 선착순)입니다. (권장: 정원의 10%)"),
                     @FieldDesc(name = "openAt", value = "신청 오픈 시각입니다. (yyyy-MM-ddTHH:mm:ss)"),
                     @FieldDesc(name = "closeAt", value = "신청 마감 시각입니다. openAt 이후여야 합니다. (yyyy-MM-ddTHH:mm:ss)"),
+                    @FieldDesc(name = "title", value = "야식 마차 제목입니다. 생략 가능합니다. (최대 200자)"),
+                    @FieldDesc(name = "contents", value = "야식 마차 안내 내용입니다. 생략 가능합니다."),
+                    @FieldDesc(name = "menu", value = "제공 메뉴입니다. 생략 가능합니다. (최대 500자, 예: 떡볶이, 순대)"),
+                    @FieldDesc(name = "pickupLocation", value = "수령 장소입니다. 생략 가능합니다. (최대 200자)"),
+                    @FieldDesc(name = "pickupDeadline", value = "수령 마감 시각입니다. 신청 마감(closeAt)과 별개로 현장 수령 가능 시각 상한입니다. 생략 가능합니다. (yyyy-MM-ddTHH:mm:ss)"),
+                    @FieldDesc(name = "requiresStudentCouncilFee", value = "신청자격 — 학생회비 납부 여부입니다. 생략 시 false(자격 제한 없음)입니다."),
                     @FieldDesc(name = "nightSnackId", value = "생성된 야식 마차 ID입니다.")
             },
             errors = {
@@ -47,7 +53,13 @@ public interface AdminNightSnackControllerApi {
                               "capacity": 100,
                               "reservedCapacity": 10,
                               "openAt": "2026-05-20T17:30:00",
-                              "closeAt": "2026-05-20T18:30:00"
+                              "closeAt": "2026-05-20T18:30:00",
+                              "title": "5월 야식마차",
+                              "contents": "선착순 100명에게 야식을 제공합니다.",
+                              "menu": "떡볶이, 순대, 튀김",
+                              "pickupLocation": "학생회관 1층 로비",
+                              "pickupDeadline": "2026-05-20T18:30:00",
+                              "requiresStudentCouncilFee": true
                             }
                             """,
                     response = """

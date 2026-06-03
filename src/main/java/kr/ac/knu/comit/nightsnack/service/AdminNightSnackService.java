@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.nightsnack.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,7 +35,17 @@ public class AdminNightSnackService {
 
     @Transactional
     public Long createNightSnack(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period) {
-        NightSnack nightSnack = NightSnack.create(nightSnackDate, capacity, reservedCapacity, period);
+        return createNightSnack(nightSnackDate, capacity, reservedCapacity, period,
+                null, null, null, null, null, false);
+    }
+
+    @Transactional
+    public Long createNightSnack(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period,
+                                 String title, String contents, String menu,
+                                 String pickupLocation, LocalDateTime pickupDeadline,
+                                 boolean requiresStudentCouncilFee) {
+        NightSnack nightSnack = NightSnack.create(nightSnackDate, capacity, reservedCapacity, period,
+                title, contents, menu, pickupLocation, pickupDeadline, requiresStudentCouncilFee);
         return nightSnackRepository.save(nightSnack).getId();
     }
 
