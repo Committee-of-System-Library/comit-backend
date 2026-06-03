@@ -1,17 +1,65 @@
 package kr.ac.knu.comit.notice.service;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import kr.ac.knu.comit.global.exception.BusinessException;
+import kr.ac.knu.comit.global.exception.NoticeErrorCode;
 import kr.ac.knu.comit.notice.dto.NoticeChatResponse;
 import kr.ac.knu.comit.notice.infrastructure.rag.NoticeRagPipeline;
-import lombok.RequiredArgsConstructor;
+import kr.ac.knu.comit.notice.infrastructure.rag.config.NoticeRagProperties;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class NoticeChatService {
 
     private final NoticeRagPipeline noticeRagPipeline;
+    private final ExecutorService ragVirtualThreadExecutor;
+    private final Semaphore ragSemaphore;
+    private final int acquireTimeoutSeconds;
 
-    public NoticeChatResponse chat(String message) {
+    public NoticeChatService(
+            NoticeRagPipeline noticeRagPipeline,
+            @Qualifier("ragVirtualThreadExecutor") ExecutorService ragVirtualThreadExecutor,
+            NoticeRagProperties properties
+    ) {
+        this.noticeRagPipeline = noticeRagPipeline;
+        this.ragVirtualThreadExecutor = ragVirtualThreadExecutor;
+        this.ragSemaphore = new Semaphore(properties.getChatMaxConcurrency());
+        this.acquireTimeoutSeconds = properties.getChatAcquireTimeoutSeconds();
+    }
+
+    public CompletableFuture<NoticeChatResponse> chat(String message) {
+        return CompletableFuture.supplyAsync(() -> executeWithPermit(message), ragVirtualThreadExecutor);
+    }
+
+    private NoticeChatResponse executeWithPermit(String message) {
+        acquirePermit();
+
+        try {
+            return generateResponse(message);
+        } finally {
+            ragSemaphore.release();
+        }
+    }
+
+    private void acquirePermit() {
+        boolean acquired;
+        try {
+            acquired = ragSemaphore.tryAcquire(acquireTimeoutSeconds, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BusinessException(NoticeErrorCode.CHAT_UNAVAILABLE);
+        }
+
+        if (!acquired) {
+            throw new BusinessException(NoticeErrorCode.CHAT_UNAVAILABLE);
+        }
+    }
+
+    private NoticeChatResponse generateResponse(String message) {
         NoticeRagPipeline.ChatResult result = noticeRagPipeline.chat(message);
         return NoticeChatResponse.of(result.answer(), result.sources());
     }
