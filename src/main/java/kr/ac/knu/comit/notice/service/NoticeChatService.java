@@ -29,11 +29,10 @@ public class NoticeChatService {
     }
 
     public CompletableFuture<NoticeChatResponse> chat(String message) {
-        if (!ragSemaphore.tryAcquire()) {
-            throw new BusinessException(NoticeErrorCode.CHAT_UNAVAILABLE);
-        }
-
         return CompletableFuture.supplyAsync(() -> {
+            if (!ragSemaphore.tryAcquire()) {
+                throw new BusinessException(NoticeErrorCode.CHAT_UNAVAILABLE);
+            }
             try {
                 NoticeRagPipeline.ChatResult result = noticeRagPipeline.chat(message);
                 return NoticeChatResponse.of(result.answer(), result.sources());
