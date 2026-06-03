@@ -17,4 +17,7 @@ public class NoticeRagProperties {
     private final String answerMiniModel;
     private final String answerModel;
     private final String summarizerModel;
+    private final int chatMaxConcurrency;
+    private final int chatAcquireTimeoutSeconds;
+    private final int chatResponseTimeoutSeconds;
 }

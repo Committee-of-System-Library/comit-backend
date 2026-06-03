@@ -131,6 +131,9 @@ comit:
       answer-mini-model: ${NOTICE_ANSWER_MINI_MODEL:gpt-4o-mini}
       answer-model: ${NOTICE_ANSWER_MODEL:gpt-4o}
       summarizer-model: ${NOTICE_SUMMARIZER_MODEL:gpt-4o-mini}
+      chat-max-concurrency: ${NOTICE_CHAT_MAX_CONCURRENCY:20}
+      chat-acquire-timeout-seconds: ${NOTICE_CHAT_ACQUIRE_TIMEOUT_SECONDS:3}
+      chat-response-timeout-seconds: ${NOTICE_CHAT_RESPONSE_TIMEOUT_SECONDS:30}
     scheduler:
       enabled: ${NOTICE_SCHEDULER_ENABLED:true}
       initial-sync-max: ${NOTICE_INITIAL_SYNC_MAX:200}
