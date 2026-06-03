@@ -1,0 +1,33 @@
+networks:
+  serv_comit:
+    external: true
+  comit-test-internal:
+    driver: bridge
+
+services:
+  comit-test-db:
+    image: mysql:8.0.36
+    container_name: comit-test-db
+    env_file:
+      - /opt/docker/env/comit-loadtest.env
+    expose:
+      - ${MYSQL_PORT:-13306}
+    ports:
+      - ${MYSQL_PORT:-13306}:${MYSQL_PORT:-13306}
+    networks:
+      - comit-test-internal
+    restart: unless-stopped
+
+  comit-loadtest:
+    image: ghcr.io/committee-of-system-library/comit-test:latest
+    container_name: comit-loadtest
+    env_file:
+      - /opt/docker/env/comit-loadtest.env
+    ports:
+      - ${SPRING_PORT:-22500}:${SPRING_PORT:-22500}
+    depends_on:
+      - comit-test-db
+    networks:
+      - serv_comit
+      - comit-test-internal
+    restart: unless-stopped

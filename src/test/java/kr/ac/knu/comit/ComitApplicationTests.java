@@ -5,6 +5,10 @@ import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.comment.service.CommentService;
 import kr.ac.knu.comit.main.service.MainPageQueryService;
 import kr.ac.knu.comit.main.service.MainService;
+import kr.ac.knu.comit.nightsnack.service.AdminNightSnackService;
+import kr.ac.knu.comit.nightsnack.service.NightSnackApplicationService;
+import kr.ac.knu.comit.nightsnack.service.NightSnackQueryService;
+import kr.ac.knu.comit.nightsnack.service.NightSnackReservationWriter;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.ac.knu.comit.member.service.MemberActivityService;
 import kr.ac.knu.comit.member.domain.MemberRepository;
@@ -99,6 +103,18 @@ class ComitApplicationTests {
 
     @MockitoBean
     OfficialNoticeRepository officialNoticeRepository;
+
+    @MockitoBean
+    AdminNightSnackService adminNightSnackService;
+
+    @MockitoBean
+    NightSnackApplicationService nightSnackApplicationService;
+
+    @MockitoBean
+    NightSnackQueryService nightSnackQueryService;
+
+    @MockitoBean
+    NightSnackReservationWriter nightSnackReservationWriter;
 
     @Test
     void contextLoads() {

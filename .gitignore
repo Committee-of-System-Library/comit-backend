@@ -42,6 +42,8 @@ logs/*
 ### macOS ###
 .DS_Store
 **/.DS_Store
+.env.staging
 
+/load-test
 ### Claude ###
 .claude/

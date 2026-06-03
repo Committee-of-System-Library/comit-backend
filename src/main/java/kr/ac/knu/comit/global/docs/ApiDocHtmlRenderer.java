@@ -89,6 +89,8 @@ final class ApiDocHtmlRenderer {
                         .card h2 {
                             margin: 0 0 10px;
                             font-size: 1.1rem;
+                            /* 카드(최소 280px)에서도 긴 컨트롤러 이름이 카드를 넘기지 않고 줄바꿈되도록 한다. */
+                            overflow-wrap: anywhere;
                         }
                         .card p {
                             margin: 0 0 12px;
@@ -308,6 +310,8 @@ final class ApiDocHtmlRenderer {
                         .sidebar h1 {
                             margin: 0 0 8px;
                             font-size: 1.5rem;
+                            /* NightSnackApplicationControllerApi 같은 공백 없는 긴 식별자가 280px 사이드바를 넘기지 않고 줄바꿈되도록 한다. */
+                            overflow-wrap: anywhere;
                         }
                         .sidebar p {
                             margin: 0 0 20px;

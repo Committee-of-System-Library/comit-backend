@@ -1,0 +1,425 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1780403769906,
+  "projectRoot": "/Users/keephun/IdeaProjects/comit",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Java/Kotlin",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "build.gradle"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "gradle",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "build": {
+      "path": "build",
+      "purpose": "Build output",
+      "fileCount": 0,
+      "lastAccessed": 1780403769864,
+      "keyFiles": []
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 2,
+      "lastAccessed": 1780403769864,
+      "keyFiles": [
+        "README.md",
+        "mock-data.sql"
+      ]
+    },
+    "gradle": {
+      "path": "gradle",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1780403769864,
+      "keyFiles": []
+    },
+    "load-test": {
+      "path": "load-test",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1780403769872,
+      "keyFiles": [
+        "error.txt",
+        "run.sh",
+        "spike-test.js",
+        "to-excel.py"
+      ]
+    },
+    "logs": {
+      "path": "logs",
+      "purpose": null,
+      "fileCount": 13,
+      "lastAccessed": 1780403769874,
+      "keyFiles": [
+        "app-local.log",
+        "app-local.log.2026-04-09.0.gz",
+        "app-local.log.2026-04-10.0.gz",
+        "app-local.log.2026-04-13.0.gz",
+        "app-local.log.2026-04-14.0.gz"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1780403769877,
+      "keyFiles": []
+    },
+    "docs/api": {
+      "path": "docs/api",
+      "purpose": "API routes",
+      "fileCount": 3,
+      "lastAccessed": 1780403769883,
+      "keyFiles": [
+        "index.html",
+        "index.js",
+        "spec-index.js"
+      ]
+    },
+    "src/test": {
+      "path": "src/test",
+      "purpose": "Test files",
+      "fileCount": 0,
+      "lastAccessed": 1780403769892,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/domain/NightSnack.java",
+      "accessCount": 13,
+      "lastAccessed": 1780480935283,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/controller/LoadTestNightSnackController.java",
+      "accessCount": 12,
+      "lastAccessed": 1780403837531,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/kr/ac/knu/comit/nightsnack/NightSnackConcurrencyIntegrationTest.java",
+      "accessCount": 11,
+      "lastAccessed": 1780215158024,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/service/AdminNightSnackService.java",
+      "accessCount": 11,
+      "lastAccessed": 1780481063018,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/kr/ac/knu/comit/nightsnack/NightSnackReservationIntegrationTest.java",
+      "accessCount": 10,
+      "lastAccessed": 1780215013688,
+      "type": "file"
+    },
+    {
+      "path": "load-test/spike-test.js",
+      "accessCount": 10,
+      "lastAccessed": 1780403982055,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/controller/api/AdminNightSnackControllerApi.java",
+      "accessCount": 10,
+      "lastAccessed": 1780481004527,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/service/NightSnackApplicationService.java",
+      "accessCount": 7,
+      "lastAccessed": 1780302356670,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.staging.yml",
+      "accessCount": 6,
+      "lastAccessed": 1780223939338,
+      "type": "file"
+    },
+    {
+      "path": "load-test/run.sh",
+      "accessCount": 6,
+      "lastAccessed": 1780403819387,
+      "type": "file"
+    },
+    {
+      "path": "load-test/to-excel.py",
+      "accessCount": 6,
+      "lastAccessed": 1780404507174,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/controller/AdminNightSnackController.java",
+      "accessCount": 6,
+      "lastAccessed": 1780480981628,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/controller/NightSnackApplicationController.java",
+      "accessCount": 6,
+      "lastAccessed": 1780483858385,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/controller/api/NightSnackApplicationControllerApi.java",
+      "accessCount": 6,
+      "lastAccessed": 1780483882170,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/kr/ac/knu/comit/nightsnack/domain/NightSnackTest.java",
+      "accessCount": 5,
+      "lastAccessed": 1780215028144,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/dto/CreateNightSnackRequest.java",
+      "accessCount": 5,
+      "lastAccessed": 1780480967505,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/domain/NightSnackApplication.java",
+      "accessCount": 5,
+      "lastAccessed": 1780483792259,
+      "type": "file"
+    },
+    {
+      "path": "src/main/resources/application-staging.yml",
+      "accessCount": 5,
+      "lastAccessed": 1780485841284,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/global/docs/ApiDocHtmlRenderer.java",
+      "accessCount": 4,
+      "lastAccessed": 1780196619395,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/kr/ac/knu/comit/fixture/NightSnackFixture.java",
+      "accessCount": 4,
+      "lastAccessed": 1780215021607,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/domain/NightSnackApplicationRepository.java",
+      "accessCount": 4,
+      "lastAccessed": 1780483810273,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/global/exception/NightSnackErrorCode.java",
+      "accessCount": 4,
+      "lastAccessed": 1780483845881,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/kr/ac/knu/comit/nightsnack/service/AdminNightSnackServiceTest.java",
+      "accessCount": 3,
+      "lastAccessed": 1780156536353,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/domain/NightSnackRepository.java",
+      "accessCount": 3,
+      "lastAccessed": 1780483657441,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/kr/ac/knu/comit/nightsnack/domain/NightSnackApplicationTest.java",
+      "accessCount": 2,
+      "lastAccessed": 1780155835154,
+      "type": "file"
+    },
+    {
+      "path": "src/main/resources/application.yml",
+      "accessCount": 2,
+      "lastAccessed": 1780198883731,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/member/domain/Member.java",
+      "accessCount": 2,
+      "lastAccessed": 1780302369192,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/dto/CreateNightSnackResponse.java",
+      "accessCount": 2,
+      "lastAccessed": 1780480703941,
+      "type": "file"
+    },
+    {
+      "path": "src/main/resources/db/migration/V103__create_night_snack_and_application.sql",
+      "accessCount": 2,
+      "lastAccessed": 1780480708348,
+      "type": "file"
+    },
+    {
+      "path": "src/main/resources/db/migration/V106__add_night_snack_period.sql",
+      "accessCount": 2,
+      "lastAccessed": 1780480709162,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/dto/ApplyResponse.java",
+      "accessCount": 2,
+      "lastAccessed": 1780483793040,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/global/exception/ErrorCodeRegistry.java",
+      "accessCount": 2,
+      "lastAccessed": 1780485878024,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/domain/NightSnackApplicationStatus.java",
+      "accessCount": 1,
+      "lastAccessed": 1780154873053,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/domain/NightSnackStatus.java",
+      "accessCount": 1,
+      "lastAccessed": 1780154873148,
+      "type": "file"
+    },
+    {
+      "path": "src/main/resources/db/migration/V103__create_event_and_application.sql",
+      "accessCount": 1,
+      "lastAccessed": 1780154878252,
+      "type": "file"
+    },
+    {
+      "path": "src/main/resources/db/migration/V104__rename_event_to_night_snack.sql",
+      "accessCount": 1,
+      "lastAccessed": 1780154878415,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/member/domain/MemberRepository.java",
+      "accessCount": 1,
+      "lastAccessed": 1780154908262,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/member/service/MemberService.java",
+      "accessCount": 1,
+      "lastAccessed": 1780154908294,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/kr/ac/knu/comit/nightsnack/service/NightSnackApplicationServiceTest.java",
+      "accessCount": 1,
+      "lastAccessed": 1780155436731,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/kr/ac/knu/comit/fixture/MemberFixture.java",
+      "accessCount": 1,
+      "lastAccessed": 1780155444778,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/global/auth/MemberPrincipal.java",
+      "accessCount": 1,
+      "lastAccessed": 1780155450982,
+      "type": "file"
+    },
+    {
+      "path": "docs/retention/requirement.md",
+      "accessCount": 1,
+      "lastAccessed": 1780155557619,
+      "type": "file"
+    },
+    {
+      "path": "src/main/resources/db/migration/V105__add_night_snack_reservation.sql",
+      "accessCount": 1,
+      "lastAccessed": 1780155574802,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/domain/NightSnackApplicationSource.java",
+      "accessCount": 1,
+      "lastAccessed": 1780155584635,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/dto/ReserveRequest.java",
+      "accessCount": 1,
+      "lastAccessed": 1780155706346,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/nightsnack/dto/ReserveResponse.java",
+      "accessCount": 1,
+      "lastAccessed": 1780155713994,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/global/auth/DevAuthFilter.java",
+      "accessCount": 1,
+      "lastAccessed": 1780198562790,
+      "type": "file"
+    },
+    {
+      "path": "src/main/resources/application-local.yml",
+      "accessCount": 1,
+      "lastAccessed": 1780198562963,
+      "type": "file"
+    },
+    {
+      "path": "docs/ops/server-state-and-staging-plan.md",
+      "accessCount": 1,
+      "lastAccessed": 1780200382155,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/kr/ac/knu/comit/global/domain/Period.java",
+      "accessCount": 1,
+      "lastAccessed": 1780208402827,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
