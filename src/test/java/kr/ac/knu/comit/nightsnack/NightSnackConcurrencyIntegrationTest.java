@@ -23,10 +23,12 @@ import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -52,7 +54,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
                 "S3_BUCKET_NAME=test-bucket",
                 "S3_REGION=ap-northeast-2",
                 "S3_ACCESS_KEY=test",
-                "S3_SECRET_KEY=test"
+                "S3_SECRET_KEY=test",
+                "OPENAI_API_KEY=ci-test-placeholder",
+                "NOTICE_SCHEDULER_ENABLED=false",
+                "spring.autoconfigure.exclude="
+                        + "org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration"
         }
 )
 @DisplayName("야식 마차 선착순 신청 동시성 (실제 MySQL)")
@@ -60,6 +66,9 @@ class NightSnackConcurrencyIntegrationTest {
 
     /** 테스트 간 공유 DB에서 회원 식별자 충돌을 막기 위한 전역 시퀀스. */
     private static final AtomicInteger MEMBER_SEQ = new AtomicInteger();
+
+    @MockitoBean
+    VectorStore vectorStore;
 
     @Container
     static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.36")
