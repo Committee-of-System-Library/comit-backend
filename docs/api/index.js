@@ -117,5 +117,12 @@ window.API_DOCS = [
   href: "./report/AdminReportControllerApi.html",
   endpointCount: 3,
   sectionPath: "report"
+},
+{
+  title: "TimeControllerApi",
+  summary: "클라이언트 로컬 시계 오차를 보정하기 위한 서버 기준 현재 시각을 반환합니다. 선착순 신청·카운트다운 화면에서 epoch(밀리초)로 서버 시각과 동기화하는 데 사용하며, 인증이 필요 없습니다.",
+  href: "./time/TimeControllerApi.html",
+  endpointCount: 1,
+  sectionPath: "time"
 }
 ];
