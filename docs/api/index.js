@@ -84,6 +84,20 @@ window.API_DOCS = [
   sectionPath: "nightsnack"
 },
 {
+  title: "NoticeChatControllerApi",
+  summary: "자연어 질문을 받아 저장된 공지사항을 기반으로 AI가 답변합니다.",
+  href: "./notice/NoticeChatControllerApi.html",
+  endpointCount: 1,
+  sectionPath: "notice"
+},
+{
+  title: "OfficialNoticeControllerApi",
+  summary: "공지사항 하나의 상세 정보를 조회합니다.",
+  href: "./notice/OfficialNoticeControllerApi.html",
+  endpointCount: 3,
+  sectionPath: "notice"
+},
+{
   title: "AdminPostControllerApi",
   summary: "관리자가 NOTICE, EVENT, INFO 게시판에 게시글을 작성합니다. QNA, FREE 게시판에는 작성할 수 없습니다.",
   href: "./post/AdminPostControllerApi.html",

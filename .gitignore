@@ -45,3 +45,5 @@ logs/*
 .env.staging
 
 /load-test
+### Claude ###
+.claude/
