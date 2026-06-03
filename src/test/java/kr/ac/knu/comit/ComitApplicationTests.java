@@ -7,6 +7,7 @@ import kr.ac.knu.comit.main.service.MainPageQueryService;
 import kr.ac.knu.comit.main.service.MainService;
 import kr.ac.knu.comit.nightsnack.service.AdminNightSnackService;
 import kr.ac.knu.comit.nightsnack.service.NightSnackApplicationService;
+import kr.ac.knu.comit.nightsnack.service.NightSnackQueryService;
 import kr.ac.knu.comit.nightsnack.service.NightSnackReservationWriter;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.ac.knu.comit.member.service.MemberActivityService;
@@ -90,6 +91,9 @@ class ComitApplicationTests {
 
     @MockitoBean
     NightSnackApplicationService nightSnackApplicationService;
+
+    @MockitoBean
+    NightSnackQueryService nightSnackQueryService;
 
     @MockitoBean
     NightSnackReservationWriter nightSnackReservationWriter;
