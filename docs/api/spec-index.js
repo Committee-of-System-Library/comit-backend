@@ -25,6 +25,11 @@ window.SPEC_DOCS = [
   href: "./spec/mypage.html"
 },
 {
+  title: "컴퓨터학부 공지사항 AI 검색",
+  summary: "- 경북대학교 컴퓨터학부 공식 공지사항을 Comit 안에서 검색하고 요약할 수 있게 한다.",
+  href: "./spec/official-notice-ai-search.html"
+},
+{
   title: "게시글·댓글 신고 기능",
   summary: "- 게시글과 댓글에 대해 사용자가 신고를 남길 수 있어야 한다.",
   href: "./spec/post-comment-report.html"

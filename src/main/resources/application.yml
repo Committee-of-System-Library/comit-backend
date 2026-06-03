@@ -53,6 +53,17 @@ spring:
   devtools:
     restart:
       enabled: false
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      embedding:
+        model: text-embedding-3-small
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_PORT:6334}
+        collection-name: ${NOTICE_VECTOR_COLLECTION:official-notices}
+        initialize-schema: true
 
 management:
   endpoints:
@@ -110,6 +121,26 @@ comit:
       visitor-weight: ${COMIT_POST_HOT_VISITOR_WEIGHT:2}
       limit: ${COMIT_POST_HOT_LIMIT:5}
       excluded-board-types: ${COMIT_POST_HOT_EXCLUDED_BOARD_TYPES:NOTICE,EVENT}
+  notice:
+    rag:
+      retrieval-top-k: ${NOTICE_RETRIEVAL_TOP_K:10}
+      query-transform-threshold: ${NOTICE_QUERY_TRANSFORM_THRESHOLD:0.7}
+      query-transform-model: ${NOTICE_QUERY_TRANSFORM_MODEL:gpt-4.1-nano}
+      rerank-model: ${NOTICE_RERANK_MODEL:gpt-4o-mini}
+      answer-nano-model: ${NOTICE_ANSWER_NANO_MODEL:gpt-4.1-nano}
+      answer-mini-model: ${NOTICE_ANSWER_MINI_MODEL:gpt-4o-mini}
+      answer-model: ${NOTICE_ANSWER_MODEL:gpt-4o}
+      summarizer-model: ${NOTICE_SUMMARIZER_MODEL:gpt-4o-mini}
+      chat-openai-timeout: ${NOTICE_CHAT_OPENAI_TIMEOUT:15s}
+      chat-max-concurrency: ${NOTICE_CHAT_MAX_CONCURRENCY:5}
+      chat-acquire-timeout-seconds: ${NOTICE_CHAT_ACQUIRE_TIMEOUT_SECONDS:1}
+      chat-response-timeout-seconds: ${NOTICE_CHAT_RESPONSE_TIMEOUT_SECONDS:30}
+    scheduler:
+      enabled: ${NOTICE_SCHEDULER_ENABLED:true}
+      initial-sync-max: ${NOTICE_INITIAL_SYNC_MAX:200}
+      latest-sync-max-pages: ${NOTICE_LATEST_SYNC_MAX_PAGES:3}
+      reindex-embeddings-on-startup: ${NOTICE_REINDEX_EMBEDDINGS_ON_STARTUP:false}
+      reindex-embeddings-limit: ${NOTICE_REINDEX_EMBEDDINGS_LIMIT:0}
   storage:
     s3:
       bucket-name: ${S3_BUCKET_NAME:}

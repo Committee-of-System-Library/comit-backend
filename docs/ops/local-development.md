@@ -11,6 +11,8 @@
 | DB 이름 | `comit` |
 | DB 계정 | `root` |
 | DB 비밀번호 | `root` |
+| Qdrant HTTP 포트 | `6333` |
+| Qdrant gRPC 포트 | `6334` |
 
 관련 파일
 
@@ -20,7 +22,7 @@
 
 ## 실행 순서
 
-1. 로컬 MySQL을 띄운다.
+1. 로컬 MySQL과 Qdrant를 띄운다.
 
 ```bash
 docker compose -f compose.local.yml up -d
@@ -29,6 +31,7 @@ docker compose -f compose.local.yml up -d
 2. 애플리케이션을 `local` 프로필로 실행한다.
 
 ```bash
+export OPENAI_API_KEY=...
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 

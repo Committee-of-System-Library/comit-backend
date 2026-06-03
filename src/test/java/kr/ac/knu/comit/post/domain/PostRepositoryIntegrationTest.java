@@ -8,10 +8,12 @@ import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.MySQLContainer;
@@ -39,13 +41,18 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "S3_BUCKET_NAME=test-bucket",
                 "S3_REGION=ap-northeast-2",
                 "S3_ACCESS_KEY=test",
-                "S3_SECRET_KEY=test"
+                "S3_SECRET_KEY=test",
+                "spring.ai.openai.api-key=dummy-for-test",
+                "spring.autoconfigure.exclude=org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration"
         }
 )
 @DisplayName("PostRepository 인기글 집계")
 class PostRepositoryIntegrationTest {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    @MockitoBean
+    private VectorStore vectorStore;
 
     @Container
     static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.36")
