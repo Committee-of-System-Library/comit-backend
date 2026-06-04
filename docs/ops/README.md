@@ -34,4 +34,5 @@
 | `08_sidowi-pinpoint-rollout.md` | `sidowi`에 Pinpoint를 도입하기 위한 버전 매트릭스, 배치 구조, agent 주입 지점, smoke test, rollback 계획 |
 | `09_comit-backend-ai-features-prod-deploy.md` | AI/RAG 기능 운영 배포 시 발생한 3가지 장애(CI Qdrant, Flyway V13 out-of-order, compose env 누락) 원인 분석 및 핫픽스 기록, 정식 수정 TODO |
 | `10_comit-naming-and-infra-drift.md` | comit-staging/comit-backend/knu-cse-comit-server 명칭 혼재 원인·전체 지도, core-infra 드리프트 지뢰, URL 경로 교통정리 방향 (3단계 비용 분류) |
+| `11_comit-infra-overview.md` | 처음 보는 사람도 이해할 수 있는 인프라 전체 구조 — 요청 흐름·CI/CD·관리 구조 Mermaid 다이어그램 3개, 관리자 플로우 가이드, 현재→목표 상태, 개선 TODO |
 | `pinpoint/` | `sidowi` Pinpoint 도입 시 바로 참고할 수 있는 compose/env/JAVA_OPTS 초안 모음 |
