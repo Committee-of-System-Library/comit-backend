@@ -4,6 +4,7 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
+import kr.ac.knu.comit.nightsnack.domain.StudentCouncilFeeRepository;
 import kr.ac.knu.comit.nightsnack.dto.ApplyResponse;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.NightSnackErrorCode;
@@ -30,6 +31,7 @@ public class NightSnackApplicationService {
 
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
+    private final StudentCouncilFeeRepository studentCouncilFeeRepository;
     private final MemberService memberService;
     private final NightSnackReservationWriter reservationWriter;
 
@@ -38,6 +40,11 @@ public class NightSnackApplicationService {
         NightSnack nightSnack = nightSnackRepository.findById(nightSnackId)
                 .orElseThrow(() -> new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND));
         int generalCapacity = nightSnack.generalCapacity(); // 일반분 정원(예약분 제외)
+
+        if (nightSnack.isRequiresStudentCouncilFee()
+                && !studentCouncilFeeRepository.existsByMemberIdAndPaidTrue(memberId)) {
+            throw new BusinessException(NightSnackErrorCode.STUDENT_COUNCIL_FEE_REQUIRED);
+        }
 
         // 빠른 중복 차단(보장 수단 아님). 알려진 중복에 원자적 UPDATE 슬롯을 낭비하지 않는다.
         if (nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(memberId, nightSnackId)) {

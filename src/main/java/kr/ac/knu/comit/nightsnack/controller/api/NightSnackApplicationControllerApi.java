@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import kr.ac.knu.comit.nightsnack.dto.ApplyResponse;
 import kr.ac.knu.comit.nightsnack.dto.MyTicketResponse;
 import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
+import kr.ac.knu.comit.nightsnack.dto.StudentCouncilFeeResponse;
 import kr.ac.knu.comit.global.auth.AuthenticatedMember;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.docs.annotation.ApiContract;
@@ -147,6 +148,26 @@ public interface NightSnackApplicationControllerApi {
     @PostMapping("/{nightSnackId}/applications")
     ResponseEntity<ApiResponse<ApplyResponse>> apply(
             @PathVariable Long nightSnackId,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "학생회비 납부 여부 조회",
+            description = "로그인한 회원의 학생회비 납부 여부를 조회합니다.",
+            descriptions = {
+                    @FieldDesc(name = "paid", value = "학생회비 납부 여부입니다. 납부하지 않은 경우 false를 반환합니다.")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": { "paid": true }
+                            }
+                            """
+            )
+    )
+    @GetMapping("/student-council-fee")
+    ResponseEntity<ApiResponse<StudentCouncilFeeResponse>> getStudentCouncilFeeStatus(
             @AuthenticatedMember MemberPrincipal principal
     );
 }

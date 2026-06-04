@@ -7,8 +7,10 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
+import kr.ac.knu.comit.nightsnack.domain.StudentCouncilFeeRepository;
 import kr.ac.knu.comit.nightsnack.dto.MyTicketResponse;
 import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
+import kr.ac.knu.comit.nightsnack.dto.StudentCouncilFeeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class NightSnackQueryService {
 
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
+    private final StudentCouncilFeeRepository studentCouncilFeeRepository;
 
     public NightSnackResponse getByDate(LocalDate date) {
         NightSnack nightSnack = nightSnackRepository.findByNightSnackDate(date)
@@ -32,5 +35,9 @@ public class NightSnackQueryService {
                 .findByMemberIdAndNightSnackId(memberId, nightSnackId)
                 .orElseThrow(() -> new BusinessException(NightSnackErrorCode.APPLICATION_NOT_FOUND));
         return MyTicketResponse.from(application);
+    }
+
+    public StudentCouncilFeeResponse getStudentCouncilFeeStatus(Long memberId) {
+        return StudentCouncilFeeResponse.of(studentCouncilFeeRepository.existsByMemberIdAndPaidTrue(memberId));
     }
 }
