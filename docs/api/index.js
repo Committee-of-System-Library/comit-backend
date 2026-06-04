@@ -1,5 +1,12 @@
 window.API_DOCS = [
 {
+  title: "AttachmentControllerApi",
+  summary: "PDF 파일을 S3에 직접 업로드할 수 있는 presigned URL을 발급합니다. 발급된 presignedUrl로 PUT 요청을 보내 업로드하고, fileUrl을 후속 메타 저장 API(포트폴리오, 리뷰 게시글)에 사용하세요. URL 유효시간은 10분이며 contentType은 application/pdf만 허용됩니다.",
+  href: "./attachment/AttachmentControllerApi.html",
+  endpointCount: 1,
+  sectionPath: "attachment"
+},
+{
   title: "RegisterControllerApi",
   summary: "회원가입 전 단계에서 SSO 토큰 쿠키를 검증한 뒤 프로필 이미지 업로드용 presigned URL을 발급합니다.",
   href: "./auth/RegisterControllerApi.html",
