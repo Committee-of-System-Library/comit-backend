@@ -1,4 +1,10 @@
 reviews:
+  # 자동 리뷰 끄기 — 모든 PR을 자동으로 리뷰하지 않는다.
+  # 리뷰가 필요한 PR에서만 아래 코멘트로 직접 호출한다:
+  #   @coderabbitai review        (변경분 증분 리뷰)
+  #   @coderabbitai full review   (전체 다시 리뷰)
+  auto_review:
+    enabled: false
   path_instructions:
     - path: "src/main/java/**/controller/**"
       instructions: |
