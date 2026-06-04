@@ -264,14 +264,14 @@
 </a>
 <a href="#reserve">
     <strong>사전신청(예약분) 등록</strong>
-    <span>POST /admin/night-snacks/{nightSnackId}/reservations</span>
+    <span>POST /admin/night-snacks/{date}/reservations</span>
 </a>
 </nav>
         </aside>
         <section class="content"><article class="endpoint" id="createNightSnack">
     <div class="eyebrow">POST</div>
     <h2>야식 마차 생성</h2>
-    <p>관리자가 선착순 야식 마차를 생성합니다. 생성 직후 상태는 SCHEDULED이며, 별도 오픈 요청으로 신청을 받기 시작합니다. 정원은 사전신청용 예약분(reservedCapacity)과 일반 선착순분(capacity - reservedCapacity)으로 나뉩니다.</p>
+    <p>관리자가 선착순 야식 마차를 생성합니다. 생성 직후 상태는 SCHEDULED이며, 별도 오픈 요청으로 신청을 받기 시작합니다. 사전신청 예약분은 전체 정원의 10%(서버 정책)로 자동 계산됩니다.</p>
     <div class="path-box"><span class="method">POST</span>/admin/night-snacks</div>
     <div class="section-grid"><section class="card">
     <h3>요청 바디 필드</h3>
@@ -337,12 +337,6 @@
     <td><span class="type-chip type-boolean">boolean</span></td>
     <td><span class="badge-optional">optional</span></td>
     <td>신청자격 — 학생회비 납부 여부입니다. 생략 시 false(자격 제한 없음)입니다.</td>
-</tr>
-<tr>
-    <td><code>reservedCapacity</code></td>
-    <td><span class="type-chip type-number">int</span></td>
-    <td><span class="badge-optional">optional</span></td>
-    <td>사전신청용 예약 정원입니다. 0 이상 capacity 이하이며, 생략 시 0(전량 일반 선착순)입니다. (권장: 정원의 10%)</td>
 </tr>
 <tr>
     <td><code>title</code></td>
@@ -468,7 +462,7 @@
     <td>400</td>
     <td><code>/problems/common/invalid-request</code></td>
     <td>입력값이 올바르지 않습니다.</td>
-    <td>날짜가 없거나, 정원이 1 미만이거나, 예약분이 0 미만 또는 정원 초과일 때</td>
+    <td>날짜가 없거나 정원이 1 미만일 때</td>
 </tr>
 <tr>
     <td><code>FORBIDDEN</code></td>
@@ -486,7 +480,6 @@
     <pre><code>{
   &quot;nightSnackDate&quot; : &quot;2026-05-20&quot;,
   &quot;capacity&quot; : 100,
-  &quot;reservedCapacity&quot; : 10,
   &quot;openAt&quot; : &quot;2026-05-20T17:30:00&quot;,
   &quot;closeAt&quot; : &quot;2026-05-20T18:30:00&quot;,
   &quot;title&quot; : &quot;5월 야식마차&quot;,
@@ -683,7 +676,7 @@
     <div class="eyebrow">POST</div>
     <h2>사전신청(예약분) 등록</h2>
     <p>관리자가 학번 목록을 받아 예약분에 사전신청을 미리 등록합니다(요구사항 4-3). Comit 계정이 없는 학번(편입생·초과학기 등)도 등록할 수 있습니다. 멱등하게 동작하여 이미 등록된 학번은 건너뛰고, 신규 학번만 예약 잔여분에서 차감합니다. 신규 학번 수가 예약 잔여분을 넘기면 전체가 거부됩니다. 선착순 오픈 전(SCHEDULED) 상태에서만 등록할 수 있습니다.</p>
-    <div class="path-box"><span class="method">POST</span>/admin/night-snacks/{nightSnackId}/reservations</div>
+    <div class="path-box"><span class="method">POST</span>/admin/night-snacks/{date}/reservations</div>
     <div class="section-grid"><section class="card">
     <h3>경로 변수</h3>
     <table>
@@ -696,10 +689,10 @@
         </tr>
     </thead>
     <tbody><tr>
-    <td><code>nightSnackId</code></td>
-    <td><span class="type-chip type-number">Long</span></td>
+    <td><code>date</code></td>
+    <td><span class="type-chip type-datetime">LocalDate</span></td>
     <td><span class="badge-required">required</span></td>
-    <td>사전신청을 등록할 야식 마차 ID입니다.</td>
+    <td>사전신청을 등록할 야식 마차 날짜입니다. (yyyy-MM-dd)</td>
 </tr>
 </tbody>
 </table>
@@ -872,7 +865,7 @@
     <td>404</td>
     <td><code>/problems/night-snack/not-found</code></td>
     <td>존재하지 않는 야식 마차입니다.</td>
-    <td>존재하지 않는 야식 마차 ID로 요청할 때</td>
+    <td>해당 날짜의 야식 마차가 존재하지 않을 때</td>
 </tr>
 <tr>
     <td><code>RESERVATION_NOT_ALLOWED</code></td>
@@ -923,7 +916,7 @@
   &quot;title&quot; : &quot;Unauthorized&quot;,
   &quot;status&quot; : 401,
   &quot;detail&quot; : &quot;인증이 필요합니다.&quot;,
-  &quot;instance&quot; : &quot;/admin/night-snacks/{nightSnackId}/reservations&quot;,
+  &quot;instance&quot; : &quot;/admin/night-snacks/{date}/reservations&quot;,
   &quot;errorCode&quot; : &quot;UNAUTHORIZED&quot;,
   &quot;timestamp&quot; : &quot;2026-03-24T03:10:00Z&quot;
 }</code></pre>

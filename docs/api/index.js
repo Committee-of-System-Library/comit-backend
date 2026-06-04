@@ -71,7 +71,7 @@ window.API_DOCS = [
 },
 {
   title: "AdminNightSnackControllerApi",
-  summary: "관리자가 선착순 야식 마차를 생성합니다. 생성 직후 상태는 SCHEDULED이며, 별도 오픈 요청으로 신청을 받기 시작합니다. 정원은 사전신청용 예약분(reservedCapacity)과 일반 선착순분(capacity - reservedCapacity)으로 나뉩니다.",
+  summary: "관리자가 선착순 야식 마차를 생성합니다. 생성 직후 상태는 SCHEDULED이며, 별도 오픈 요청으로 신청을 받기 시작합니다. 사전신청 예약분은 전체 정원의 10%(서버 정책)로 자동 계산됩니다.",
   href: "./nightsnack/AdminNightSnackControllerApi.html",
   endpointCount: 3,
   sectionPath: "nightsnack"
