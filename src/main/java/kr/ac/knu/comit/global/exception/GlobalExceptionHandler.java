@@ -6,11 +6,16 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -32,6 +37,30 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(problemDetail.getStatus())
                 .body(problemDetail);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ProblemDetail> handleTypeMismatch(MethodArgumentTypeMismatchException e, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetailFactory.forBusiness(CommonErrorCode.INVALID_REQUEST, request.getRequestURI());
+        return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ProblemDetail> handleNotReadable(HttpMessageNotReadableException e, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetailFactory.forBusiness(CommonErrorCode.INVALID_REQUEST, request.getRequestURI());
+        return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ProblemDetail> handleMissingParam(MissingServletRequestParameterException e, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetailFactory.forBusiness(CommonErrorCode.INVALID_REQUEST, request.getRequestURI());
+        return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNoResource(NoResourceFoundException e, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetailFactory.forBusiness(CommonErrorCode.INVALID_REQUEST, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
 
     @ExceptionHandler(TimeoutException.class)
