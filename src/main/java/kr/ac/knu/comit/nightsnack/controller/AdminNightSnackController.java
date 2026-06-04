@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.nightsnack.controller;
 
+import java.time.LocalDate;
 import kr.ac.knu.comit.nightsnack.controller.api.AdminNightSnackControllerApi;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackRequest;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackResponse;
@@ -25,7 +26,7 @@ public class AdminNightSnackController implements AdminNightSnackControllerApi {
             CreateNightSnackRequest request, MemberPrincipal principal) {
         validateAdmin(principal);
         Long nightSnackId = adminNightSnackService.createNightSnack(
-                request.nightSnackDate(), request.capacity(), request.reservedCapacity(), request.toPeriod(),
+                request.nightSnackDate(), request.capacity(), request.toPeriod(),
                 request.title(), request.contents(), request.menu(),
                 request.pickupLocation(), request.pickupDeadline(), request.requiresStudentCouncilFee());
         return ResponseEntity.ok(ApiResponse.success(CreateNightSnackResponse.from(nightSnackId)));
@@ -40,9 +41,9 @@ public class AdminNightSnackController implements AdminNightSnackControllerApi {
 
     @Override
     public ResponseEntity<ApiResponse<ReserveResponse>> reserve(
-            Long nightSnackId, ReserveRequest request, MemberPrincipal principal) {
+            LocalDate date, ReserveRequest request, MemberPrincipal principal) {
         validateAdmin(principal);
-        ReserveResponse response = adminNightSnackService.reserve(nightSnackId, request.studentNumbers());
+        ReserveResponse response = adminNightSnackService.reserve(date, request.studentNumbers());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
