@@ -12,7 +12,9 @@ public enum NightSnackErrorCode implements ErrorCode {
     RESERVATION_NOT_ALLOWED(HttpStatus.CONFLICT, "/problems/night-snack/reservation-not-allowed",
             "사전신청은 오픈 전(SCHEDULED) 상태에서만 가능합니다."),
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "/problems/night-snack/application-not-found",
-            "신청 내역이 없습니다.");
+            "신청 내역이 없습니다."),
+    STUDENT_COUNCIL_FEE_REQUIRED(HttpStatus.FORBIDDEN, "/problems/night-snack/student-council-fee-required",
+            "학생회비 납부자만 신청할 수 있습니다.");
 
     private final HttpStatus status;
     private final String type;
