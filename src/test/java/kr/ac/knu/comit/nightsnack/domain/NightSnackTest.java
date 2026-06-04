@@ -27,7 +27,7 @@ class NightSnackTest {
         @Test
         @DisplayName("정원만큼 remaining을 채우고 SCHEDULED 상태로 생성한다")
         void createsScheduledNightSnackWithFullRemaining() {
-            NightSnack nightSnack = NightSnack.create(DATE, 100, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 0, PERIOD, null, null, null, null, null, false);
 
             assertThat(nightSnack.getCapacity()).isEqualTo(100);
             assertThat(nightSnack.getRemaining()).isEqualTo(100);
@@ -38,7 +38,7 @@ class NightSnackTest {
         @Test
         @DisplayName("정원이 0 이하이면 INVALID_REQUEST가 발생한다")
         void throwsWhenCapacityNotPositive() {
-            assertThatThrownBy(() -> NightSnack.create(DATE, 0, PERIOD))
+            assertThatThrownBy(() -> NightSnack.create(DATE, 0, 0, PERIOD, null, null, null, null, null, false))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(CommonErrorCode.INVALID_REQUEST);
@@ -47,7 +47,7 @@ class NightSnackTest {
         @Test
         @DisplayName("날짜가 null이면 INVALID_REQUEST가 발생한다")
         void throwsWhenDateIsNull() {
-            assertThatThrownBy(() -> NightSnack.create(null, 100, PERIOD))
+            assertThatThrownBy(() -> NightSnack.create(null, 100, 0, PERIOD, null, null, null, null, null, false))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(CommonErrorCode.INVALID_REQUEST);
@@ -56,7 +56,7 @@ class NightSnackTest {
         @Test
         @DisplayName("period가 null이면 INVALID_REQUEST가 발생한다")
         void throwsWhenPeriodIsNull() {
-            assertThatThrownBy(() -> NightSnack.create(DATE, 100, (Period) null))
+            assertThatThrownBy(() -> NightSnack.create(DATE, 100, 0, null, null, null, null, null, null, false))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(CommonErrorCode.INVALID_REQUEST);
@@ -66,7 +66,7 @@ class NightSnackTest {
         @DisplayName("예약분을 지정하면 일반분 remaining과 예약분 reservedRemaining을 나눠 채운다")
         void splitsCapacityIntoGeneralAndReserved() {
             // 정원 100 중 10을 예약분으로 떼면 일반분은 90이다.
-            NightSnack nightSnack = NightSnack.create(DATE, 100, 10, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 10, PERIOD, null, null, null, null, null, false);
 
             assertThat(nightSnack.getCapacity()).isEqualTo(100);
             assertThat(nightSnack.getReservedCapacity()).isEqualTo(10);
@@ -78,7 +78,7 @@ class NightSnackTest {
         @Test
         @DisplayName("예약분이 정원을 초과하면 INVALID_REQUEST가 발생한다")
         void throwsWhenReservedExceedsCapacity() {
-            assertThatThrownBy(() -> NightSnack.create(DATE, 100, 101, PERIOD))
+            assertThatThrownBy(() -> NightSnack.create(DATE, 100, 101, PERIOD, null, null, null, null, null, false))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(CommonErrorCode.INVALID_REQUEST);
@@ -87,7 +87,7 @@ class NightSnackTest {
         @Test
         @DisplayName("예약분이 음수면 INVALID_REQUEST가 발생한다")
         void throwsWhenReservedNegative() {
-            assertThatThrownBy(() -> NightSnack.create(DATE, 100, -1, PERIOD))
+            assertThatThrownBy(() -> NightSnack.create(DATE, 100, -1, PERIOD, null, null, null, null, null, false))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(CommonErrorCode.INVALID_REQUEST);
@@ -102,7 +102,7 @@ class NightSnackTest {
         @DisplayName("예약 잔여분 내에서 선점하면 reservedRemaining이 줄고 true를 반환한다")
         void decrementsReservedRemainingWithinCapacity() {
             // given
-            NightSnack nightSnack = NightSnack.create(DATE, 100, 10, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 10, PERIOD, null, null, null, null, null, false);
 
             // when
             boolean reserved = nightSnack.reserve(3);
@@ -118,7 +118,7 @@ class NightSnackTest {
         @DisplayName("예약 잔여분을 넘기면 false를 반환하고 reservedRemaining을 건드리지 않는다")
         void returnsFalseWhenExceedingReservedRemaining() {
             // given
-            NightSnack nightSnack = NightSnack.create(DATE, 100, 10, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 10, PERIOD, null, null, null, null, null, false);
 
             // when
             boolean reserved = nightSnack.reserve(11);
@@ -131,7 +131,7 @@ class NightSnackTest {
         @Test
         @DisplayName("0 이하를 예약하면 false를 반환한다")
         void returnsFalseForNonPositiveCount() {
-            NightSnack nightSnack = NightSnack.create(DATE, 100, 10, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 10, PERIOD, null, null, null, null, null, false);
 
             assertThat(nightSnack.reserve(0)).isFalse();
             assertThat(nightSnack.getReservedRemaining()).isEqualTo(10);
@@ -146,7 +146,7 @@ class NightSnackTest {
         @DisplayName("SCHEDULED 상태에서 OPEN으로 전이한다")
         void transitionsFromScheduledToOpen() {
             // given
-            NightSnack nightSnack = NightSnack.create(DATE, 100, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 0, PERIOD, null, null, null, null, null, false);
 
             // when
             nightSnack.open();
@@ -160,7 +160,7 @@ class NightSnackTest {
         @DisplayName("이미 OPEN인 야식 마차를 다시 오픈하면 INVALID_REQUEST가 발생한다")
         void throwsWhenAlreadyOpen() {
             // given
-            NightSnack nightSnack = NightSnack.create(DATE, 100, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 0, PERIOD, null, null, null, null, null, false);
             ReflectionTestUtils.setField(nightSnack, "status", NightSnackStatus.OPEN);
 
             // when & then
@@ -174,7 +174,7 @@ class NightSnackTest {
         @DisplayName("CLOSED 상태의 야식 마차는 오픈할 수 없다")
         void throwsWhenClosed() {
             // given
-            NightSnack nightSnack = NightSnack.create(DATE, 100, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 0, PERIOD, null, null, null, null, null, false);
             ReflectionTestUtils.setField(nightSnack, "status", NightSnackStatus.CLOSED);
 
             // when & then
@@ -193,7 +193,7 @@ class NightSnackTest {
         @DisplayName("순번은 일반분 정원에서 잔여 수량을 뺀 값이다")
         void computesSequenceFromCapacityMinusRemaining() {
             // given
-            NightSnack nightSnack = NightSnack.create(DATE, 100, PERIOD);
+            NightSnack nightSnack = NightSnack.create(DATE, 100, 0, PERIOD, null, null, null, null, null, false);
             ReflectionTestUtils.setField(nightSnack, "remaining", 63);
 
             // then — 100명 정원에서 63명 남았으면 37번째 신청자다.

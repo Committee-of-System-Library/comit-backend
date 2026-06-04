@@ -103,11 +103,11 @@ class NightSnackReservationIntegrationTest {
         // 정원 20, 예약분 5 → 일반분 15.
         LocalDate date1 = LocalDate.now().plusDays(3);
         Period period1 = Period.of(date1.atTime(17, 30), date1.atTime(18, 30));
-        Long nightSnackId = adminNightSnackService.createNightSnack(date1, 20, 5, period1);
+        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date1, 20, 5, period1, null, null, null, null, null, false)).getId();
         List<String> studentNumbers = List.of(uniqueStudentNumber(), uniqueStudentNumber());
 
         // when
-        ReserveResponse response = adminNightSnackService.reserve(nightSnackId, studentNumbers);
+        ReserveResponse response = adminNightSnackService.reserve(date1, studentNumbers);
 
         // then
         assertThat(response.registered()).isEqualTo(2);
@@ -135,7 +135,7 @@ class NightSnackReservationIntegrationTest {
         int reserved = 3;
         LocalDate date2 = LocalDate.now().plusDays(4);
         Period period2 = Period.of(date2.atTime(17, 30), date2.atTime(18, 30));
-        Long nightSnackId = adminNightSnackService.createNightSnack(date2, capacity, reserved, period2);
+        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date2, capacity, reserved, period2, null, null, null, null, null, false)).getId();
         adminNightSnackService.open(nightSnackId);
 
         int success = 0;
@@ -168,8 +168,8 @@ class NightSnackReservationIntegrationTest {
         String studentNumber = uniqueStudentNumber();
         LocalDate date3 = LocalDate.now().plusDays(5);
         Period period3 = Period.of(date3.atTime(17, 30), date3.atTime(18, 30));
-        Long nightSnackId = adminNightSnackService.createNightSnack(date3, 10, 3, period3);
-        adminNightSnackService.reserve(nightSnackId, List.of(studentNumber));
+        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date3, 10, 3, period3, null, null, null, null, null, false)).getId();
+        adminNightSnackService.reserve(date3, List.of(studentNumber));
         adminNightSnackService.open(nightSnackId);
 
         Long memberId = seedMemberWithStudentNumber(studentNumber);

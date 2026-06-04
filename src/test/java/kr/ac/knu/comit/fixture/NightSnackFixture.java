@@ -19,7 +19,7 @@ public class NightSnackFixture {
 
     /** SCHEDULED 상태의 야식 마차(예약분 없음). */
     public static NightSnack scheduledNightSnack(Long id, int capacity) {
-        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, defaultPeriod());
+        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, 0, defaultPeriod(), null, null, null, null, null, false);
         ReflectionTestUtils.setField(nightSnack, "id", id);
         return nightSnack;
     }
@@ -34,7 +34,7 @@ public class NightSnackFixture {
 
     /** SCHEDULED 상태의 예약분이 있는 야식 마차. */
     public static NightSnack reservedNightSnack(Long id, int capacity, int reservedCapacity) {
-        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, reservedCapacity, defaultPeriod());
+        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, reservedCapacity, defaultPeriod(), null, null, null, null, null, false);
         ReflectionTestUtils.setField(nightSnack, "id", id);
         return nightSnack;
     }

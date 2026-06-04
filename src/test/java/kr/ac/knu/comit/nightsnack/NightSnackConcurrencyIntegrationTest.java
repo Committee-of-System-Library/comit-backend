@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import kr.ac.knu.comit.ComitApplication;
+import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
 import kr.ac.knu.comit.nightsnack.service.AdminNightSnackService;
@@ -206,9 +207,11 @@ class NightSnackConcurrencyIntegrationTest {
 
     private Long openNightSnack(LocalDate date, int capacity) {
         Period period = Period.of(date.atTime(17, 30), date.atTime(18, 30));
-        Long nightSnackId = adminNightSnackService.createNightSnack(date, capacity, 0, period);
-        adminNightSnackService.open(nightSnackId);
-        return nightSnackId;
+        NightSnack nightSnack = nightSnackRepository.save(
+                NightSnack.create(date, capacity, 0, period, null, null, null, null, null, false));
+        nightSnack.open();
+        nightSnackRepository.save(nightSnack);
+        return nightSnack.getId();
     }
 
     private List<Long> seedMembers(int count) {
