@@ -121,6 +121,8 @@ comit:
       visitor-weight: ${COMIT_POST_HOT_VISITOR_WEIGHT:2}
       limit: ${COMIT_POST_HOT_LIMIT:5}
       excluded-board-types: ${COMIT_POST_HOT_EXCLUDED_BOARD_TYPES:NOTICE,EVENT}
+  night-snack:
+    reserved-capacity-ratio: ${COMIT_NIGHT_SNACK_RESERVED_CAPACITY_RATIO:0.1}
   notice:
     rag:
       retrieval-top-k: ${NOTICE_RETRIEVAL_TOP_K:10}

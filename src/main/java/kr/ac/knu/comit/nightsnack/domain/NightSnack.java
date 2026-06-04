@@ -86,25 +86,6 @@ public class NightSnack {
     }
 
     /**
-     * 예약분 없는 야식 마차(전량 일반 선착순). 부하 테스트·단순 생성용.
-     *
-     * @param period 오픈·마감 시각 ({@link Period#of(LocalDateTime, LocalDateTime)} 로 생성)
-     */
-    public static NightSnack create(LocalDate nightSnackDate, int capacity, Period period) {
-        return create(nightSnackDate, capacity, 0, period, null, null, null, null, null, false);
-    }
-
-    /**
-     * 정원을 예약분(사전신청)과 일반분(선착순)으로 나눠 생성한다(요구사항 4-3). 부가 정보 없는 단순 생성용.
-     *
-     * @param reservedCapacity 사전신청용 예약 정원. {@code 0 <= reservedCapacity <= capacity} 여야 한다.
-     * @param period           오픈·마감 시각
-     */
-    public static NightSnack create(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period) {
-        return create(nightSnackDate, capacity, reservedCapacity, period, null, null, null, null, null, false);
-    }
-
-    /**
      * 관리자 생성 전용 팩토리. 부가 정보(제목·내용·메뉴·수령장소·수령마감·신청자격)를 함께 등록한다.
      *
      * @param requiresStudentCouncilFee 신청자격 — 학생회비 납부 여부. 미등록 시 {@code false}.

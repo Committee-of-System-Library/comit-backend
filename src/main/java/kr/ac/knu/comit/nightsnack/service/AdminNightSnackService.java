@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import kr.ac.knu.comit.global.domain.Period;
+import kr.ac.knu.comit.nightsnack.config.NightSnackProperties;
 import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
@@ -32,18 +33,14 @@ public class AdminNightSnackService {
 
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
+    private final NightSnackProperties nightSnackProperties;
 
     @Transactional
-    public Long createNightSnack(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period) {
-        return createNightSnack(nightSnackDate, capacity, reservedCapacity, period,
-                null, null, null, null, null, false);
-    }
-
-    @Transactional
-    public Long createNightSnack(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period,
+    public Long createNightSnack(LocalDate nightSnackDate, int capacity, Period period,
                                  String title, String contents, String menu,
                                  String pickupLocation, LocalDateTime pickupDeadline,
                                  boolean requiresStudentCouncilFee) {
+        int reservedCapacity = (int) Math.round(capacity * nightSnackProperties.getReservedCapacityRatio());
         NightSnack nightSnack = NightSnack.create(nightSnackDate, capacity, reservedCapacity, period,
                 title, contents, menu, pickupLocation, pickupDeadline, requiresStudentCouncilFee);
         return nightSnackRepository.save(nightSnack).getId();
@@ -76,8 +73,8 @@ public class AdminNightSnackService {
      * SCHEDULED 로 한정하면 {@code decrementRemaining(WHERE status=OPEN)} 이 동시에 일어날 수 없어 이 충돌이 사라진다.
      */
     @Transactional
-    public ReserveResponse reserve(Long nightSnackId, List<String> studentNumbers) {
-        NightSnack nightSnack = nightSnackRepository.findById(nightSnackId)
+    public ReserveResponse reserve(LocalDate nightSnackDate, List<String> studentNumbers) {
+        NightSnack nightSnack = nightSnackRepository.findByNightSnackDate(nightSnackDate)
                 .orElseThrow(() -> new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND));
         if (!nightSnack.isScheduled()) {
             throw new BusinessException(NightSnackErrorCode.RESERVATION_NOT_ALLOWED);
@@ -85,7 +82,7 @@ public class AdminNightSnackService {
 
         Set<String> requested = normalize(studentNumbers);
         Set<String> alreadyRegistered = Set.copyOf(
-                nightSnackApplicationRepository.findStudentNumbersByNightSnackId(nightSnackId));
+                nightSnackApplicationRepository.findStudentNumbersByNightSnackId(nightSnack.getId()));
 
         List<String> toInsert = requested.stream()
                 .filter(studentNumber -> !alreadyRegistered.contains(studentNumber))
