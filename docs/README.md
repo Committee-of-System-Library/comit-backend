@@ -21,6 +21,7 @@
 - [Sidowi Pinpoint 롤아웃 계획](./ops/08_sidowi-pinpoint-rollout.md)
 - [Backend self-hosted runner 배포 흐름 HTML](./ops/01_backend-self-hosted-runner-flow.html) - 상단 Mermaid 미니맵과 카드형 상세 설명으로 push -> runner -> server 흐름을 설명
 - [AI 기능 운영 배포 장애 기록](./ops/09_comit-backend-ai-features-prod-deploy.md)
+- [명칭 혼재 및 인프라 드리프트 분석](./ops/10_comit-naming-and-infra-drift.md)
 - [ADR-002 ProblemDetail 기반 에러 응답 표준 채택](./adr/002-problem-detail-error-response.md)
 
 ## 디렉토리 구조

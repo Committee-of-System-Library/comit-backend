@@ -33,4 +33,5 @@
 | `07_comit-sso-integration-rollout.md` | auth-server custom JWT를 `Comit` backend callback, cookie 인증, `@AuthenticatedMember` 주입, 2단계 회원가입 경계와 동적 redirectUri 연동까지 포함한 운영 계획 |
 | `08_sidowi-pinpoint-rollout.md` | `sidowi`에 Pinpoint를 도입하기 위한 버전 매트릭스, 배치 구조, agent 주입 지점, smoke test, rollback 계획 |
 | `09_comit-backend-ai-features-prod-deploy.md` | AI/RAG 기능 운영 배포 시 발생한 3가지 장애(CI Qdrant, Flyway V13 out-of-order, compose env 누락) 원인 분석 및 핫픽스 기록, 정식 수정 TODO |
+| `10_comit-naming-and-infra-drift.md` | comit-staging/comit-backend/knu-cse-comit-server 명칭 혼재 원인·전체 지도, core-infra 드리프트 지뢰, URL 경로 교통정리 방향 (3단계 비용 분류) |
 | `pinpoint/` | `sidowi` Pinpoint 도입 시 바로 참고할 수 있는 compose/env/JAVA_OPTS 초안 모음 |
