@@ -5,6 +5,7 @@ import kr.ac.knu.comit.nightsnack.controller.api.NightSnackApplicationController
 import kr.ac.knu.comit.nightsnack.dto.ApplyResponse;
 import kr.ac.knu.comit.nightsnack.dto.MyTicketResponse;
 import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
+import kr.ac.knu.comit.nightsnack.dto.StudentCouncilFeeResponse;
 import kr.ac.knu.comit.nightsnack.service.NightSnackApplicationService;
 import kr.ac.knu.comit.nightsnack.service.NightSnackQueryService;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
@@ -35,5 +36,11 @@ public class NightSnackApplicationController implements NightSnackApplicationCon
     public ResponseEntity<ApiResponse<ApplyResponse>> apply(Long nightSnackId, MemberPrincipal principal) {
         ApplyResponse response = nightSnackApplicationService.apply(nightSnackId, principal.memberId());
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<StudentCouncilFeeResponse>> getStudentCouncilFeeStatus(MemberPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                nightSnackQueryService.getStudentCouncilFeeStatus(principal.memberId())));
     }
 }
