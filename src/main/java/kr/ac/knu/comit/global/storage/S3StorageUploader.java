@@ -1,14 +1,18 @@
 package kr.ac.knu.comit.global.storage;
 
 import kr.ac.knu.comit.global.exception.BusinessException;
+import kr.ac.knu.comit.global.exception.CommonErrorCode;
 import kr.ac.knu.comit.global.exception.StorageErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
@@ -64,6 +68,27 @@ public class S3StorageUploader implements StorageUploader {
         String presignedUrl = presignedRequest.url().toString();
         String imageUrl = s3Properties.baseUrl() + "/" + key;
         return new PresignedUploadUrls(presignedUrl, imageUrl);
+    }
+
+    public String generatePresignedDownloadUrl(String key, Duration ttl) {
+        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(
+                GetObjectPresignRequest.builder()
+                        .signatureDuration(ttl)
+                        .getObjectRequest(GetObjectRequest.builder()
+                                .bucket(s3Properties.bucketName())
+                                .key(key)
+                                .build())
+                        .build()
+        );
+        return presignedRequest.url().toString();
+    }
+
+    public String extractKeyFromUrl(String url) {
+        String prefix = s3Properties.baseUrl() + "/";
+        if (url == null || !url.startsWith(prefix)) {
+            throw new BusinessException("S3 URL 형식이 올바르지 않습니다.", CommonErrorCode.INVALID_REQUEST);
+        }
+        return url.substring(prefix.length());
     }
 
     private String extractExtension(String filename) {
