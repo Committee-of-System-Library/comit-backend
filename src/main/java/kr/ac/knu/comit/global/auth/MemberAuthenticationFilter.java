@@ -128,7 +128,8 @@ public class MemberAuthenticationFilter extends OncePerRequestFilter {
         String requestUri = request.getRequestURI();
         return isAuthPath(requestUri, "/auth/sso")
                 || isAuthPath(requestUri, "/auth/register")
-                || isAuthPath(requestUri, "/auth/dev");
+                || isAuthPath(requestUri, "/auth/dev")
+                || requestUri.endsWith("/members/nicknames/check");
     }
 
     private boolean isAuthPath(String requestUri, String path) {
