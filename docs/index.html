@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT@latest/fonts/variable/woff2/SUIT-Variable.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COMIT Docs</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #1b2a41;
+      --muted: #607086;
+      --line: #d8e2ef;
+      --accent: #3182f6;
+      --accent-soft: #e9f2ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "SUIT", "Pretendard", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 50%, #edf3fa 100%);
+      color: var(--text);
+      padding: 40px 20px;
+    }
+    .shell {
+      width: 100%;
+      max-width: 760px;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #6ba4ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 1.1rem;
+      letter-spacing: -0.5px;
+    }
+    .logo-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .hero h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+    .fork-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 560px) {
+      .fork-grid { grid-template-columns: 1fr; }
+    }
+    .fork-card {
+      display: flex;
+      flex-direction: column;
+      padding: 28px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 16px 48px rgba(15, 23, 42, 0.07);
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+      cursor: pointer;
+    }
+    .fork-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(49, 130, 246, 0.4);
+      box-shadow: 0 28px 56px rgba(49, 130, 246, 0.13);
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 18px;
+      flex-shrink: 0;
+    }
+    .card-icon.api  { background: #e9f2ff; }
+    .card-icon.dev  { background: #f0fdf4; }
+    .fork-card h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+    .fork-card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      flex: 1;
+    }
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 20px;
+    }
+    .tag {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .tag.api { background: var(--accent-soft); color: var(--accent); }
+    .tag.dev { background: #f0fdf4; color: #166534; }
+    .arrow {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .arrow.dev { color: #16a34a; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="hero">
+      <div class="logo">
+        <div class="logo-icon">C</div>
+        <span class="logo-name">COMIT</span>
+      </div>
+      <h1>개발 문서 포털</h1>
+      <p>확인하고 싶은 문서 종류를 선택하세요.</p>
+    </div>
+
+    <div class="fork-grid">
+      <a class="fork-card" href="./api/index.html">
+        <div class="card-icon api">📡</div>
+        <h2>API 문서</h2>
+        <p>엔드포인트, 요청/응답 필드, 예시 JSON, 기능 명세를 확인할 수 있습니다.</p>
+        <div class="tag-row">
+          <span class="tag api">REST API</span>
+          <span class="tag api">기능 명세</span>
+          <span class="tag api">JSON 예시</span>
+        </div>
+        <div class="arrow">바로가기 →</div>
+      </a>
+
+      <a class="fork-card" href="./config-overview.html">
+        <div class="card-icon dev">⚙️</div>
+        <h2>개발 환경 레퍼런스</h2>
+        <p>프로필별 설정, 환경변수 목록, 인증 구조, AI·Vector Store 구성을 확인할 수 있습니다.</p>
+        <div class="tag-row">
+          <span class="tag dev">환경 설정</span>
+          <span class="tag dev">인증 구조</span>
+          <span class="tag dev">AI / Vector</span>
+        </div>
+        <div class="arrow dev">바로가기 →</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
