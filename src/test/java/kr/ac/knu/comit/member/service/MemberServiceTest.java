@@ -10,6 +10,7 @@ import java.util.Optional;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
+import kr.ac.knu.comit.member.domain.ComitRole;
 import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.dto.UpdateNicknameRequest;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MemberService")
@@ -37,8 +39,8 @@ class MemberServiceTest {
     class FindBySso {
 
         @Test
-        @DisplayName("기존 회원이 있으면 학번만 동기화해서 반환한다")
-        void syncsStudentNumberWhenMemberAlreadyExists() {
+        @DisplayName("기존 회원이 있으면 학번을 동기화하지 않고 반환한다")
+        void returnsExistingMemberWithoutSyncingStudentNumber() {
             Member member = member("sso-1", "comit-user", "20230001");
             MemberPrincipal principal = principal("sso-1", "comit-user", "20239999");
             given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-1")).willReturn(Optional.of(member));
@@ -46,9 +48,22 @@ class MemberServiceTest {
             Optional<Member> result = memberService.findBySso(principal);
 
             assertThat(result).containsSame(member);
-            assertThat(result.orElseThrow().getStudentNumber()).isEqualTo("20239999");
+            assertThat(result.orElseThrow().getStudentNumber()).isEqualTo("20230001");
             then(memberRepository).should().findBySsoSubAndDeletedAtIsNull("sso-1");
             then(memberRepository).shouldHaveNoMoreInteractions();
+        }
+
+        @Test
+        @DisplayName("관리자 회원은 로그인 principal 학번이 관리자여도 기존 학번을 유지한다")
+        void keepsExistingStudentNumberForAdminMember() {
+            Member member = adminMember("sso-1", "admin-user", "20230001");
+            MemberPrincipal principal = principal("sso-1", "admin-user", "관리자");
+            given(memberRepository.findBySsoSubAndDeletedAtIsNull("sso-1")).willReturn(Optional.of(member));
+
+            Optional<Member> result = memberService.findBySso(principal);
+
+            assertThat(result).containsSame(member);
+            assertThat(result.orElseThrow().getStudentNumber()).isEqualTo("20230001");
         }
 
         @Test
@@ -191,5 +206,11 @@ class MemberServiceTest {
                 null,
                 LocalDateTime.parse("2026-03-31T12:00:00")
         );
+    }
+
+    private Member adminMember(String ssoSub, String nickname, String studentNumber) {
+        Member member = member(ssoSub, nickname, studentNumber);
+        ReflectionTestUtils.setField(member, "comitRole", ComitRole.ADMIN);
+        return member;
     }
 }

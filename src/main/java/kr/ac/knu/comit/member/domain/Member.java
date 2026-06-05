@@ -113,10 +113,6 @@ public class Member {
         this.profileImageUrl = normalized;
     }
 
-    public void syncStudentNumber(String studentNumber) {
-        this.studentNumber = normalizeStudentNumber(studentNumber);
-    }
-
     public void delete() {
         if (isDeleted()) {
             return;
