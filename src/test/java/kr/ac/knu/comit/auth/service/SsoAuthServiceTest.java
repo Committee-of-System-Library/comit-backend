@@ -7,7 +7,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.lenient;
 
 import java.util.List;
-import kr.ac.knu.comit.auth.config.AdminEmailProperties;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
 import kr.ac.knu.comit.auth.dto.SsoCallbackRejected;
@@ -19,7 +18,6 @@ import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
-import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,8 +36,6 @@ class SsoAuthServiceTest {
     @Mock private AuthCookieManager authCookieManager;
     @Mock private ExternalIdentityMapper externalIdentityMapper;
     @Mock private MemberService memberService;
-    @Mock private MemberRegistrationService memberRegistrationService;
-    @Mock private AdminEmailProperties adminEmailProperties;
     @InjectMocks private SsoAuthService ssoAuthService;
 
     @Nested
@@ -206,6 +202,53 @@ class SsoAuthServiceTest {
             assertThat(pendingRegistration.tokenCookie()).isEqualTo("Set-Cookie: token=abc");
             assertThat(pendingRegistration.clearRedirectUriCookieHeader())
                     .isEqualTo("Set-Cookie: comit-redirect-uri=; Max-Age=0");
+        }
+
+        @Test
+        @DisplayName("미가입 사용자는 이메일과 무관하게 회원가입 URL로 리디렉션한다")
+        void returnsPendingRegistrationForUnregisteredAdminEmail() {
+            // given
+            ExternalIdentity identity = new ExternalIdentity(
+                    "sub-1",
+                    "홍길동",
+                    "admin@knu.ac.kr",
+                    "2023012780",
+                    "심화",
+                    "CSE_STUDENT",
+                    "ADMIN"
+            );
+            MemberPrincipal principal = new MemberPrincipal(
+                    null,
+                    "sub-1",
+                    "홍길동",
+                    "admin@knu.ac.kr",
+                    "2023012780",
+                    MemberPrincipal.UserType.CSE_STUDENT,
+                    MemberPrincipal.MemberRole.STUDENT
+            );
+
+            givenFrontendUrls();
+            given(externalAuthClient.verify("valid-token")).willReturn(identity);
+            given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal);
+            given(memberService.hasActiveMember("sub-1")).willReturn(false);
+            given(authCookieManager.createTokenCookie("valid-token")).willReturn("Set-Cookie: token=abc");
+            given(authCookieManager.clearStateCookie()).willReturn("Set-Cookie: state=; Max-Age=0");
+            given(authCookieManager.clearRedirectUriCookie())
+                    .willReturn("Set-Cookie: comit-redirect-uri=; Max-Age=0");
+
+            // when
+            SsoCallbackResult result = ssoAuthService.handleCallback(
+                    "state-1",
+                    "valid-token",
+                    "state-1",
+                    "https://comit-sso-smoke.vercel.app"
+            );
+
+            // then
+            assertThat(result).isInstanceOf(SsoCallbackPendingRegistration.class);
+            SsoCallbackPendingRegistration pendingRegistration = (SsoCallbackPendingRegistration) result;
+            assertThat(pendingRegistration.redirectUrl()).isEqualTo("https://comit-sso-smoke.vercel.app?stage=register");
+            assertThat(pendingRegistration.tokenCookie()).isEqualTo("Set-Cookie: token=abc");
         }
 
         @Test

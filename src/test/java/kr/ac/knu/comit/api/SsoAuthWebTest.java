@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.controller.RegisterController;
@@ -36,6 +37,9 @@ import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
+import kr.ac.knu.comit.report.controller.AdminReportController;
+import kr.ac.knu.comit.report.dto.AdminReportPageResponse;
+import kr.ac.knu.comit.report.service.AdminReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,14 +52,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@WebMvcTest({SsoAuthController.class, RegisterController.class, MemberController.class})
+@WebMvcTest({SsoAuthController.class, RegisterController.class, MemberController.class, AdminReportController.class})
 @Import({
         WebMvcConfig.class,
         MemberArgumentResolver.class,
         GlobalExceptionHandler.class,
         ComitSsoProperties.class,
         AuthCookieManager.class,
-        kr.ac.knu.comit.auth.config.AdminEmailProperties.class,
         ExternalIdentityMapper.class,
         RegisterService.class,
         SsoAuthService.class,
@@ -98,6 +101,9 @@ class SsoAuthWebTest {
 
     @MockitoBean
     private ImageService imageService;
+
+    @MockitoBean
+    private AdminReportService adminReportService;
 
     @BeforeEach
     void setUp() {
@@ -340,6 +346,38 @@ class SsoAuthWebTest {
     }
 
     @Test
+    @DisplayName("SSO JWT role claim이 ADMIN이어도 DB role이 STUDENT면 관리자 API를 거부한다")
+    void blocksAdminApiWhenJwtRoleIsAdminButDbRoleIsStudent() throws Exception {
+        // given
+        given(externalAuthClient.verify(any())).willReturn(externalIdentity("ADMIN"));
+        given(memberService.findBySso(any())).willReturn(Optional.of(authenticatedMember()));
+
+        // when & then
+        mockMvc.perform(get("/admin/reports")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("/problems/common/forbidden"))
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
+    }
+
+    @Test
+    @DisplayName("SSO JWT role claim이 STUDENT여도 DB role이 ADMIN이면 관리자 API를 허용한다")
+    void allowsAdminApiWhenJwtRoleIsStudentButDbRoleIsAdmin() throws Exception {
+        // given
+        given(externalAuthClient.verify(any())).willReturn(externalIdentity("STUDENT"));
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
+        given(adminReportService.getReports(isNull(), isNull(), any()))
+                .willReturn(new AdminReportPageResponse(List.of(), 0, 20, 0, 0));
+
+        // when & then
+        mockMvc.perform(get("/admin/reports")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
     @DisplayName("prefill API는 JWT에서 name, studentNumber, major를 반환한다")
     void returnsRegisterPrefillFromVerifiedToken() throws Exception {
         // given
@@ -467,7 +505,27 @@ class SsoAuthWebTest {
         return member;
     }
 
+    private Member adminMember() {
+        Member member = Member.create(
+                "sso-sub-1",
+                "관리자",
+                "010-0000-0000",
+                "admin-user",
+                "2023012780",
+                null,
+                null,
+                LocalDateTime.now()
+        );
+        ReflectionTestUtils.setField(member, "id", 1L);
+        ReflectionTestUtils.setField(member, "comitRole", ComitRole.ADMIN);
+        return member;
+    }
+
     private ExternalIdentity externalIdentity() {
+        return externalIdentity("STUDENT");
+    }
+
+    private ExternalIdentity externalIdentity(String role) {
         return new ExternalIdentity(
                 "sso-sub-1",
                 "홍길동",
@@ -475,7 +533,7 @@ class SsoAuthWebTest {
                 "2023012780",
                 "심화",
                 "CSE_STUDENT",
-                "STUDENT"
+                role
         );
     }
 }
