@@ -25,10 +25,8 @@ public class MemberService {
         return MemberProfileResponse.from(findMemberOrThrow(memberId));
     }
 
-    @Transactional
     public Optional<Member> findBySso(MemberPrincipal principal) {
-        return memberRepository.findBySsoSubAndDeletedAtIsNull(principal.ssoSub())
-                .map(member -> syncStudentNumber(member, principal.studentNumber()));
+        return memberRepository.findBySsoSubAndDeletedAtIsNull(principal.ssoSub());
     }
 
     public boolean hasActiveMember(String ssoSub) {
@@ -92,10 +90,5 @@ public class MemberService {
         return memberRepository.findById(memberId)
                 .filter(m -> !m.isDeleted())
                 .orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
-
-    private Member syncStudentNumber(Member member, String studentNumber) {
-        member.syncStudentNumber(studentNumber);
-        return member;
     }
 }
