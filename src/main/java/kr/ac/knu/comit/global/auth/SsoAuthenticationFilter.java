@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 
-import kr.ac.knu.comit.auth.config.AdminEmailProperties;
 import kr.ac.knu.comit.auth.port.ExternalAuthClient;
 import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.auth.service.AuthCookieManager;
@@ -16,7 +15,6 @@ import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
 
 import kr.ac.knu.comit.member.domain.Member;
-import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -35,15 +33,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String ADMIN_DISPLAY = "관리자";
-    private static final String ADMIN_PHONE_PLACEHOLDER = "000-000-0000";
-
     private final AuthCookieManager authCookieManager;
     private final ExternalAuthClient externalAuthClient;
     private final ExternalIdentityMapper externalIdentityMapper;
     private final MemberService memberService;
-    private final MemberRegistrationService memberRegistrationService;
-    private final AdminEmailProperties adminEmailProperties;
     private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
@@ -69,26 +62,7 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
 
             Optional<Member> memberOptional = memberService.findBySso(provisionalPrincipal);
             if (memberOptional.isEmpty()) {
-                if (adminEmailProperties.isAdminEmail(identity.email())) {
-                    try {
-                        memberRegistrationService.register(
-                                identity.ssoSub(),
-                                ADMIN_DISPLAY,
-                                ADMIN_PHONE_PLACEHOLDER,
-                                adminNickname(identity.ssoSub()),
-                                null,
-                                null,
-                                null
-                        );
-                    } catch (BusinessException e) {
-                        if (e.getErrorCode() != MemberErrorCode.MEMBER_ALREADY_EXISTS) {
-                            throw e;
-                        }
-                    }
-                    memberOptional = memberService.findBySso(provisionalPrincipal);
-                } else {
-                    throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
-                }
+                throw new BusinessException(MemberErrorCode.REGISTRATION_REQUIRED);
             }
 
             Member member = memberOptional.get();
@@ -100,7 +74,7 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
             }
             request.setAttribute(
                     MemberArgumentResolver.PRINCIPAL_ATTRIBUTE,
-                    externalIdentityMapper.toPrincipal(member.getId(), identity)
+                    toAuthenticatedPrincipal(member, provisionalPrincipal)
             );
         } catch (BusinessException e) {
             handlerExceptionResolver.resolveException(request, response, null, e);
@@ -126,9 +100,21 @@ public class SsoAuthenticationFilter extends OncePerRequestFilter {
         return servletPath.equals(path) || servletPath.startsWith(path + "/");
     }
 
-    private static String adminNickname(String ssoSub) {
-        String cleaned = ssoSub.replaceAll("[^a-zA-Z0-9]", "");
-        String suffix = cleaned.length() >= 6 ? cleaned.substring(0, 6) : cleaned;
-        return "관리자-" + suffix;
+    private MemberPrincipal toAuthenticatedPrincipal(Member member, MemberPrincipal provisionalPrincipal) {
+        return new MemberPrincipal(
+                member.getId(),
+                member.getSsoSub(),
+                provisionalPrincipal.name(),
+                provisionalPrincipal.email(),
+                provisionalPrincipal.studentNumber(),
+                provisionalPrincipal.userType(),
+                toMemberRole(member.getComitRole())
+        );
+    }
+
+    private MemberPrincipal.MemberRole toMemberRole(kr.ac.knu.comit.member.domain.ComitRole comitRole) {
+        return comitRole == kr.ac.knu.comit.member.domain.ComitRole.ADMIN
+                ? MemberPrincipal.MemberRole.ADMIN
+                : MemberPrincipal.MemberRole.STUDENT;
     }
 }
