@@ -6,6 +6,7 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationStatus;
 
 public record MyTicketResponse(
+        String name,
         Long applicationId,
         String ticketToken,
         NightSnackApplicationStatus status,
@@ -16,8 +17,9 @@ public record MyTicketResponse(
         LocalDateTime appliedAt,
         LocalDateTime confirmedAt
 ) {
-    public static MyTicketResponse from(NightSnackApplication application) {
+    public static MyTicketResponse from(NightSnackApplication application, String name) {
         return new MyTicketResponse(
+                name,
                 application.getId(),
                 application.getTicketToken(),
                 application.getStatus(),
