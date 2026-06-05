@@ -13,6 +13,8 @@ final class ApiDocHtmlRenderer {
                 <html lang="ko">
                 <head>
                     <meta charset="UTF-8">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" />
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT@latest/fonts/variable/woff2/SUIT-Variable.css" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>COMIT API Docs</title>
                     <style>
@@ -263,6 +265,8 @@ final class ApiDocHtmlRenderer {
                 <html lang="ko">
                 <head>
                     <meta charset="UTF-8">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" />
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT@latest/fonts/variable/woff2/SUIT-Variable.css" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>__TITLE__</title>
                     <style>

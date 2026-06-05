@@ -29,7 +29,7 @@ public class NightSnackApplicationController implements NightSnackApplicationCon
     @Override
     public ResponseEntity<ApiResponse<MyTicketResponse>> getMyTicket(Long nightSnackId, MemberPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
-                nightSnackQueryService.getMyTicket(nightSnackId, principal.memberId())));
+                nightSnackQueryService.getMyTicket(nightSnackId, principal.memberId(), principal.name())));
     }
 
     @Override
