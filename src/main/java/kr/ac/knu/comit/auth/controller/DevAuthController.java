@@ -41,7 +41,7 @@ public class DevAuthController {
         Member member = memberRepository.findByNicknameAndDeletedAtIsNull(nickname)
                 .orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        String cookieValue = member.getSsoSub() + "|" + role.name();
+        String cookieValue = member.getSsoSub();
         response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(cookieValue, Duration.ofDays(7)));
         return ResponseEntity.ok().build();
     }

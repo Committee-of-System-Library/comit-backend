@@ -2,7 +2,6 @@ package kr.ac.knu.comit.auth.service;
 
 import java.net.URI;
 import java.util.UUID;
-import kr.ac.knu.comit.auth.config.AdminEmailProperties;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
 import kr.ac.knu.comit.auth.dto.SsoCallbackRejected;
@@ -14,8 +13,6 @@ import kr.ac.knu.comit.auth.port.ExternalIdentity;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
-import kr.ac.knu.comit.global.exception.MemberErrorCode;
-import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,16 +24,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class SsoAuthService {
 
-    private static final String ADMIN_DISPLAY = "관리자";
-    private static final String ADMIN_PHONE_PLACEHOLDER = "000-000-0000";
-
     private final ComitSsoProperties ssoProperties;
     private final ExternalAuthClient externalAuthClient;
     private final AuthCookieManager authCookieManager;
     private final ExternalIdentityMapper externalIdentityMapper;
     private final MemberService memberService;
-    private final MemberRegistrationService memberRegistrationService;
-    private final AdminEmailProperties adminEmailProperties;
 
     public SsoLoginStart startLogin() {
         return startLogin(null);
@@ -77,30 +69,12 @@ public class SsoAuthService {
         }
 
         if (!memberService.hasActiveMember(principal.ssoSub())) {
-            if (adminEmailProperties.isAdminEmail(identity.email())) {
-                try {
-                    memberRegistrationService.register(
-                            identity.ssoSub(),
-                            ADMIN_DISPLAY,
-                            ADMIN_PHONE_PLACEHOLDER,
-                            adminNickname(identity.ssoSub()),
-                            null,
-                            null,
-                            null
-                    );
-                } catch (BusinessException e) {
-                    if (e.getErrorCode() != MemberErrorCode.MEMBER_ALREADY_EXISTS) {
-                        throw e;
-                    }
-                }
-            } else {
-                return new SsoCallbackPendingRegistration(
-                        resolveRegisterUrl(storedRedirectUri),
-                        authCookieManager.createTokenCookie(token),
-                        authCookieManager.clearStateCookie(),
-                        authCookieManager.clearRedirectUriCookie()
-                );
-            }
+            return new SsoCallbackPendingRegistration(
+                    resolveRegisterUrl(storedRedirectUri),
+                    authCookieManager.createTokenCookie(token),
+                    authCookieManager.clearStateCookie(),
+                    authCookieManager.clearRedirectUriCookie()
+            );
         }
 
         return new SsoCallbackSuccess(
@@ -242,11 +216,5 @@ public class SsoAuthService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
-    }
-
-    private static String adminNickname(String ssoSub) {
-        String cleaned = ssoSub.replaceAll("[^a-zA-Z0-9]", "");
-        String suffix = cleaned.length() >= 6 ? cleaned.substring(0, 6) : cleaned;
-        return "관리자-" + suffix;
     }
 }
