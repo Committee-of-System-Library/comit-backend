@@ -71,9 +71,9 @@ window.API_DOCS = [
 },
 {
   title: "AdminNightSnackControllerApi",
-  summary: "관리자가 선착순 야식 마차를 생성합니다. 생성 직후 상태는 SCHEDULED이며, 별도 오픈 요청으로 신청을 받기 시작합니다. 사전신청 예약분은 전체 정원의 10%(서버 정책)로 자동 계산됩니다.",
+  summary: "관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. 신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다.",
   href: "./nightsnack/AdminNightSnackControllerApi.html",
-  endpointCount: 3,
+  endpointCount: 5,
   sectionPath: "nightsnack"
 },
 {
