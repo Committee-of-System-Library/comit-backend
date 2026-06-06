@@ -1,7 +1,9 @@
 package kr.ac.knu.comit.notice.infrastructure.rag.indexing;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,19 +26,24 @@ public class NoticeEmbedder {
         String url = originalUrl != null ? originalUrl : "";
         List<String> chunks = chunker.chunk(content);
 
+        LocalDate deadline = NoticeDeadlineExtractor.extract(content);
+
         List<Document> docs = new ArrayList<>();
         for (int i = 0; i < chunks.size(); i++) {
+            Map<String, Object> meta = new LinkedHashMap<>();
+            meta.put("noticeId", String.valueOf(noticeId));
+            meta.put("wrId", wrId);
+            meta.put("title", title);
+            meta.put("originalUrl", url);
+            meta.put("chunkIndex", String.valueOf(i));
+            meta.put("chunkCount", String.valueOf(chunks.size()));
+            if (deadline != null) {
+                meta.put("deadlineDate", deadline.toString());
+            }
             docs.add(Document.builder()
                     .id(toDocumentId(noticeId, i))
                     .text(NoticeDocumentText.format(title, chunks.get(i)))
-                    .metadata(Map.of(
-                            "noticeId", String.valueOf(noticeId),
-                            "wrId", wrId,
-                            "title", title,
-                            "originalUrl", url,
-                            "chunkIndex", String.valueOf(i),
-                            "chunkCount", String.valueOf(chunks.size())
-                    ))
+                    .metadata(meta)
                     .build());
         }
 

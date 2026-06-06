@@ -37,6 +37,10 @@ final class NoticeDocumentMetadata {
         return (String) doc.getMetadata().get("originalUrl");
     }
 
+    static String deadlineDate(Document doc) {
+        return (String) doc.getMetadata().get("deadlineDate");
+    }
+
     static List<Document> distinctByNoticeId(List<Document> docs) {
         Map<Long, Document> documentsByNoticeId = new LinkedHashMap<>();
         for (Document doc : docs) {
