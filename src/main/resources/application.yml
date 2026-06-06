@@ -124,10 +124,10 @@ comit:
     reserved-capacity-ratio: ${COMIT_NIGHT_SNACK_RESERVED_CAPACITY_RATIO:0.1}
   notice:
     rag:
-      retrieval-top-k: ${NOTICE_RETRIEVAL_TOP_K:10}
-      query-transform-threshold: ${NOTICE_QUERY_TRANSFORM_THRESHOLD:0.7}
+      retrieval-top-k: ${NOTICE_RETRIEVAL_TOP_K:7}
+      query-transform-threshold: ${NOTICE_QUERY_TRANSFORM_THRESHOLD:0.75}
       query-transform-model: ${NOTICE_QUERY_TRANSFORM_MODEL:gpt-4.1-nano}
-      rerank-model: ${NOTICE_RERANK_MODEL:gpt-4o-mini}
+      rerank-model: ${NOTICE_RERANK_MODEL:gpt-4.1-mini}
       answer-nano-model: ${NOTICE_ANSWER_NANO_MODEL:gpt-4.1-nano}
       answer-mini-model: ${NOTICE_ANSWER_MINI_MODEL:gpt-4o-mini}
       answer-model: ${NOTICE_ANSWER_MODEL:gpt-4o}

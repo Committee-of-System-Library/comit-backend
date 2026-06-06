@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class NoticeReranker {
 
     private static final int CONTEXT_NOTICE_COUNT = 5;
-    private static final int RERANK_SUMMARY_PREVIEW_LENGTH = 180;
+    private static final int RERANK_SUMMARY_PREVIEW_LENGTH = 100;
 
     private final ChatClient chatClient;
     private final OfficialNoticeRepository noticeRepository;

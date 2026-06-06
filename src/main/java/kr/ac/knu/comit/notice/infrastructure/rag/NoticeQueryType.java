@@ -4,7 +4,8 @@ public enum NoticeQueryType {
 
     OUT_OF_SCOPE(0, AnswerTier.NANO),
     CATEGORY_MULTI_NOTICE_SEARCH(5, AnswerTier.NANO),
-    DETAIL_ANSWER(1, AnswerTier.FULL),
+    DEADLINE_SEARCH(5, AnswerTier.MINI),
+    DETAIL_ANSWER(2, AnswerTier.MINI),
     SINGLE_NOTICE_SEARCH(1, AnswerTier.MINI),
     EXACT_TOKEN_DETAIL(2, AnswerTier.MINI),
     DOMAIN_LABEL_SINGLE_NOTICE_SEARCH(2, AnswerTier.MINI),
