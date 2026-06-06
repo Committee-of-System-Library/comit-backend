@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import kr.ac.knu.comit.global.domain.Period;
 import kr.ac.knu.comit.nightsnack.config.NightSnackProperties;
@@ -12,6 +13,8 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
+import kr.ac.knu.comit.nightsnack.dto.AdminApplicationListResponse;
+import kr.ac.knu.comit.nightsnack.dto.ApplicationCheckResponse;
 import kr.ac.knu.comit.nightsnack.dto.ReserveResponse;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
@@ -98,6 +101,24 @@ public class AdminNightSnackService {
                     NightSnackApplication.reserved(nightSnack, studentNumber)));
         }
         return ReserveResponse.of(requested.size(), created);
+    }
+
+    public AdminApplicationListResponse listApplications(Long nightSnackId) {
+        if (!nightSnackRepository.existsById(nightSnackId)) {
+            throw new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND);
+        }
+        List<NightSnackApplication> applications =
+                nightSnackApplicationRepository.findAllByNightSnackIdOrderByCreatedAtAsc(nightSnackId);
+        return AdminApplicationListResponse.from(applications);
+    }
+
+    public ApplicationCheckResponse checkApplication(Long nightSnackId, String studentNumber) {
+        if (!nightSnackRepository.existsById(nightSnackId)) {
+            throw new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND);
+        }
+        Optional<NightSnackApplication> application =
+                nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(nightSnackId, studentNumber);
+        return ApplicationCheckResponse.of(application);
     }
 
     /** 학번 목록을 정규화한다: 공백 제거, 빈 값 제외, 순서를 유지하며 중복 제거. */

@@ -2,6 +2,8 @@ package kr.ac.knu.comit.nightsnack.controller.api;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import kr.ac.knu.comit.nightsnack.dto.AdminApplicationListResponse;
+import kr.ac.knu.comit.nightsnack.dto.ApplicationCheckResponse;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackRequest;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.ReserveRequest;
@@ -16,6 +18,7 @@ import kr.ac.knu.comit.global.docs.annotation.FieldDesc;
 import kr.ac.knu.comit.global.exception.ApiResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -152,6 +155,97 @@ public interface AdminNightSnackControllerApi {
     ResponseEntity<ApiResponse<ReserveResponse>> reserve(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestBody @Valid ReserveRequest request,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "야식 마차 신청자 목록 조회",
+            description = "관리자가 특정 야식 마차의 전체 신청자 목록을 신청 시각 오름차순으로 조회합니다. "
+                    + "일반 선착순(GENERAL)과 사전신청(RESERVED) 모두 포함됩니다.",
+            descriptions = {
+                    @FieldDesc(name = "nightSnackId", value = "조회할 야식 마차 ID입니다."),
+                    @FieldDesc(name = "total", value = "전체 신청 건수입니다."),
+                    @FieldDesc(name = "applications", value = "신청 목록입니다. 신청 시각 오름차순으로 정렬됩니다."),
+                    @FieldDesc(name = "applicationId", value = "신청 ID입니다."),
+                    @FieldDesc(name = "studentNumber", value = "신청자 학번입니다."),
+                    @FieldDesc(name = "source", value = "신청 구분입니다. GENERAL(선착순) 또는 RESERVED(사전신청)."),
+                    @FieldDesc(name = "status", value = "수령 상태입니다. PENDING / CONFIRMED / NO_SHOW."),
+                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다."),
+                    @FieldDesc(name = "createdAt", value = "신청 시각입니다.")
+            },
+            errors = {
+                    @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),
+                    @ApiError(code = "EVENT_NOT_FOUND", when = "존재하지 않는 야식 마차 ID로 요청할 때")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": {
+                                "total": 2,
+                                "applications": [
+                                  {
+                                    "applicationId": 1,
+                                    "studentNumber": "2026000001",
+                                    "source": "RESERVED",
+                                    "status": "PENDING",
+                                    "ticketToken": "9f1c2e4a-7b8d-4c2a-9e3f-1a2b3c4d5e6f",
+                                    "createdAt": "2026-05-19T17:00:00"
+                                  },
+                                  {
+                                    "applicationId": 2,
+                                    "studentNumber": "2026000002",
+                                    "source": "GENERAL",
+                                    "status": "PENDING",
+                                    "ticketToken": "0a2d3f5b-8c9e-4d3b-af40-2b3c4d5e6f70",
+                                    "createdAt": "2026-05-20T17:30:01"
+                                  }
+                                ]
+                              }
+                            }
+                            """
+            )
+    )
+    @GetMapping("/{nightSnackId}/applications")
+    ResponseEntity<ApiResponse<AdminApplicationListResponse>> listApplications(
+            @PathVariable Long nightSnackId,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "야식 마차 신청 성공 여부 조회",
+            description = "관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. "
+                    + "신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다.",
+            descriptions = {
+                    @FieldDesc(name = "nightSnackId", value = "조회할 야식 마차 ID입니다."),
+                    @FieldDesc(name = "studentNumber", value = "조회할 학번입니다."),
+                    @FieldDesc(name = "applied", value = "신청 성공 여부입니다. 신청 내역이 있으면 true."),
+                    @FieldDesc(name = "source", value = "신청 구분입니다. GENERAL 또는 RESERVED. applied가 false이면 null."),
+                    @FieldDesc(name = "status", value = "수령 상태입니다. applied가 false이면 null."),
+                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다. applied가 false이면 null.")
+            },
+            errors = {
+                    @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),
+                    @ApiError(code = "EVENT_NOT_FOUND", when = "존재하지 않는 야식 마차 ID로 요청할 때")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS",
+                              "data": {
+                                "applied": true,
+                                "source": "GENERAL",
+                                "status": "PENDING",
+                                "ticketToken": "9f1c2e4a-7b8d-4c2a-9e3f-1a2b3c4d5e6f"
+                              }
+                            }
+                            """
+            )
+    )
+    @GetMapping("/{nightSnackId}/applications/{studentNumber}")
+    ResponseEntity<ApiResponse<ApplicationCheckResponse>> checkApplication(
+            @PathVariable Long nightSnackId,
+            @PathVariable String studentNumber,
             @AuthenticatedMember MemberPrincipal principal
     );
 }

@@ -23,4 +23,8 @@ public interface NightSnackApplicationRepository extends JpaRepository<NightSnac
             WHERE a.nightSnack.id = :nightSnackId AND a.studentNumber IS NOT NULL
             """)
     List<String> findStudentNumbersByNightSnackId(@Param("nightSnackId") Long nightSnackId);
+
+    List<NightSnackApplication> findAllByNightSnackIdOrderByCreatedAtAsc(Long nightSnackId);
+
+    Optional<NightSnackApplication> findByNightSnackIdAndStudentNumber(Long nightSnackId, String studentNumber);
 }

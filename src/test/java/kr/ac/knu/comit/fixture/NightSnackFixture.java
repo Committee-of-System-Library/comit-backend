@@ -3,7 +3,9 @@ package kr.ac.knu.comit.fixture;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import kr.ac.knu.comit.global.domain.Period;
+import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.nightsnack.domain.NightSnack;
+import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -37,5 +39,19 @@ public class NightSnackFixture {
         NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, reservedCapacity, defaultPeriod(), null, null, null, null, null, false);
         ReflectionTestUtils.setField(nightSnack, "id", id);
         return nightSnack;
+    }
+
+    /** 사전신청(RESERVED) 신청 건. */
+    public static NightSnackApplication reservedApplication(Long id, NightSnack nightSnack, String studentNumber) {
+        NightSnackApplication application = NightSnackApplication.reserved(nightSnack, studentNumber);
+        ReflectionTestUtils.setField(application, "id", id);
+        return application;
+    }
+
+    /** 일반 선착순(GENERAL) 신청 건. */
+    public static NightSnackApplication generalApplication(Long id, NightSnack nightSnack, Member member) {
+        NightSnackApplication application = NightSnackApplication.general(member, nightSnack);
+        ReflectionTestUtils.setField(application, "id", id);
+        return application;
     }
 }
