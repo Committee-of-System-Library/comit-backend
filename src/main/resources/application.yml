@@ -138,6 +138,7 @@ comit:
       chat-response-timeout-seconds: ${NOTICE_CHAT_RESPONSE_TIMEOUT_SECONDS:30}
     scheduler:
       enabled: ${NOTICE_SCHEDULER_ENABLED:true}
+      initial-sync-max-pages: ${NOTICE_INITIAL_SYNC_MAX_PAGES:200}
       latest-sync-max-pages: ${NOTICE_LATEST_SYNC_MAX_PAGES:3}
       reindex-embeddings-on-startup: ${NOTICE_REINDEX_EMBEDDINGS_ON_STARTUP:false}
       reindex-embeddings-limit: ${NOTICE_REINDEX_EMBEDDINGS_LIMIT:0}

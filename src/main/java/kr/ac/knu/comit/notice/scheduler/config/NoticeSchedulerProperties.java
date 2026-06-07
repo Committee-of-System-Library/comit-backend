@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 public class NoticeSchedulerProperties {
 
+    private final int initialSyncMaxPages;
     private final int latestSyncMaxPages;
     private final boolean reindexEmbeddingsOnStartup;
     private final int reindexEmbeddingsLimit;

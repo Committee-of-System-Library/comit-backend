@@ -18,8 +18,6 @@ import kr.ac.knu.comit.notice.infrastructure.crawler.KnuCseNoticeCrawler;
 @RequiredArgsConstructor
 public class OfficialNoticeInitializer {
 
-    private static final int INITIAL_SYNC_MAX_PAGES = 150;
-
     private final KnuCseNoticeCrawler crawler;
     private final OfficialNoticeRepository noticeRepository;
     private final NoticeEmbedder embedder;
@@ -39,7 +37,7 @@ public class OfficialNoticeInitializer {
     }
 
     private void syncInitial() {
-        for (int page = 1; page <= INITIAL_SYNC_MAX_PAGES; page++) {
+        for (int page = 1; page <= properties.getInitialSyncMaxPages(); page++) {
             List<NoticeListItem> items = crawler.crawlListPage(page);
             if (items.isEmpty()) {
                 break;
