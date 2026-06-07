@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.nightsnack.domain;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -10,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 public interface NightSnackRepository extends JpaRepository<NightSnack, Long> {
 
     Optional<NightSnack> findByNightSnackDate(LocalDate nightSnackDate);
+
+    List<NightSnack> findAllByOrderByNightSnackDateDesc();
 
     /**
      * Discussion #96 "방안 1 — DB 원자적 UPDATE 선점 전략"의 핵심 쿼리.
