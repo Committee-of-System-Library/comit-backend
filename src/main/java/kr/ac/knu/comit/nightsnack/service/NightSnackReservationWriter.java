@@ -9,22 +9,29 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 선착순 선점의 임계구역만 담는 쓰기 트랜잭션. 핫 row 락(remaining 행)은 {@link #reserve}의
- * {@code decrementRemaining}에서 잡혀 커밋까지 유지되므로, 이 트랜잭션 안에는 (성공 경로 기준)
- * {@code decrement → INSERT} 외 어떤 조회도 두지 않는다.
+ * 선착순 선점의 임계구역만 담는 쓰기 트랜잭션 — {@link ReservationStrategy}의 {@code db-atomic-update} 구현체.
+ *
+ * <p>핫 row 락(remaining 행)은 {@link #reserve}의 {@code decrementRemaining}에서 잡혀 커밋까지 유지되므로,
+ * 이 트랜잭션 안에는 (성공 경로 기준) {@code decrement → INSERT} 외 어떤 조회도 두지 않는다.
  *
  * <p>별도 빈으로 둔 이유: {@code @Transactional}은 스프링 프록시로만 적용되어, 같은 클래스 내부 호출
  * (self-invocation)로는 새 트랜잭션 경계가 생기지 않는다. {@link NightSnackApplicationService}가
  * 주입받아 호출해야 이 메서드만의 짧은 트랜잭션이 만들어진다.
  */
 @Service
+@ConditionalOnProperty(
+        name = "comit.nightsnack.reservation-strategy",
+        havingValue = "db-atomic-update",
+        matchIfMissing = true
+)
 @RequiredArgsConstructor
-public class NightSnackReservationWriter {
+public class NightSnackReservationWriter implements ReservationStrategy {
 
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
@@ -40,10 +47,8 @@ public class NightSnackReservationWriter {
     public NightSnackApplication reserve(Member member, NightSnack nightSnack) {
         Long nightSnackId = nightSnack.getId();
 
-        // 방안 1: 단일 원자적 UPDATE로 선점. 여기서 remaining 행에 X락을 잡는다(커밋까지 유지).
         int updated = nightSnackRepository.decrementRemaining(nightSnackId);
         if (updated == 0) {
-            // 0건 = 매칭 row 없음(락 미보유). status/remaining을 WHERE에 함께 두므로 사유를 재조회로 구분한다.
             NightSnack current = nightSnackRepository.findById(nightSnackId)
                     .orElseThrow(() -> new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND));
             if (!current.isOpen()) {
