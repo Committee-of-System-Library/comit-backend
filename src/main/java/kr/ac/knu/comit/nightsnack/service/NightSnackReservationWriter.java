@@ -8,9 +8,7 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,43 +55,11 @@ public class NightSnackReservationWriter implements ReservationStrategy {
             throw new BusinessException(NightSnackErrorCode.EVENT_SOLD_OUT);
         }
 
+        if (nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(member.getId(), nightSnackId)) {
+            throw new BusinessException(NightSnackErrorCode.ALREADY_APPLIED);
+        }
         NightSnackApplication application = NightSnackApplication.general(member, nightSnack);
-        try {
-            nightSnackApplicationRepository.save(application);
-        } catch (DataIntegrityViolationException exception) {
-            if (isDuplicateApplication(exception)) {
-                // 롤백이 decrementRemaining까지 되돌려 슬롯을 복구한다.
-                throw new BusinessException(NightSnackErrorCode.ALREADY_APPLIED);
-            }
-            throw exception;
-        }
+        nightSnackApplicationRepository.save(application);
         return application;
-    }
-
-    private boolean isDuplicateApplication(Throwable throwable) {
-        Throwable current = throwable;
-        while (current != null) {
-            if (current instanceof ConstraintViolationException hibernateException
-                    && containsUniqueConstraint(hibernateException.getConstraintName())) {
-                return true;
-            }
-            if (current instanceof java.sql.SQLException sqlException
-                    && (sqlException.getErrorCode() == 1062
-                    || containsUniqueConstraint(sqlException.getMessage()))) {
-                return true;
-            }
-            if (containsUniqueConstraint(current.getMessage())) {
-                return true;
-            }
-            current = current.getCause();
-        }
-        return false;
-    }
-
-    private boolean containsUniqueConstraint(String value) {
-        return value != null
-                && (value.contains("uk_night_snack_application_member_night_snack")
-                || value.contains("uk_night_snack_application_night_snack_student_number")
-                || value.contains("Duplicate entry"));
     }
 }
