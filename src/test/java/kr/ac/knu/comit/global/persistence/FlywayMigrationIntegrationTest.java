@@ -136,7 +136,8 @@ class FlywayMigrationIntegrationTest {
         assertThat(memberColumns).contains("status", "suspended_until", "name", "phone", "major_track", "agreed_at", "comit_role");
         assertThat(postColumns).contains("hidden_by_admin");
         assertThat(commentColumns).contains("hidden_by_admin", "like_count");
-        assertThat(studentCouncilFeeColumns).contains("member_id", "student_number", "is_paid");
+        assertThat(studentCouncilFeeColumns).containsExactly("id", "student_number", "is_paid");
+        assertThat(studentCouncilFeeColumns).doesNotContain("member_id");
         assertThat(studentCouncilFeeUniqueIndexes).contains("uk_student_council_fee_student_number");
     }
 }

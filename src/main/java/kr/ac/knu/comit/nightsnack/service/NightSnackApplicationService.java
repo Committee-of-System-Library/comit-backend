@@ -23,13 +23,13 @@ public class NightSnackApplicationService {
     private final MemberService memberService;
     private final ReservationStrategy reservationStrategy;
 
-    public ApplyResponse apply(Long nightSnackId, Long memberId) {
+    public ApplyResponse apply(Long nightSnackId, Long memberId, String studentNumber) {
         NightSnack nightSnack = nightSnackRepository.findById(nightSnackId)
                 .orElseThrow(() -> new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND));
         int generalCapacity = nightSnack.generalCapacity();
 
         if (nightSnack.isRequiresStudentCouncilFee()
-                && !studentCouncilFeeRepository.existsByMemberIdAndPaidTrue(memberId)) {
+                && !studentCouncilFeeRepository.existsPaidByStudentNumber(studentNumber)) {
             throw new BusinessException(NightSnackErrorCode.STUDENT_COUNCIL_FEE_REQUIRED);
         }
 
