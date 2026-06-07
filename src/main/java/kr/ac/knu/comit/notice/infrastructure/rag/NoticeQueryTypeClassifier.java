@@ -11,10 +11,16 @@ public class NoticeQueryTypeClassifier {
             "식단", "학식", "날씨", "버스", "셔틀", "지도", "위치"
     );
     private static final List<String> MULTI_NOTICE_KEYWORDS = List.of(
-            "공지사항들", "공지들", "문서들", "관련 공지", "관련 문서", "목록", "모아", "전체", "여러"
+            "공지사항들", "공지들", "문서들", "관련 공지", "관련 문서", "목록", "모아", "전체", "여러",
+            "요약", "정리해", "최근 공지", "최신 공지"
+    );
+    private static final List<String> DEADLINE_SEARCH_KEYWORDS = List.of(
+            "이번 주", "이번 달", "오늘까지", "마감 임박", "임박", "다가오는", "곧 마감",
+            "현재", "지금", "모집중", "진행중", "신청 가능"
     );
     private static final List<String> DETAIL_KEYWORDS = List.of(
-            "얼마", "금액", "언제", "기한", "마감", "링크", "제출서류", "대상", "방법", "어디", "이메일", "신청기간"
+            "얼마", "금액", "언제", "기한", "마감", "링크", "제출서류", "대상", "방법", "어디", "이메일", "신청기간",
+            "양식", "신청서", "가능한지", "신청 가능", "해당되는지", "복수전공"
     );
     private static final List<String> EXACT_TOKEN_KEYWORDS = List.of(
             "exit", "dsac", "5-step", "1:1"
@@ -37,6 +43,9 @@ public class NoticeQueryTypeClassifier {
         }
         if (containsAny(normalized, MULTI_NOTICE_KEYWORDS)) {
             return NoticeQueryType.CATEGORY_MULTI_NOTICE_SEARCH;
+        }
+        if (containsAny(normalized, DEADLINE_SEARCH_KEYWORDS)) {
+            return NoticeQueryType.DEADLINE_SEARCH;
         }
         if (containsAny(normalized, DETAIL_KEYWORDS)) {
             return NoticeQueryType.DETAIL_ANSWER;

@@ -1,5 +1,7 @@
 package kr.ac.knu.comit.notice.infrastructure.rag;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClient;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class NoticeAnswerGenerator {
+
+    private static final int MAX_CONTEXT_CHARS_PER_DOC = 600;
 
     private final ChatClient nanoClient;
     private final ChatClient miniClient;
@@ -33,6 +37,9 @@ public class NoticeAnswerGenerator {
     public GeneratedAnswer generate(String message, List<Document> docs, AnswerTier tier) {
         String context = docs.stream()
                 .map(Document::getText)
+                .map(text -> text != null && text.length() > MAX_CONTEXT_CHARS_PER_DOC
+                        ? text.substring(0, MAX_CONTEXT_CHARS_PER_DOC)
+                        : text)
                 .collect(Collectors.joining("\n\n---\n\n"));
 
         ChatClient chatClient = switch (tier) {
@@ -41,8 +48,12 @@ public class NoticeAnswerGenerator {
             case FULL -> fullClient;
         };
 
+        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
+
         ChatResponse response = chatClient.prompt()
-                .system(s -> s.text(answerPrompt).param("context", context))
+                .system(s -> s.text(answerPrompt)
+                        .param("context", context)
+                        .param("currentDate", currentDate))
                 .user(message)
                 .call()
                 .chatResponse();

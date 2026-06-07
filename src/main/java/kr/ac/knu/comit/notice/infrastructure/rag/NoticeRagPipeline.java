@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.notice.infrastructure.rag;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import kr.ac.knu.comit.notice.dto.NoticeSource;
@@ -69,7 +70,10 @@ public class NoticeRagPipeline {
         ragTracer.selectedDocuments(traceId, selectedDocs);
 
         NoticeQueryType queryType = queryTypeClassifier.classify(message);
-        List<Document> answerDocs = selectedDocs.stream()
+        List<Document> candidateDocs = queryType == NoticeQueryType.DEADLINE_SEARCH
+                ? filterExpiredNotices(selectedDocs)
+                : selectedDocs;
+        List<Document> answerDocs = candidateDocs.stream()
                 .limit(queryType.maxSources())
                 .toList();
         ragTracer.queryClassified(traceId, queryType, selectedDocs, answerDocs);
@@ -92,6 +96,23 @@ public class NoticeRagPipeline {
         return docs.stream()
                 .map(this::toNoticeSource)
                 .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private List<Document> filterExpiredNotices(List<Document> docs) {
+        LocalDate today = LocalDate.now();
+        return docs.stream()
+                .filter(doc -> {
+                    String deadlineDateStr = NoticeDocumentMetadata.deadlineDate(doc);
+                    if (deadlineDateStr == null) {
+                        return true;
+                    }
+                    try {
+                        return !LocalDate.parse(deadlineDateStr).isBefore(today);
+                    } catch (Exception e) {
+                        return true;
+                    }
+                })
                 .toList();
     }
 
