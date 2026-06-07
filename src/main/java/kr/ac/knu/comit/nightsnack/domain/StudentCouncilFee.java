@@ -13,6 +13,9 @@ public class StudentCouncilFee {
     @Column(name = "member_id")
     private Long memberId;
 
+    @Column(name = "student_number", length = 20, unique = true)
+    private String studentNumber;
+
     @Column(name = "is_paid", nullable = false)
     private boolean paid;
 
