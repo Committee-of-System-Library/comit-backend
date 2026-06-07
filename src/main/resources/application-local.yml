@@ -24,6 +24,9 @@ spring:
 logging:
   file:
     name: ./logs/app-local.log
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
 
 comit:
   dev:
