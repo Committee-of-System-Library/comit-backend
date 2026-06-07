@@ -1,13 +1,13 @@
 package kr.ac.knu.comit.notice.domain;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 public interface OfficialNoticeRepository extends JpaRepository<OfficialNotice, Long> {
 
@@ -20,17 +20,28 @@ public interface OfficialNoticeRepository extends JpaRepository<OfficialNotice, 
     @Query("""
             SELECT n FROM OfficialNotice n
             WHERE n.deletedAt IS NULL
-            ORDER BY n.id DESC
+            ORDER BY n.postedAt DESC, n.id DESC
             """)
     List<OfficialNotice> findFirstPage(Pageable pageable);
 
     @Query("""
             SELECT n FROM OfficialNotice n
             WHERE n.deletedAt IS NULL
-              AND n.id < :cursorId
-            ORDER BY n.id DESC
+              AND (
+                  (:cursorPostedAt IS NOT NULL AND (
+                      n.postedAt < :cursorPostedAt
+                      OR n.postedAt IS NULL
+                      OR (n.postedAt = :cursorPostedAt AND n.id < :cursorId)
+                  ))
+                  OR (:cursorPostedAt IS NULL AND n.postedAt IS NULL AND n.id < :cursorId)
+              )
+            ORDER BY n.postedAt DESC, n.id DESC
             """)
-    List<OfficialNotice> findByCursor(@Param("cursorId") Long cursorId, Pageable pageable);
+    List<OfficialNotice> findByCursor(
+            @Param("cursorPostedAt") LocalDateTime cursorPostedAt,
+            @Param("cursorId") Long cursorId,
+            Pageable pageable
+    );
 
     @Query("""
             SELECT n FROM OfficialNotice n
