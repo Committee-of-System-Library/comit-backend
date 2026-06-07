@@ -13,8 +13,8 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
-import kr.ac.knu.comit.nightsnack.dto.AdminApplicationListResponse;
 import kr.ac.knu.comit.nightsnack.dto.ApplicationCheckResponse;
+import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.ReserveResponse;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
@@ -103,13 +103,10 @@ public class AdminNightSnackService {
         return ReserveResponse.of(requested.size(), created);
     }
 
-    public AdminApplicationListResponse listApplications(Long nightSnackId) {
-        if (!nightSnackRepository.existsById(nightSnackId)) {
-            throw new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND);
-        }
-        List<NightSnackApplication> applications =
-                nightSnackApplicationRepository.findAllByNightSnackIdOrderByCreatedAtAsc(nightSnackId);
-        return AdminApplicationListResponse.from(applications);
+    public List<NightSnackResponse> listNightSnacks() {
+        return nightSnackRepository.findAllByOrderByNightSnackDateDesc().stream()
+                .map(NightSnackResponse::from)
+                .toList();
     }
 
     public ApplicationCheckResponse checkApplication(Long nightSnackId, String studentNumber) {

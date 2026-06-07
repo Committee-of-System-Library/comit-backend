@@ -24,8 +24,8 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationSource;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationStatus;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackStatus;
-import kr.ac.knu.comit.nightsnack.dto.AdminApplicationListResponse;
 import kr.ac.knu.comit.nightsnack.dto.ApplicationCheckResponse;
+import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.ReserveResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -197,61 +197,38 @@ class AdminNightSnackServiceTest {
     }
 
     @Nested
-    @DisplayName("listApplications (신청자 목록 조회)")
-    class ListApplications {
+    @DisplayName("listNightSnacks (야식 마차 목록 조회)")
+    class ListNightSnacks {
 
         @Test
-        @DisplayName("RESERVED·GENERAL 신청이 모두 포함된 전체 목록을 반환한다")
-        void returnsAllApplications() {
+        @DisplayName("야식 마차 목록을 날짜 내림차순으로 반환한다")
+        void returnsNightSnacksSortedByDateDesc() {
             // given
-            NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
-            NightSnackApplication reserved = NightSnackFixture.reservedApplication(1L, nightSnack, "2026000001");
-            NightSnackApplication general = NightSnackFixture.generalApplication(2L, nightSnack, MemberFixture.member(1L));
-            given(nightSnackRepository.existsById(10L)).willReturn(true);
-            given(nightSnackApplicationRepository.findAllByNightSnackIdOrderByCreatedAtAsc(10L))
-                    .willReturn(List.of(reserved, general));
+            NightSnack older = NightSnackFixture.scheduledNightSnack(1L, 100);
+            NightSnack newer = NightSnackFixture.scheduledNightSnack(2L, 50);
+            given(nightSnackRepository.findAllByOrderByNightSnackDateDesc())
+                    .willReturn(List.of(newer, older));
 
             // when
-            AdminApplicationListResponse response = adminNightSnackService.listApplications(10L);
+            List<NightSnackResponse> response = adminNightSnackService.listNightSnacks();
 
             // then
-            assertThat(response.total()).isEqualTo(2);
-            assertThat(response.applications()).hasSize(2);
-            assertThat(response.applications().get(0).applicationId()).isEqualTo(1L);
-            assertThat(response.applications().get(0).studentNumber()).isEqualTo("2026000001");
-            assertThat(response.applications().get(0).source()).isEqualTo(NightSnackApplicationSource.RESERVED);
-            assertThat(response.applications().get(0).status()).isEqualTo(NightSnackApplicationStatus.PENDING);
-            assertThat(response.applications().get(0).ticketToken()).isNotBlank();
-            assertThat(response.applications().get(1).source()).isEqualTo(NightSnackApplicationSource.GENERAL);
+            assertThat(response).hasSize(2);
+            assertThat(response.get(0).nightSnackId()).isEqualTo(2L);
+            assertThat(response.get(1).nightSnackId()).isEqualTo(1L);
         }
 
         @Test
-        @DisplayName("신청자가 없으면 빈 목록을 반환한다")
-        void returnsEmptyList() {
+        @DisplayName("등록된 야식 마차가 없으면 빈 목록을 반환한다")
+        void returnsEmptyListWhenNone() {
             // given
-            given(nightSnackRepository.existsById(10L)).willReturn(true);
-            given(nightSnackApplicationRepository.findAllByNightSnackIdOrderByCreatedAtAsc(10L))
-                    .willReturn(List.of());
+            given(nightSnackRepository.findAllByOrderByNightSnackDateDesc()).willReturn(List.of());
 
             // when
-            AdminApplicationListResponse response = adminNightSnackService.listApplications(10L);
+            List<NightSnackResponse> response = adminNightSnackService.listNightSnacks();
 
             // then
-            assertThat(response.total()).isZero();
-            assertThat(response.applications()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 야식 마차 ID면 EVENT_NOT_FOUND를 던진다")
-        void throwsWhenNotFound() {
-            // given
-            given(nightSnackRepository.existsById(99L)).willReturn(false);
-
-            // when & then
-            assertThatThrownBy(() -> adminNightSnackService.listApplications(99L))
-                    .isInstanceOf(BusinessException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(NightSnackErrorCode.EVENT_NOT_FOUND);
+            assertThat(response).isEmpty();
         }
     }
 
