@@ -26,6 +26,43 @@ class NoticeDeadlineExtractorTest {
     }
 
     @Test
+    void extractDelimitedDeadlineWithUntilKeyword() {
+        String content = "신청은 2026.06.10까지 가능합니다.";
+        assertThat(NoticeDeadlineExtractor.extract(content)).isEqualTo(LocalDate.of(2026, 6, 10));
+    }
+
+    @Test
+    void extractDeadlineWhenKeywordComesBeforeDate() {
+        String content = "접수 마감: 2026년 6월 10일 18:00";
+        assertThat(NoticeDeadlineExtractor.extract(content)).isEqualTo(LocalDate.of(2026, 6, 10));
+    }
+
+    @Test
+    void extractDeadlineWithDocumentSubmissionKeyword() {
+        String content = "서류 제출 기한: 2026년 6월 10일";
+        assertThat(NoticeDeadlineExtractor.extract(content)).isEqualTo(LocalDate.of(2026, 6, 10));
+    }
+
+    @Test
+    void extractEndDateFromDelimitedApplicationPeriod() {
+        String content = "신청기간: 2026.6.1 ~ 2026.6.10";
+        assertThat(NoticeDeadlineExtractor.extract(content)).isEqualTo(LocalDate.of(2026, 6, 10));
+    }
+
+    @Test
+    void extractEndDateFromYearlessApplicationPeriod() {
+        String content = "신청기간: 6.1 ~ 6.10";
+        assertThat(NoticeDeadlineExtractor.extract(content))
+                .isEqualTo(LocalDate.of(LocalDate.now().getYear(), 6, 10));
+    }
+
+    @Test
+    void inferYearFromContextForYearlessApplicationPeriod() {
+        String content = "2026학년도 신청기간: 6.1 ~ 6.10";
+        assertThat(NoticeDeadlineExtractor.extract(content)).isEqualTo(LocalDate.of(2026, 6, 10));
+    }
+
+    @Test
     void preferAdjacentKeywordOverLatestDate() {
         String content = "행사 일정: 2026년 8월 1일. 신청 마감: 2026년 5월 31일까지";
         assertThat(NoticeDeadlineExtractor.extract(content)).isEqualTo(LocalDate.of(2026, 5, 31));
@@ -40,6 +77,24 @@ class NoticeDeadlineExtractorTest {
     @Test
     void returnNullWhenNoDateFound() {
         assertThat(NoticeDeadlineExtractor.extract("날짜 정보가 없는 공지입니다.")).isNull();
+    }
+
+    @Test
+    void returnNullForOpenEndedApplicationWithoutFixedDeadline() {
+        String content = "상시 모집합니다. 교육일은 2026년 6월 10일입니다.";
+        assertThat(NoticeDeadlineExtractor.extract(content)).isNull();
+    }
+
+    @Test
+    void returnNullForFirstComeFirstServedWithoutFixedDeadline() {
+        String content = "선착순 접수, 마감 시까지 모집합니다. 행사일: 2026년 6월 10일";
+        assertThat(NoticeDeadlineExtractor.extract(content)).isNull();
+    }
+
+    @Test
+    void extractFixedDeadlineEvenWhenFirstComeFirstServedExists() {
+        String content = "선착순 접수이며 2026년 6월 10일까지 신청 가능합니다.";
+        assertThat(NoticeDeadlineExtractor.extract(content)).isEqualTo(LocalDate.of(2026, 6, 10));
     }
 
     @Test
