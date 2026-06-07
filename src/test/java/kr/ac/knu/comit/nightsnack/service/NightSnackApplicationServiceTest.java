@@ -40,7 +40,7 @@ class NightSnackApplicationServiceTest {
     private MemberService memberService;
 
     @Mock
-    private NightSnackReservationWriter reservationWriter;
+    private ReservationStrategy reservationStrategy;
 
     @InjectMocks
     private NightSnackApplicationService nightSnackApplicationService;
@@ -57,7 +57,7 @@ class NightSnackApplicationServiceTest {
                 .willReturn(Optional.of(beforeDecrement), Optional.of(afterDecrement));
         given(nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(1L, 10L)).willReturn(false);
         given(memberService.findMemberOrThrow(1L)).willReturn(member);
-        given(reservationWriter.reserve(any(Member.class), any(NightSnack.class))).willReturn(application);
+        given(reservationStrategy.reserve(any(Member.class), any(NightSnack.class))).willReturn(application);
 
         // when
         ApplyResponse response = nightSnackApplicationService.apply(10L, 1L);
@@ -66,7 +66,7 @@ class NightSnackApplicationServiceTest {
         assertThat(response.sequence()).isEqualTo(37);
         assertThat(response.remaining()).isEqualTo(63);
         assertThat(response.ticketToken()).isNotBlank();
-        then(reservationWriter).should().reserve(any(Member.class), any(NightSnack.class));
+        then(reservationStrategy).should().reserve(any(Member.class), any(NightSnack.class));
     }
 
     @Test
@@ -81,7 +81,7 @@ class NightSnackApplicationServiceTest {
                 .extracting("errorCode")
                 .isEqualTo(NightSnackErrorCode.EVENT_NOT_FOUND);
 
-        then(reservationWriter).should(never()).reserve(any(), any());
+        then(reservationStrategy).should(never()).reserve(any(), any());
     }
 
     @Test
@@ -99,6 +99,6 @@ class NightSnackApplicationServiceTest {
                 .isEqualTo(NightSnackErrorCode.ALREADY_APPLIED);
 
         then(memberService).should(never()).findMemberOrThrow(any());
-        then(reservationWriter).should(never()).reserve(any(), any());
+        then(reservationStrategy).should(never()).reserve(any(), any());
     }
 }
