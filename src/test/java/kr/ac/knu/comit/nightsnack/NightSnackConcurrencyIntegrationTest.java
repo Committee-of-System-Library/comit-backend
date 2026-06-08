@@ -206,7 +206,8 @@ class NightSnackConcurrencyIntegrationTest {
     }
 
     private Long openNightSnack(LocalDate date, int capacity) {
-        Period period = Period.of(date.atTime(17, 30), date.atTime(18, 30));
+        LocalDateTime now = LocalDateTime.now();
+        Period period = Period.of(now.minusMinutes(5), now.plusHours(1));
         NightSnack nightSnack = nightSnackRepository.save(
                 NightSnack.create(date, capacity, 0, period, null, null, null, null, null, false));
         nightSnack.open();
