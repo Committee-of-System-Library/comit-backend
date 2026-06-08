@@ -281,7 +281,7 @@
         <section class="content"><article class="endpoint" id="checkApplication">
     <div class="eyebrow">GET</div>
     <h2>야식 마차 신청 성공 여부 조회</h2>
-    <p>관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. 신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다.</p>
+    <p>관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. 신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다. 단, 서버 시간이 수령 마감 시각(pickupDeadline) 이상이면 신청 내역이 없어도 applied: true를 반환합니다.</p>
     <div class="path-box"><span class="method">GET</span>/admin/night-snacks/{nightSnackId}/applications/{studentNumber}</div>
     <div class="section-grid"><section class="card">
     <h3>경로 변수</h3>
@@ -325,25 +325,25 @@
     <td><code>applied</code></td>
     <td><span class="type-chip type-boolean">boolean</span></td>
     <td><span class="badge-optional">optional</span></td>
-    <td>신청 성공 여부입니다. 신청 내역이 있으면 true.</td>
+    <td>신청 성공 여부입니다. 신청 내역이 있거나 수령 마감 시각 이후이면 true.</td>
 </tr>
 <tr>
     <td><code>source</code></td>
     <td><span class="type-chip type-custom">NightSnackApplicationSource</span></td>
     <td><span class="badge-optional">optional</span></td>
-    <td>신청 구분입니다. GENERAL 또는 RESERVED. applied가 false이면 null.</td>
+    <td>신청 구분입니다. GENERAL 또는 RESERVED. 신청 내역이 없으면 null.</td>
 </tr>
 <tr>
     <td><code>status</code></td>
     <td><span class="type-chip type-custom">NightSnackApplicationStatus</span></td>
     <td><span class="badge-optional">optional</span></td>
-    <td>수령 상태입니다. applied가 false이면 null.</td>
+    <td>수령 상태입니다. 신청 내역이 없으면 null.</td>
 </tr>
 <tr>
     <td><code>ticketToken</code></td>
     <td><span class="type-chip type-string">String</span></td>
     <td><span class="badge-optional">optional</span></td>
-    <td>QR 수령 티켓 값입니다. applied가 false이면 null.</td>
+    <td>QR 수령 티켓 값입니다. 신청 내역이 없으면 null.</td>
 </tr>
 </tbody>
 </table>
