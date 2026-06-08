@@ -3,6 +3,7 @@ package kr.ac.knu.comit.notice.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -76,6 +77,28 @@ class OfficialNoticeServiceTest {
         assertThat(response.notices()).hasSize(2);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.nextCursorId()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("cursor가 있으면 게시일과 ID 기준으로 다음 페이지를 조회한다")
+    void returnsPageAfterCursorByPostedAtAndId() {
+        // given
+        OfficialNotice cursor = OfficialNoticeFixture.notice(10L);
+        List<OfficialNotice> notices = List.of(
+                OfficialNoticeFixture.notice(9L),
+                OfficialNoticeFixture.notice(8L)
+        );
+        given(officialNoticeRepository.findActiveById(10L)).willReturn(Optional.of(cursor));
+        given(officialNoticeRepository.findByCursor(eq(cursor.getPostedAt()), eq(10L), any(PageRequest.class)))
+                .willReturn(notices);
+
+        // when
+        OfficialNoticeListResponse response = officialNoticeService.getNotices(10L, 20);
+
+        // then
+        assertThat(response.notices()).hasSize(2);
+        then(officialNoticeRepository).should()
+                .findByCursor(eq(cursor.getPostedAt()), eq(10L), any(PageRequest.class));
     }
 
     @Test

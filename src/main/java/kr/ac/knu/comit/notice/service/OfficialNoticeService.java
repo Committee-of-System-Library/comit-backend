@@ -36,7 +36,7 @@ public class OfficialNoticeService {
 
         List<OfficialNotice> notices = (cursorId == null)
                 ? officialNoticeRepository.findFirstPage(pageable)
-                : officialNoticeRepository.findByCursor(cursorId, pageable);
+                : findByCursor(cursorId, pageable);
 
         return OfficialNoticeListResponse.of(notices, pageSize);
     }
@@ -87,6 +87,12 @@ public class OfficialNoticeService {
     private OfficialNotice findActiveOrThrow(Long noticeId) {
         return officialNoticeRepository.findActiveById(noticeId)
                 .orElseThrow(() -> new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
+    }
+
+    private List<OfficialNotice> findByCursor(Long cursorId, PageRequest pageable) {
+        return officialNoticeRepository.findActiveById(cursorId)
+                .map(cursor -> officialNoticeRepository.findByCursor(cursor.getPostedAt(), cursor.getId(), pageable))
+                .orElseGet(List::of);
     }
 
     private Long parseNoticeId(Object value) {
