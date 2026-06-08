@@ -5,7 +5,8 @@ import org.springframework.http.HttpStatus;
 public enum StorageErrorCode implements ErrorCode {
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "/problems/storage/file-upload-failed", "파일 업로드에 실패했습니다."),
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "/problems/storage/file-size-exceeded", "파일 크기는 5MB를 초과할 수 없습니다."),
-    UNSUPPORTED_FILE_TYPE(HttpStatus.BAD_REQUEST, "/problems/storage/unsupported-file-type", "지원하지 않는 파일 형식입니다. (허용: jpg, jpeg, png, webp, gif)");
+    UNSUPPORTED_FILE_TYPE(HttpStatus.BAD_REQUEST, "/problems/storage/unsupported-file-type", "지원하지 않는 파일 형식입니다. (허용: jpg, jpeg, png, webp, gif)"),
+    INVALID_FOLDER(HttpStatus.BAD_REQUEST, "/problems/storage/invalid-folder", "허용되지 않는 업로드 경로입니다.");
 
     private final HttpStatus status;
     private final String type;
