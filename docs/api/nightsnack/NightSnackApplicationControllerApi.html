@@ -449,6 +449,13 @@
     <td>이미 신청한 야식 마차입니다.</td>
     <td>이미 신청한 야식 마차에 다시 신청할 때</td>
 </tr>
+<tr>
+    <td><code>STUDENT_COUNCIL_FEE_REQUIRED</code></td>
+    <td>403</td>
+    <td><code>/problems/night-snack/student-council-fee-required</code></td>
+    <td>학생회비 납부자만 신청할 수 있습니다.</td>
+    <td>학생회비 납부자 전용 야식 마차에서 로그인 회원의 학번이 납부 상태가 아닐 때</td>
+</tr>
 </tbody>
 </table>
 
@@ -972,7 +979,7 @@
 <article class="endpoint" id="getStudentCouncilFeeStatus">
     <div class="eyebrow">GET</div>
     <h2>학생회비 납부 여부 조회</h2>
-    <p>로그인한 회원의 학생회비 납부 여부를 조회합니다.</p>
+    <p>로그인한 회원의 학번으로 학생회비 납부 여부를 조회합니다.</p>
     <div class="path-box"><span class="method">GET</span>/night-snacks/student-council-fee</div>
     <div class="section-grid"><section class="card">
     <h3>응답 바디 필드</h3>
@@ -989,7 +996,7 @@
     <td><code>paid</code></td>
     <td><span class="type-chip type-boolean">boolean</span></td>
     <td><span class="badge-optional">optional</span></td>
-    <td>학생회비 납부 여부입니다. 납부하지 않은 경우 false를 반환합니다.</td>
+    <td>학생회비 납부 여부입니다. is_paid=1이면 true, 미납 또는 납부 행이 없으면 false를 반환합니다.</td>
 </tr>
 </tbody>
 </table>
