@@ -45,6 +45,10 @@ logs/*
 .env.staging
 
 /load-test
+
+### Generated API docs — 빌드(CI) 시 생성, 소스=@ApiContract + docs/features (ADR-005) ###
+docs/api/
+
 ### Claude ###
 .claude/
 .omc/

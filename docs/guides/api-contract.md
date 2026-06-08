@@ -213,13 +213,11 @@ public interface PaymentControllerApi {
 
 ## CI에서 어떻게 검증되나
 
-PR에서는 다음 순서로 검증한다.
+PR(`validate-api-docs.yml`)에서는 `./gradlew generateApiDocs`가 **에러 없이 도는지**만 본다.
+생성·컴파일에 실패하면(예: `@ApiContract`가 깨졌으면) PR이 막힌다.
 
-1. `./gradlew generateApiDocs`
-2. `git diff --exit-code docs/api`
-3. 차이가 있으면 실패
-
-즉 컨트롤러 계약을 바꾸고 문서 산출물을 커밋하지 않으면 PR이 막힌다.
+생성물 `docs/api/`는 git에 커밋하지 않으므로([ADR-005](../adr/005-api-doc-build-time-generation.md))
+과거의 `git diff --exit-code docs/api` 커밋 검증은 없어졌다. 컨트롤러 계약을 바꿔도 문서를 직접 커밋할 필요가 없다 — 빌드가 알아서 생성한다.
 
 ## 권장 설계
 
@@ -227,7 +225,7 @@ PR에서는 다음 순서로 검증한다.
 - QueryDSL 결과는 서비스나 리포지토리에서 DTO로 변환한다
 - 응답 래퍼가 필요하면 `ApiResponse<T>`처럼 명시적 제네릭 래퍼만 사용한다
 - `Page<T>`를 직접 반환하기보다 `PageResponse<T>` 같은 DTO로 감싼다
-- 공개 응답 필드가 바뀌면 `example.response`와 `docs/api/` 산출물을 같이 갱신한다
+- 공개 응답 필드가 바뀌면 `@ApiContract`의 `example.response`를 갱신한다(`docs/api/` 산출물은 빌드가 자동 생성)
 
 ## 비권장 패턴
 

@@ -21,16 +21,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Generate API docs
+      # 이 스텝이 곧 PR 게이트다: @ApiContract가 깨졌거나 컴파일이 실패하면 여기서 PR이 막힌다.
+      # 생성물 docs/api는 더 이상 git에 커밋하지 않으므로(ADR-005), 기존 git diff 검증 스텝은 제거했다.
+      # (PR에서 도는 워크플로는 이것 하나뿐이고, generateApiDocs는 dependsOn classes라 컴파일 체크도 겸한다.)
+      - name: Generate API docs (PR 게이트 — 생성·컴파일 성공만 확인)
         run: ./gradlew generateApiDocs
-
-      - name: Verify generated docs are committed
-        run: |
-          status_output="$(git status --porcelain -- docs/api)"
-          if [[ -n "$status_output" ]]; then
-            echo "=== git status --porcelain -- docs/api ==="
-            echo "$status_output"
-            echo "::error::API 문서가 업데이트되지 않았습니다."
-            echo "::error::로컬에서 ./gradlew generateApiDocs 실행 후 커밋하세요."
-            exit 1
-          fi

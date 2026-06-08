@@ -44,8 +44,8 @@
 
 ## API 문서 공개 경로
 
-- API 문서는 저장소 안의 `docs/api/`에 커밋된다.
-- `main` 브랜치 push 시 GitHub Pages workflow가 같은 산출물을 정적 사이트로 배포한다.
+- API 문서(`docs/api/`)는 **생성물이라 git에 커밋하지 않고** 빌드(CI) 시점에 생성된다 — [ADR-005](./adr/005-api-doc-build-time-generation.md).
+- `main` 브랜치 push 시 GitHub Pages workflow가 재생성한 산출물을 정적 사이트로 배포한다.
 - Pages가 활성화되어 있으면 기본 접근 경로는 `https://<org>.github.io/<repo>/` 이다.
 
 ## 변경 유형별 업데이트 대상
