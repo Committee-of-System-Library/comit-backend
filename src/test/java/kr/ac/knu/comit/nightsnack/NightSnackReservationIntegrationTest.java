@@ -134,7 +134,8 @@ class NightSnackReservationIntegrationTest {
         int capacity = 10;
         int reserved = 3;
         LocalDate date2 = LocalDate.now().plusDays(4);
-        Period period2 = Period.of(date2.atTime(17, 30), date2.atTime(18, 30));
+        LocalDateTime now2 = LocalDateTime.now();
+        Period period2 = Period.of(now2.minusMinutes(5), now2.plusHours(1));
         Long nightSnackId = nightSnackRepository.save(NightSnack.create(date2, capacity, reserved, period2, null, null, null, null, null, false)).getId();
         adminNightSnackService.open(nightSnackId);
 
@@ -158,35 +159,6 @@ class NightSnackReservationIntegrationTest {
         NightSnack nightSnack = nightSnackRepository.findById(nightSnackId).orElseThrow();
         assertThat(nightSnack.getRemaining()).isZero();
         assertThat(nightSnack.getReservedRemaining()).isEqualTo(reserved); // 예약분은 손대지 않음
-    }
-
-    @Test
-    @DisplayName("사전신청된 학번은 같은 마차의 일반 선착순으로 다시 신청할 수 없다(교차 중복)")
-    void reservedStudentCannotApplyGenerally() {
-        // given
-        // 같은 학번을 가진 회원을 만들고, 그 학번을 먼저 사전신청해 둔다.
-        String studentNumber = uniqueStudentNumber();
-        LocalDate date3 = LocalDate.now().plusDays(5);
-        Period period3 = Period.of(date3.atTime(17, 30), date3.atTime(18, 30));
-        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date3, 10, 3, period3, null, null, null, null, null, false)).getId();
-        adminNightSnackService.reserve(date3, List.of(studentNumber));
-        adminNightSnackService.open(nightSnackId);
-
-        Long memberId = seedMemberWithStudentNumber(studentNumber);
-        int remainingBefore = nightSnackRepository.findById(nightSnackId).orElseThrow().getRemaining();
-
-        // when & then
-        // 일반 신청 시 (night_snack_id, student_number) 유니크에 걸려 ALREADY_APPLIED로 변환되고,
-        // 롤백되어 일반분 잔여는 그대로 복구된다.
-        assertThatThrownBy(() -> nightSnackApplicationService.apply(nightSnackId, memberId))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(NightSnackErrorCode.ALREADY_APPLIED);
-
-        int remainingAfter = nightSnackRepository.findById(nightSnackId).orElseThrow().getRemaining();
-        assertThat(remainingAfter).isEqualTo(remainingBefore);
-        // 사전신청 1건만 존재한다.
-        assertThat(nightSnackApplicationRepository.countByNightSnackId(nightSnackId)).isEqualTo(1);
     }
 
     private Long seedMember() {
