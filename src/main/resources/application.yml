@@ -122,6 +122,7 @@ comit:
       excluded-board-types: ${COMIT_POST_HOT_EXCLUDED_BOARD_TYPES:NOTICE,EVENT}
   night-snack:
     reserved-capacity-ratio: ${COMIT_NIGHT_SNACK_RESERVED_CAPACITY_RATIO:0.1}
+    reservation-strategy: ${COMIT_NIGHT_SNACK_RESERVATION_STRATEGY:time-based}
   notice:
     rag:
       retrieval-top-k: ${NOTICE_RETRIEVAL_TOP_K:7}

@@ -143,7 +143,7 @@ class NightSnackReservationIntegrationTest {
         for (int i = 0; i < capacity; i++) {
             Long memberId = seedMember();
             try {
-                nightSnackApplicationService.apply(nightSnackId, memberId);
+                nightSnackApplicationService.apply(nightSnackId, memberId, null);
                 success++;
             } catch (BusinessException exception) {
                 if (exception.getErrorCode() == NightSnackErrorCode.EVENT_SOLD_OUT) {
@@ -178,7 +178,7 @@ class NightSnackReservationIntegrationTest {
         // when & then
         // 일반 신청 시 (night_snack_id, student_number) 유니크에 걸려 ALREADY_APPLIED로 변환되고,
         // 롤백되어 일반분 잔여는 그대로 복구된다.
-        assertThatThrownBy(() -> nightSnackApplicationService.apply(nightSnackId, memberId))
+        assertThatThrownBy(() -> nightSnackApplicationService.apply(nightSnackId, memberId, null))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(NightSnackErrorCode.ALREADY_APPLIED);
