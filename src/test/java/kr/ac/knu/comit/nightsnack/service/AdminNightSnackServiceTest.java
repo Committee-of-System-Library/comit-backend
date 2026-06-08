@@ -8,7 +8,11 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import kr.ac.knu.comit.fixture.MemberFixture;
@@ -53,6 +57,9 @@ class AdminNightSnackServiceTest {
 
     @Mock
     private NightSnackProperties nightSnackProperties;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private AdminNightSnackService adminNightSnackService;
@@ -242,7 +249,7 @@ class AdminNightSnackServiceTest {
             // given
             NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
             NightSnackApplication application = NightSnackFixture.reservedApplication(1L, nightSnack, "2026000001");
-            given(nightSnackRepository.existsById(10L)).willReturn(true);
+            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
             given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "2026000001"))
                     .willReturn(Optional.of(application));
 
@@ -257,10 +264,73 @@ class AdminNightSnackServiceTest {
         }
 
         @Test
-        @DisplayName("신청 내역이 없으면 applied: false를 반환하며 예외를 던지지 않는다")
-        void returnsFalseWhenNotApplied() {
+        @DisplayName("신청 내역이 없고 수령 마감 전이면 applied: false를 반환한다")
+        void returnsFalseWhenNotAppliedBeforePickupDeadline() {
             // given
-            given(nightSnackRepository.existsById(10L)).willReturn(true);
+            mockClockAt(LocalDateTime.of(2026, 5, 20, 18, 29, 59));
+            NightSnack nightSnack = nightSnackWithPickupDeadline(LocalDateTime.of(2026, 5, 20, 18, 30));
+            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
+            given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "9999999999"))
+                    .willReturn(Optional.empty());
+
+            // when
+            ApplicationCheckResponse response = adminNightSnackService.checkApplication(10L, "9999999999");
+
+            // then
+            assertThat(response.applied()).isFalse();
+            assertThat(response.source()).isNull();
+            assertThat(response.status()).isNull();
+            assertThat(response.ticketToken()).isNull();
+        }
+
+        @Test
+        @DisplayName("신청 내역이 없고 서버 시간이 수령 마감 시각과 같으면 applied: true와 null 상세 정보를 반환한다")
+        void returnsTrueWhenNotAppliedAtPickupDeadline() {
+            // given
+            LocalDateTime pickupDeadline = LocalDateTime.of(2026, 5, 20, 18, 30);
+            mockClockAt(pickupDeadline);
+            NightSnack nightSnack = nightSnackWithPickupDeadline(pickupDeadline);
+            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
+            given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "9999999999"))
+                    .willReturn(Optional.empty());
+
+            // when
+            ApplicationCheckResponse response = adminNightSnackService.checkApplication(10L, "9999999999");
+
+            // then
+            assertThat(response.applied()).isTrue();
+            assertThat(response.source()).isNull();
+            assertThat(response.status()).isNull();
+            assertThat(response.ticketToken()).isNull();
+        }
+
+        @Test
+        @DisplayName("신청 내역이 없고 서버 시간이 수령 마감 이후면 applied: true와 null 상세 정보를 반환한다")
+        void returnsTrueWhenNotAppliedAfterPickupDeadline() {
+            // given
+            LocalDateTime pickupDeadline = LocalDateTime.of(2026, 5, 20, 18, 30);
+            mockClockAt(pickupDeadline.plusSeconds(1));
+            NightSnack nightSnack = nightSnackWithPickupDeadline(pickupDeadline);
+            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
+            given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "9999999999"))
+                    .willReturn(Optional.empty());
+
+            // when
+            ApplicationCheckResponse response = adminNightSnackService.checkApplication(10L, "9999999999");
+
+            // then
+            assertThat(response.applied()).isTrue();
+            assertThat(response.source()).isNull();
+            assertThat(response.status()).isNull();
+            assertThat(response.ticketToken()).isNull();
+        }
+
+        @Test
+        @DisplayName("신청 내역이 없고 수령 마감 시각이 없으면 applied: false를 반환한다")
+        void returnsFalseWhenNotAppliedAndPickupDeadlineIsNull() {
+            // given
+            NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
+            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
             given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "9999999999"))
                     .willReturn(Optional.empty());
 
@@ -278,13 +348,26 @@ class AdminNightSnackServiceTest {
         @DisplayName("존재하지 않는 야식 마차 ID면 EVENT_NOT_FOUND를 던진다")
         void throwsWhenNotFound() {
             // given
-            given(nightSnackRepository.existsById(99L)).willReturn(false);
+            given(nightSnackRepository.findById(99L)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> adminNightSnackService.checkApplication(99L, "2026000001"))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(NightSnackErrorCode.EVENT_NOT_FOUND);
+        }
+
+        private NightSnack nightSnackWithPickupDeadline(LocalDateTime pickupDeadline) {
+            NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
+            ReflectionTestUtils.setField(nightSnack, "pickupDeadline", pickupDeadline);
+            return nightSnack;
+        }
+
+        private void mockClockAt(LocalDateTime dateTime) {
+            ZoneId zone = ZoneId.of("Asia/Seoul");
+            Instant instant = dateTime.atZone(zone).toInstant();
+            given(clock.instant()).willReturn(instant);
+            given(clock.getZone()).willReturn(zone);
         }
     }
 }

@@ -71,7 +71,7 @@ window.API_DOCS = [
 },
 {
   title: "AdminNightSnackControllerApi",
-  summary: "관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. 신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다.",
+  summary: "관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. 신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다. 단, 서버 시간이 수령 마감 시각(pickupDeadline) 이상이면 신청 내역이 없어도 applied: true를 반환합니다.",
   href: "./nightsnack/AdminNightSnackControllerApi.html",
   endpointCount: 5,
   sectionPath: "nightsnack"
