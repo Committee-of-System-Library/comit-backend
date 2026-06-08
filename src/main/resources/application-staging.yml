@@ -19,7 +19,7 @@ comit:
     enabled: ${COMIT_LOAD_TEST_ENABLED:false}
   dev:
     auth:
-      enabled: ${COMIT_DEV_AUTH_ENABLED:true}
+      enabled: ${COMIT_DEV_AUTH_ENABLED:false}
       cookie-same-site: ${COMIT_DEV_AUTH_COOKIE_SAME_SITE:None}
   auth:
     bridge:
