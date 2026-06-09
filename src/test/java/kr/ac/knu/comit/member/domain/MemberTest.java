@@ -63,6 +63,7 @@ class MemberTest {
         // then
         // 계정은 soft delete 되고 표시 닉네임과 개인정보가 정책에 맞게 정리되어야 한다.
         assertThat(member.isDeleted()).isTrue();
+        assertThat(member.getSsoSub()).startsWith("deleted-sso-");
         assertThat(member.getDisplayNickname()).isEqualTo("탈퇴한 사용자");
         assertThat(member.getNickname()).startsWith("deleted-member-");
         assertThat(member.getName()).isEqualTo("탈퇴한 사용자");

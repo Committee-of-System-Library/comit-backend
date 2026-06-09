@@ -13,6 +13,7 @@ import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.dto.UpdateProfileRequest;
 import kr.ac.knu.comit.member.dto.UpdateStudentNumberVisibilityRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -114,6 +115,25 @@ public interface MemberControllerApi {
     @PatchMapping("/student-number-visibility")
     ResponseEntity<ApiResponse<Void>> updateStudentNumberVisibility(
             @RequestBody @Valid UpdateStudentNumberVisibilityRequest request,
+            @AuthenticatedMember MemberPrincipal principal
+    );
+
+    @ApiDoc(
+            summary = "회원 탈퇴",
+            description = "현재 로그인한 회원을 탈퇴 처리합니다. 탈퇴 후 개인정보는 즉시 마스킹되며 복구할 수 없습니다.",
+            errors = {
+                    @ApiError(code = "MEMBER_NOT_FOUND", when = "인증된 사용자의 로컬 회원 정보가 존재하지 않을 때")
+            },
+            example = @Example(
+                    response = """
+                            {
+                              "result": "SUCCESS"
+                            }
+                            """
+            )
+    )
+    @DeleteMapping
+    ResponseEntity<ApiResponse<Void>> withdraw(
             @AuthenticatedMember MemberPrincipal principal
     );
 }
