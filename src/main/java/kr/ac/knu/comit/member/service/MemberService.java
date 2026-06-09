@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.member.service;
 
+import java.util.Optional;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
@@ -9,7 +10,6 @@ import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.dto.UpdateNicknameRequest;
 import kr.ac.knu.comit.member.dto.UpdateProfileRequest;
 import kr.ac.knu.comit.member.dto.UpdateStudentNumberVisibilityRequest;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +78,13 @@ public class MemberService {
     @Transactional
     public void updateStudentNumberVisibility(Long memberId, UpdateStudentNumberVisibilityRequest request) {
         findMemberOrThrow(memberId).updateStudentNumberVisibility(request.visible());
+    }
+
+    @Transactional
+    public void withdraw(Long memberId) {
+        var member = findMemberOrThrow(memberId);
+
+        member.delete();
     }
 
     public void checkNicknameAvailability(String nickname) {

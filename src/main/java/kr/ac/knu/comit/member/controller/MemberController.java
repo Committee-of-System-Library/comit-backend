@@ -39,4 +39,10 @@ public class MemberController implements MemberControllerApi {
         memberService.updateStudentNumberVisibility(principal.memberId(), request);
         return ResponseEntity.ok(ApiResponse.success());
     }
+
+    @Override
+    public ResponseEntity<ApiResponse<Void>> withdraw(MemberPrincipal principal) {
+        memberService.withdraw(principal.memberId());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 }

@@ -166,6 +166,37 @@ class MemberServiceTest {
     }
 
     @Nested
+    @DisplayName("withdraw")
+    class Withdraw {
+
+        @Test
+        @DisplayName("회원 탈퇴 시 개인정보가 마스킹된다")
+        void masksPersonalInfoOnWithdraw() {
+            Member member = member("sso-1", "comit-user", "20230001");
+            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+
+            memberService.withdraw(1L);
+
+            assertThat(member.isDeleted()).isTrue();
+            assertThat(member.getStudentNumber()).isNull();
+            assertThat(member.getProfileImageUrl()).isNull();
+        }
+
+        @Test
+        @DisplayName("이미 탈퇴한 회원이면 MEMBER_NOT_FOUND 예외를 던진다")
+        void throwsWhenMemberAlreadyDeleted() {
+            Member member = member("sso-1", "comit-user", "20230001");
+            member.delete();
+            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+
+            assertThatThrownBy(() -> memberService.withdraw(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+        }
+    }
+
+    @Nested
     @DisplayName("findMemberOrThrow")
     class FindMemberOrThrow {
 
