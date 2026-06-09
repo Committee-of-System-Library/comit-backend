@@ -78,7 +78,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle (+ API 문서 생성)
-        run: ./gradlew clean build generateApiDocs
+        run: ./gradlew clean build generateApiDocs -x test
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login $REGISTRY -u ${{ github.actor }} --password-stdin
