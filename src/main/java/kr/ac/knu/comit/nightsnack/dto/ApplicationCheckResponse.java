@@ -12,9 +12,9 @@ public record ApplicationCheckResponse(
         String ticketToken
 ) {
 
-    public static ApplicationCheckResponse of(Optional<NightSnackApplication> application) {
+    public static ApplicationCheckResponse of(Optional<NightSnackApplication> application, boolean appliedAfterDeadline) {
         return application
                 .map(a -> new ApplicationCheckResponse(true, a.getSource(), a.getStatus(), a.getTicketToken()))
-                .orElseGet(() -> new ApplicationCheckResponse(false, null, null, null));
+                .orElseGet(() -> new ApplicationCheckResponse(appliedAfterDeadline, null, null, null));
     }
 }

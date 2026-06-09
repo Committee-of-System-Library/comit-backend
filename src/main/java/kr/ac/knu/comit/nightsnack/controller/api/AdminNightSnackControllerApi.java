@@ -214,14 +214,15 @@ public interface AdminNightSnackControllerApi {
     @ApiDoc(
             summary = "야식 마차 신청 성공 여부 조회",
             description = "관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. "
-                    + "신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다.",
+                    + "신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다. "
+                    + "단, 서버 시간이 수령 마감 시각(pickupDeadline) 이상이면 신청 내역이 없어도 applied: true를 반환합니다.",
             descriptions = {
                     @FieldDesc(name = "nightSnackId", value = "조회할 야식 마차 ID입니다."),
                     @FieldDesc(name = "studentNumber", value = "조회할 학번입니다."),
-                    @FieldDesc(name = "applied", value = "신청 성공 여부입니다. 신청 내역이 있으면 true."),
-                    @FieldDesc(name = "source", value = "신청 구분입니다. GENERAL 또는 RESERVED. applied가 false이면 null."),
-                    @FieldDesc(name = "status", value = "수령 상태입니다. applied가 false이면 null."),
-                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다. applied가 false이면 null.")
+                    @FieldDesc(name = "applied", value = "신청 성공 여부입니다. 신청 내역이 있거나 수령 마감 시각 이후이면 true."),
+                    @FieldDesc(name = "source", value = "신청 구분입니다. GENERAL 또는 RESERVED. 신청 내역이 없으면 null."),
+                    @FieldDesc(name = "status", value = "수령 상태입니다. 신청 내역이 없으면 null."),
+                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다. 신청 내역이 없으면 null.")
             },
             errors = {
                     @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),

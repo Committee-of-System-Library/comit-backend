@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.nightsnack.service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class AdminNightSnackService {
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
     private final NightSnackProperties nightSnackProperties;
+    private final Clock clock;
 
     @Transactional
     public Long createNightSnack(LocalDate nightSnackDate, int capacity, Period period,
@@ -110,12 +112,16 @@ public class AdminNightSnackService {
     }
 
     public ApplicationCheckResponse checkApplication(Long nightSnackId, String studentNumber) {
-        if (!nightSnackRepository.existsById(nightSnackId)) {
-            throw new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND);
-        }
+        NightSnack nightSnack = nightSnackRepository.findById(nightSnackId)
+                .orElseThrow(() -> new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND));
         Optional<NightSnackApplication> application =
                 nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(nightSnackId, studentNumber);
-        return ApplicationCheckResponse.of(application);
+        return ApplicationCheckResponse.of(application, isPickupDeadlineReached(nightSnack));
+    }
+
+    private boolean isPickupDeadlineReached(NightSnack nightSnack) {
+        LocalDateTime pickupDeadline = nightSnack.getPickupDeadline();
+        return pickupDeadline != null && !LocalDateTime.now(clock).isBefore(pickupDeadline);
     }
 
     /** 학번 목록을 정규화한다: 공백 제거, 빈 값 제외, 순서를 유지하며 중복 제거. */
