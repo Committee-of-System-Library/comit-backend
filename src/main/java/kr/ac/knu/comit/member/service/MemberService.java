@@ -82,9 +82,7 @@ public class MemberService {
 
     @Transactional
     public void withdraw(Long memberId) {
-        var member = findMemberOrThrow(memberId);
-
-        member.delete();
+        findMemberOrThrow(memberId).delete();
     }
 
     public void checkNicknameAvailability(String nickname) {
