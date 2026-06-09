@@ -109,9 +109,9 @@ kr.ac.knu.comit/
 
 - `@ApiContract` 인터페이스 스캔 → `docs/api/` 하위 HTML 자동 생성
 - 생성 명령: `./gradlew generateApiDocs`
-- 컨트롤러 변경 시 반드시 문서 재생성 후 커밋
-- CI에서 `git diff docs/api/` 검증 — 문서 미업데이트 시 PR 통과 불가
-- `main` 브랜치 push 시 GitHub Pages workflow가 `docs/api/`를 정적 사이트로 배포한다.
+- `docs/api/`는 **생성물이라 git에 커밋하지 않는다**(`.gitignore`). 빌드(CI) 시점에 생성된다 — [ADR-005](docs/adr/005-api-doc-build-time-generation.md)
+- PR 게이트(`validate-api-docs.yml`)는 `generateApiDocs`를 돌려 **생성·컴파일 성공**만 확인한다(과거의 `git diff` 커밋 검증은 폐기)
+- `main` 브랜치 push 시 GitHub Pages workflow가 재생성한 `docs/api/`를 정적 사이트로 배포한다.
 
 ---
 
@@ -125,8 +125,8 @@ kr.ac.knu.comit/
    기능 방향은 `docs/features/`, 기술 결정은 `docs/adr/`를 우선 수정한다.
 3. 개발 가이드를 갱신한다.
    API 계약은 `docs/guides/api-contract.md`, 생성기 동작은 `docs/guides/api-doc-generator-flow.md`, 테스트 원칙은 `docs/guides/testing-strategy.md`를 본다.
-4. 산출물을 재생성한다.
-   API 계약이나 생성기 관련 변경이면 `./gradlew generateApiDocs`를 실행해 `docs/api/`를 갱신한다.
+4. 산출물 확인(커밋 불필요).
+   `docs/api/`는 빌드 때 자동 생성되며 git에 커밋하지 않는다(ADR-005). 로컬에서 문서 페이지를 직접 보려면 `./gradlew generateApiDocs`를 1회 실행한다.
 5. 인덱스 문서를 마지막에 맞춘다.
    새 문서가 생기거나 문서 성격이 바뀌면 `docs/README.md`, 각 하위 폴더의 `README.md`를 함께 갱신한다.
 
