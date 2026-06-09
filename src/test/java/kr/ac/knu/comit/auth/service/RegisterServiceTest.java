@@ -55,7 +55,7 @@ class RegisterServiceTest {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
 
         RegisterPrefillResponse response = registerService.getPrefill("token-123");
 
@@ -70,7 +70,7 @@ class RegisterServiceTest {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(true);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(true);
 
         assertThatThrownBy(() -> registerService.getPrefill("token-123"))
                 .isInstanceOf(BusinessException.class)
@@ -84,7 +84,7 @@ class RegisterServiceTest {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
 
         registerService.register("token-123", new RegisterRequest("길동이", "010-1234-5678", null, true));
 
@@ -121,12 +121,33 @@ class RegisterServiceTest {
     }
 
     @Test
+    @DisplayName("탈퇴한 회원은 다시 가입할 수 있다")
+    void allowsReRegistrationAfterWithdrawal() {
+        ExternalIdentity identity = identity();
+        given(externalAuthClient.verify("token-123")).willReturn(identity);
+        given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
+
+        registerService.register("token-123", new RegisterRequest("길동이", "010-1234-5678", null, true));
+
+        then(memberRegistrationService).should().register(
+                "sso-sub-1",
+                "홍길동",
+                "010-1234-5678",
+                "길동이",
+                "2023012780",
+                "심화",
+                null
+        );
+    }
+
+    @Test
     @DisplayName("이미 가입된 회원이 다시 register를 호출하면 MEMBER_ALREADY_EXISTS를 반환한다")
     void throwsWhenRegisterRequestedByExistingMember() {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(true);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(true);
 
         assertThatThrownBy(() -> registerService.register(
                 "token-123",
@@ -143,7 +164,7 @@ class RegisterServiceTest {
         ExternalIdentity identity = identity();
         given(externalAuthClient.verify("token-123")).willReturn(identity);
         given(externalIdentityMapper.toPrincipal(identity)).willReturn(principal());
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
         given(imageService.generatePresignedUrl(any())).willReturn(
                 new PresignedUploadResponse(
                         "https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png?signature=test",
