@@ -120,7 +120,7 @@ public interface MemberControllerApi {
 
     @ApiDoc(
             summary = "회원 탈퇴",
-            description = "현재 로그인한 회원을 탈퇴 처리합니다. 탈퇴 후 개인정보는 즉시 마스킹되며 복구할 수 없습니다.",
+            description = "현재 로그인한 회원을 탈퇴 처리합니다. 탈퇴 후 개인정보는 즉시 마스킹되며 복구할 수 없고, SSO 인증 쿠키를 만료합니다.",
             errors = {
                     @ApiError(code = "MEMBER_NOT_FOUND", when = "인증된 사용자의 로컬 회원 정보가 존재하지 않을 때")
             },

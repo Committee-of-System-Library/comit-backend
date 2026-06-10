@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -255,7 +256,7 @@ class SsoAuthWebTest {
     @Test
     @DisplayName("미가입 회원은 회원가입 전용 프로필 이미지 presigned URL을 발급받을 수 있다")
     void createsProfileImagePresignedUploadForPendingRegistration() throws Exception {
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
         given(imageService.generatePresignedUrl(any())).willReturn(
                 new PresignedUploadResponse(
                         "https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png?signature=test",
@@ -381,7 +382,7 @@ class SsoAuthWebTest {
     @DisplayName("prefill API는 JWT에서 name, studentNumber, major를 반환한다")
     void returnsRegisterPrefillFromVerifiedToken() throws Exception {
         // given
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
 
         // when & then
         mockMvc.perform(get("/auth/register/prefill")
@@ -397,7 +398,7 @@ class SsoAuthWebTest {
     @DisplayName("register API는 JWT claim과 요청 본문으로 회원가입을 완료한다")
     void registersMemberUsingTokenClaimsAndRequestBody() throws Exception {
         // given
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
 
         // when & then
         mockMvc.perform(post("/auth/register")
@@ -475,6 +476,20 @@ class SsoAuthWebTest {
                 .andReturn();
 
         // then
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
+    }
+
+    @Test
+    @DisplayName("회원탈퇴하면 SSO token cookie를 제거한다")
+    void clearsSsoCookieOnWithdraw() throws Exception {
+        MvcResult result = mockMvc.perform(delete("/members/me")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andReturn();
+
+        then(memberService).should().withdraw(1L);
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
     }
