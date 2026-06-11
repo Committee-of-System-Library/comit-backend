@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -475,6 +476,20 @@ class SsoAuthWebTest {
                 .andReturn();
 
         // then
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
+    }
+
+    @Test
+    @DisplayName("회원탈퇴하면 SSO token cookie를 제거한다")
+    void clearsSsoCookieOnWithdraw() throws Exception {
+        MvcResult result = mockMvc.perform(delete("/members/me")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andReturn();
+
+        then(memberService).should().withdraw(1L);
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
     }
