@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import kr.ac.knu.comit.auth.service.SsoAuthService;
 import kr.ac.knu.comit.comment.controller.AdminCommentController;
 import kr.ac.knu.comit.comment.controller.CommentController;
 import kr.ac.knu.comit.comment.dto.CommentListResponse;
@@ -101,6 +102,9 @@ class AuthenticatedApiWebTest {
 
     @MockitoBean
     private MemberService memberService;
+
+    @MockitoBean
+    private SsoAuthService ssoAuthService;
 
     @MockitoBean
     private PostService postService;
