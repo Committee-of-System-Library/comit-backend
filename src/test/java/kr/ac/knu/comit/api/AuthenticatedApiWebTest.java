@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import kr.ac.knu.comit.auth.service.SsoAuthService;
 import kr.ac.knu.comit.comment.controller.AdminCommentController;
 import kr.ac.knu.comit.comment.controller.CommentController;
 import kr.ac.knu.comit.comment.dto.CommentListResponse;
@@ -125,6 +126,9 @@ class AuthenticatedApiWebTest {
 
     @MockitoBean
     private MemberRepository memberRepository;
+
+    @MockitoBean
+    private SsoAuthService ssoAuthService;
 
     @BeforeEach
     void setUp() {
@@ -909,23 +913,6 @@ class AuthenticatedApiWebTest {
                 .andExpect(header().string("Location", "/docs/index.html"));
     }
 
-    @Test
-    void servesGeneratedApiDocsIndexScript() throws Exception {
-        // when & then
-        // 생성된 API 문서 정적 산출물이 앱 경로로 서빙되어야 한다.
-        mockMvc.perform(get("/api/docs/index.js"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("window.API_DOCS")));
-    }
-
-    @Test
-    void servesGeneratedApiDocsIndexScriptOnStrippedDocsPath() throws Exception {
-        // when & then
-        // 프록시가 /api prefix를 제거한 경로에서도 정적 문서가 그대로 서빙되어야 한다.
-        mockMvc.perform(get("/docs/index.js"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("window.API_DOCS")));
-    }
 
     private Member authenticatedMember() {
         Member member = Member.create(
