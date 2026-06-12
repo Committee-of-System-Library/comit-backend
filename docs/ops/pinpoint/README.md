@@ -17,3 +17,4 @@
 2. [pinpoint.env.example](./pinpoint.env.example)을 기준으로 `/opt/docker/env/pinpoint.env`를 만든다.
 3. [comit.env.pinpoint.example](./comit.env.pinpoint.example)을 참고해 `/opt/docker/env/comit.env`에 Pinpoint agent 주입값을 추가한다.
 4. rollout 순서와 smoke test는 [sidowi-pinpoint-rollout.md](../sidowi-pinpoint-rollout.md)를 따른다.
+5. 실제 적용 과정과 트러블슈팅, 1차 메모리 튜닝 값, auth server 연결, TLS 인증서 이슈는 [sidowi-pinpoint-implementation-log.md](../sidowi-pinpoint-implementation-log.md)에 남긴다.

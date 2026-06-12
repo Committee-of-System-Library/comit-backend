@@ -9,6 +9,26 @@
 - 현재 repo에도 observability 필요성이 이미 드러나 있다.
 - 다만 `sidowi`는 이미 backend runtime, nginx, self-hosted runner를 함께 맡고 있으므로, APM 도입은 배포 스택과 관측 스택을 분리한 상태로 들어가야 한다.
 
+## 현재 반영 상태 (`2026-04-10`)
+
+이미 실제 서버에 반영된 항목:
+
+- `Pinpoint 3.0.5` base stack 기동
+- `Kafka + Pinot` metric stack 추가
+- `Comit` backend agent 연결
+- auth server agent 연결
+- `Servermap`, `Inspector` 동작 확인
+- `Pinpoint` 주요 metric 서비스 1차 메모리 튜닝 적용
+
+아직 남아 있는 항목:
+
+- `pinot-server-0`까지 포함한 2차 메모리 튜닝
+- Kafka topic partition 축소 여부 판단
+- `Pinpoint` UI를 path 기반 공개에서 별도 vhost로 분리할지 결정
+- 만료된 `*.knu.ac.kr` TLS 인증서 교체
+
+실제 적용 중 겪은 문제와 해결 과정은 [sidowi-pinpoint-implementation-log.md](./sidowi-pinpoint-implementation-log.md)에 따로 남긴다.
+
 ## 현재 Comit 런타임 전제
 
 - Spring Boot: `4.0.4`
@@ -227,13 +247,14 @@ collector 주소가 기본값이 아니면 agent 설정 파일 또는 JVM 옵션
 목표:
 
 - backend 서비스에 agent mount + `JAVA_OPTS` 주입
+- auth server에도 같은 collector를 향하도록 agent를 주입
 - `sidowi` staging에서 안전하게 smoke test
 - 빠른 rollback 절차 확보
 
 산출물:
 
 - `/opt/docker/compose/docker-compose.services.yml` 변경점
-- `/opt/docker/env/comit.env` 변경점
+- `/opt/docker/env/comit.env`, `/opt/docker/env/sso.env` 변경점
 - smoke test / rollback runbook
 
 ## 권장 롤아웃 순서
@@ -245,7 +266,8 @@ collector 주소가 기본값이 아니면 agent 설정 파일 또는 JVM 옵션
 5. backend 서비스에 agent를 주입한다.
 6. backend compose만 재기동한다.
 7. trace 수집과 앱 동작을 함께 검증한다.
-8. 안정화 전까지는 Pinpoint 운영을 수동 runbook으로 둔다.
+8. auth server까지 collector에 붙는지 확인한다.
+9. 안정화 전까지는 Pinpoint 운영을 수동 runbook으로 둔다.
 
 ## Smoke Test
 
@@ -258,6 +280,17 @@ collector 주소가 기본값이 아니면 agent 설정 파일 또는 JVM 옵션
   - Pinpoint agent 초기화 로그
   - Spring Boot started 로그
   를 함께 확인
+
+### auth server 연결 확인
+
+- `docker ps`에서 `knu-cse-auth-server`가 재기동 후 유지되는지 확인
+- `docker logs knu-cse-auth-server --tail 200`에서
+  - Pinpoint agent 초기화 로그
+  - auth server started 로그
+  를 함께 확인
+- `pinpoint-collector` 로그에서 아래 식별값으로 agent 연결이 잡히는지 확인한다
+  - `applicationname=cse-auth-server`
+  - `agentid=auth-prod-01`
 
 ### 2차 정적 리소스 확인
 

@@ -162,23 +162,27 @@ Comit은 별도 signup form이 아니라,
 
 ## 남은 운영 이슈
 
-### self-hosted runner 부재
+### healthcheck 미설정
 
-현재 `knu-cse-comit-server`는:
-- PR merge
-- CI test
-- GHCR build/push
-까지는 자동화돼 있다.
+`docker-compose.services.yml`에 `healthcheck`가 없어서 앱이 완전히 뜨기 전에 트래픽을 받을 수 있다.
 
-하지만:
-- `deploy`는 self-hosted runner가 없어서 자동 반영되지 않는다.
+- `build.gradle`에 `spring-boot-starter-actuator` 추가
+- `application.yml`에 `management.endpoints.web.exposure.include: health` 추가
+- compose에 아래 추가 후 `docker compose up -d knu-cse-comit-server` 재기동 필요
 
-즉 현재 상태는:
-- 코드/CI는 자동
-- 서버 반영은 수동
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+```
 
-다음 단계:
-- `knu-cse-comit-server`용 self-hosted runner를 붙여서 `deploy` job이 실제로 `sidowi`까지 반영되게 해야 한다.
+### ~~self-hosted runner 부재~~ (해결됨)
+
+`Comit_BE` runner가 `/home/yujihun20251/actions-runner/comit-backend/`에 등록되어 online 상태.
+`deploy` job이 `sidowi`까지 자동 반영되는 구조 완성.
 
 ## 재검증 체크리스트
 
