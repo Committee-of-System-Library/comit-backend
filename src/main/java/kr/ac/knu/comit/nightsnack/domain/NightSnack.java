@@ -136,6 +136,10 @@ public class NightSnack {
         return this.status == NightSnackStatus.OPEN;
     }
 
+    public boolean isOpenAt(LocalDateTime now) {
+        return period.contains(now);
+    }
+
     public boolean isScheduled() {
         return this.status == NightSnackStatus.SCHEDULED;
     }

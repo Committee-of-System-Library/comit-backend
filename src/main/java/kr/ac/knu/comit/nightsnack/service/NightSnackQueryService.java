@@ -3,7 +3,6 @@ package kr.ac.knu.comit.nightsnack.service;
 import java.time.LocalDate;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.NightSnackErrorCode;
-import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
@@ -38,7 +37,7 @@ public class NightSnackQueryService {
         return MyTicketResponse.from(application, name);
     }
 
-    public StudentCouncilFeeResponse getStudentCouncilFeeStatus(Long memberId) {
-        return StudentCouncilFeeResponse.of(studentCouncilFeeRepository.existsByMemberIdAndPaidTrue(memberId));
+    public StudentCouncilFeeResponse getStudentCouncilFeeStatus(String studentNumber) {
+        return StudentCouncilFeeResponse.of(studentCouncilFeeRepository.existsPaidByStudentNumber(studentNumber));
     }
 }

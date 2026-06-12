@@ -103,6 +103,16 @@ class FlywayMigrationIntegrationTest {
                         "WHERE table_schema = DATABASE() AND table_name = 'comment' ORDER BY ordinal_position",
                 String.class
         );
+        List<String> studentCouncilFeeColumns = jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'student_council_fee' ORDER BY ordinal_position",
+                String.class
+        );
+        List<String> studentCouncilFeeUniqueIndexes = jdbcTemplate.queryForList(
+                "SELECT index_name FROM information_schema.statistics " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'student_council_fee' AND non_unique = 0",
+                String.class
+        );
 
         // then
         // Flyway 이력 테이블과 핵심 도메인 테이블이 모두 생성되어야 한다.
@@ -119,11 +129,15 @@ class FlywayMigrationIntegrationTest {
                 "comment_like",
                 "post_daily_visitor",
                 "post_image",
-                "report"
+                "report",
+                "student_council_fee"
         );
         assertThat(reportColumns).contains("deleted_at");
         assertThat(memberColumns).contains("status", "suspended_until", "name", "phone", "major_track", "agreed_at", "comit_role");
         assertThat(postColumns).contains("hidden_by_admin");
         assertThat(commentColumns).contains("hidden_by_admin", "like_count");
+        assertThat(studentCouncilFeeColumns).containsExactly("id", "student_number", "is_paid");
+        assertThat(studentCouncilFeeColumns).doesNotContain("member_id");
+        assertThat(studentCouncilFeeUniqueIndexes).contains("uk_student_council_fee_student_number");
     }
 }

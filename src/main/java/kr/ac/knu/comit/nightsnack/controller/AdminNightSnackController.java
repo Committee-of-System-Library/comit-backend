@@ -1,9 +1,10 @@
 package kr.ac.knu.comit.nightsnack.controller;
 
 import java.time.LocalDate;
+import java.util.List;
 import kr.ac.knu.comit.nightsnack.controller.api.AdminNightSnackControllerApi;
-import kr.ac.knu.comit.nightsnack.dto.AdminApplicationListResponse;
 import kr.ac.knu.comit.nightsnack.dto.ApplicationCheckResponse;
+import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackRequest;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.ReserveRequest;
@@ -50,10 +51,9 @@ public class AdminNightSnackController implements AdminNightSnackControllerApi {
     }
 
     @Override
-    public ResponseEntity<ApiResponse<AdminApplicationListResponse>> listApplications(
-            Long nightSnackId, MemberPrincipal principal) {
+    public ResponseEntity<ApiResponse<List<NightSnackResponse>>> listNightSnacks(MemberPrincipal principal) {
         validateAdmin(principal);
-        return ResponseEntity.ok(ApiResponse.success(adminNightSnackService.listApplications(nightSnackId)));
+        return ResponseEntity.ok(ApiResponse.success(adminNightSnackService.listNightSnacks()));
     }
 
     @Override

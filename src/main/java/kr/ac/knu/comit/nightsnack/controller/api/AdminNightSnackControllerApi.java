@@ -2,8 +2,9 @@ package kr.ac.knu.comit.nightsnack.controller.api;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import kr.ac.knu.comit.nightsnack.dto.AdminApplicationListResponse;
+import java.util.List;
 import kr.ac.knu.comit.nightsnack.dto.ApplicationCheckResponse;
+import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackRequest;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.ReserveRequest;
@@ -159,70 +160,69 @@ public interface AdminNightSnackControllerApi {
     );
 
     @ApiDoc(
-            summary = "야식 마차 신청자 목록 조회",
-            description = "관리자가 특정 야식 마차의 전체 신청자 목록을 신청 시각 오름차순으로 조회합니다. "
-                    + "일반 선착순(GENERAL)과 사전신청(RESERVED) 모두 포함됩니다.",
+            summary = "야식 마차 목록 조회",
+            description = "관리자가 전체 야식 마차 목록을 날짜 내림차순으로 조회합니다.",
             descriptions = {
-                    @FieldDesc(name = "nightSnackId", value = "조회할 야식 마차 ID입니다."),
-                    @FieldDesc(name = "total", value = "전체 신청 건수입니다."),
-                    @FieldDesc(name = "applications", value = "신청 목록입니다. 신청 시각 오름차순으로 정렬됩니다."),
-                    @FieldDesc(name = "applicationId", value = "신청 ID입니다."),
-                    @FieldDesc(name = "studentNumber", value = "신청자 학번입니다."),
-                    @FieldDesc(name = "source", value = "신청 구분입니다. GENERAL(선착순) 또는 RESERVED(사전신청)."),
-                    @FieldDesc(name = "status", value = "수령 상태입니다. PENDING / CONFIRMED / NO_SHOW."),
-                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다."),
-                    @FieldDesc(name = "createdAt", value = "신청 시각입니다.")
+                    @FieldDesc(name = "nightSnackId", value = "야식 마차 ID입니다."),
+                    @FieldDesc(name = "nightSnackDate", value = "야식 마차 날짜입니다."),
+                    @FieldDesc(name = "status", value = "야식 마차 상태입니다. SCHEDULED / OPEN / CLOSED."),
+                    @FieldDesc(name = "capacity", value = "전체 정원입니다."),
+                    @FieldDesc(name = "remaining", value = "일반분 잔여 수량입니다."),
+                    @FieldDesc(name = "reservedCapacity", value = "예약분 정원입니다."),
+                    @FieldDesc(name = "reservedRemaining", value = "예약분 잔여 수량입니다.")
             },
             errors = {
-                    @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),
-                    @ApiError(code = "EVENT_NOT_FOUND", when = "존재하지 않는 야식 마차 ID로 요청할 때")
+                    @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때")
             },
             example = @Example(
                     response = """
                             {
                               "result": "SUCCESS",
-                              "data": {
-                                "total": 2,
-                                "applications": [
-                                  {
-                                    "applicationId": 1,
-                                    "studentNumber": "2026000001",
-                                    "source": "RESERVED",
-                                    "status": "PENDING",
-                                    "ticketToken": "9f1c2e4a-7b8d-4c2a-9e3f-1a2b3c4d5e6f",
-                                    "createdAt": "2026-05-19T17:00:00"
-                                  },
-                                  {
-                                    "applicationId": 2,
-                                    "studentNumber": "2026000002",
-                                    "source": "GENERAL",
-                                    "status": "PENDING",
-                                    "ticketToken": "0a2d3f5b-8c9e-4d3b-af40-2b3c4d5e6f70",
-                                    "createdAt": "2026-05-20T17:30:01"
-                                  }
-                                ]
-                              }
+                              "data": [
+                                {
+                                  "nightSnackId": 2,
+                                  "nightSnackDate": "2026-06-10",
+                                  "status": "SCHEDULED",
+                                  "capacity": 100,
+                                  "remaining": 90,
+                                  "reservedCapacity": 10,
+                                  "reservedRemaining": 10,
+                                  "openAt": "2026-06-10T17:30:00",
+                                  "closeAt": "2026-06-10T18:30:00"
+                                },
+                                {
+                                  "nightSnackId": 1,
+                                  "nightSnackDate": "2026-06-03",
+                                  "status": "CLOSED",
+                                  "capacity": 100,
+                                  "remaining": 0,
+                                  "reservedCapacity": 10,
+                                  "reservedRemaining": 8,
+                                  "openAt": "2026-06-03T17:30:00",
+                                  "closeAt": "2026-06-03T18:30:00"
+                                }
+                              ]
                             }
                             """
             )
     )
-    @GetMapping("/{nightSnackId}/applications")
-    ResponseEntity<ApiResponse<AdminApplicationListResponse>> listApplications(
-            @PathVariable Long nightSnackId,
+    @GetMapping
+    ResponseEntity<ApiResponse<List<NightSnackResponse>>> listNightSnacks(
             @AuthenticatedMember MemberPrincipal principal
     );
 
     @ApiDoc(
             summary = "야식 마차 신청 성공 여부 조회",
             description = "관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. "
-                    + "신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다.",
+                    + "신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다. "
+                    + "단, 서버 시간이 수령 마감 시각(pickupDeadline) 이상이면 신청 내역이 없어도 applied: true를 반환합니다.",
             descriptions = {
                     @FieldDesc(name = "nightSnackId", value = "조회할 야식 마차 ID입니다."),
                     @FieldDesc(name = "studentNumber", value = "조회할 학번입니다."),
-                    @FieldDesc(name = "applied", value = "신청 성공 여부입니다. 신청 내역이 있으면 true."),
-                    @FieldDesc(name = "source", value = "신청 구분입니다. GENERAL 또는 RESERVED. applied가 false이면 null."),
-                    @FieldDesc(name = "status", value = "수령 상태입니다. applied가 false이면 null."),
-                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다. applied가 false이면 null.")
+                    @FieldDesc(name = "applied", value = "신청 성공 여부입니다. 신청 내역이 있거나 수령 마감 시각 이후이면 true."),
+                    @FieldDesc(name = "source", value = "신청 구분입니다. GENERAL 또는 RESERVED. 신청 내역이 없으면 null."),
+                    @FieldDesc(name = "status", value = "수령 상태입니다. 신청 내역이 없으면 null."),
+                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다. 신청 내역이 없으면 null.")
             },
             errors = {
                     @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),
