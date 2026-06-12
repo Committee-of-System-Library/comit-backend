@@ -14,6 +14,7 @@ public class Member {
     private static final String DELETED_MEMBER_DISPLAY_NICKNAME = "탈퇴한 사용자";
     private static final String DELETED_MEMBER_INTERNAL_NICKNAME_PREFIX = "deleted-member-";
     private static final String DELETED_MEMBER_PHONE_PREFIX = "deleted-phone-";
+    private static final String DELETED_MEMBER_SSO_SUB_PREFIX = "deleted-sso-";
     private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9\\-]{10,15}$");
     private static final int MAX_PROFILE_IMAGE_URL_LENGTH = 500;
 
@@ -113,15 +114,12 @@ public class Member {
         this.profileImageUrl = normalized;
     }
 
-    public void syncStudentNumber(String studentNumber) {
-        this.studentNumber = normalizeStudentNumber(studentNumber);
-    }
-
     public void delete() {
         if (isDeleted()) {
             return;
         }
         this.deletedAt = LocalDateTime.now();
+        this.ssoSub = DELETED_MEMBER_SSO_SUB_PREFIX + deletionSuffix();
         this.nickname = deletedMemberInternalNickname();
         this.name = DELETED_MEMBER_DISPLAY_NICKNAME;
         this.phone = deletedMemberPhone();

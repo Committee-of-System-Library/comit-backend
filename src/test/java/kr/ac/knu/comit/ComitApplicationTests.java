@@ -7,18 +7,24 @@ import kr.ac.knu.comit.main.service.MainPageQueryService;
 import kr.ac.knu.comit.main.service.MainService;
 import kr.ac.knu.comit.nightsnack.service.AdminNightSnackService;
 import kr.ac.knu.comit.nightsnack.service.NightSnackApplicationService;
+import kr.ac.knu.comit.nightsnack.service.NightSnackQueryService;
 import kr.ac.knu.comit.nightsnack.service.NightSnackReservationWriter;
+import kr.ac.knu.comit.nightsnack.service.TimeBasedReservationStrategy;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.ac.knu.comit.member.service.MemberActivityService;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import kr.ac.knu.comit.member.service.AdminMemberService;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
+import kr.ac.knu.comit.notice.domain.OfficialNoticeRepository;
+import kr.ac.knu.comit.notice.service.NoticeChatService;
+import kr.ac.knu.comit.notice.service.OfficialNoticeService;
 import kr.ac.knu.comit.post.service.AdminPostService;
 import kr.ac.knu.comit.post.service.PostService;
 import kr.ac.knu.comit.report.service.AdminReportService;
 import kr.ac.knu.comit.report.service.ReportService;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -33,10 +39,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
         "S3_REGION=ap-northeast-2",
         "S3_ACCESS_KEY=test",
         "S3_SECRET_KEY=test",
+        "spring.ai.openai.api-key=dummy-for-test",
         "spring.autoconfigure.exclude="
                 + "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
                 + "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,"
-                + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration"
+                + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,"
+                + "org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration"
 })
 class ComitApplicationTests {
 
@@ -86,13 +94,31 @@ class ComitApplicationTests {
     MainPageQueryService mainPageQueryService;
 
     @MockitoBean
+    VectorStore vectorStore;
+
+    @MockitoBean
+    NoticeChatService noticeChatService;
+
+    @MockitoBean
+    OfficialNoticeService officialNoticeService;
+
+    @MockitoBean
+    OfficialNoticeRepository officialNoticeRepository;
+
+    @MockitoBean
     AdminNightSnackService adminNightSnackService;
 
     @MockitoBean
     NightSnackApplicationService nightSnackApplicationService;
 
     @MockitoBean
+    NightSnackQueryService nightSnackQueryService;
+
+    @MockitoBean
     NightSnackReservationWriter nightSnackReservationWriter;
+
+    @MockitoBean
+    TimeBasedReservationStrategy timeBasedReservationStrategy;
 
     @Test
     void contextLoads() {

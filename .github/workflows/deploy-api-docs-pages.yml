@@ -1,8 +1,9 @@
 name: Deploy API Docs to GitHub Pages
 
 on:
-  push:
-    branches: [ "main" ]
+  # 수동 발행만 — 코드 머지(main push)와 분리한다.
+  # 문서 사이트를 갱신하려면 Actions 탭에서 직접 실행하거나 `gh workflow run deploy-api-docs-pages.yml`.
+  # 발행 시점의 main 기준으로 generateApiDocs가 매번 새로 문서를 생성해 올린다.
   workflow_dispatch:
 
 permissions:
@@ -41,7 +42,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs/api
+          path: ./docs
 
   deploy-api-docs:
     runs-on: ubuntu-latest

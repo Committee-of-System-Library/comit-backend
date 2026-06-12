@@ -3,11 +3,13 @@ package kr.ac.knu.comit.global.persistence;
 import kr.ac.knu.comit.ComitApplication;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -28,11 +30,16 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "S3_BUCKET_NAME=test-bucket",
                 "S3_REGION=ap-northeast-2",
                 "S3_ACCESS_KEY=test",
-                "S3_SECRET_KEY=test"
+                "S3_SECRET_KEY=test",
+                "spring.ai.openai.api-key=dummy-for-test",
+                "spring.autoconfigure.exclude=org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration"
         }
 )
 @DisplayName("Flyway 마이그레이션")
 class FlywayMigrationIntegrationTest {
+
+    @MockitoBean
+    private VectorStore vectorStore;
 
     @Container
     static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.36")
@@ -96,6 +103,16 @@ class FlywayMigrationIntegrationTest {
                         "WHERE table_schema = DATABASE() AND table_name = 'comment' ORDER BY ordinal_position",
                 String.class
         );
+        List<String> studentCouncilFeeColumns = jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'student_council_fee' ORDER BY ordinal_position",
+                String.class
+        );
+        List<String> studentCouncilFeeUniqueIndexes = jdbcTemplate.queryForList(
+                "SELECT index_name FROM information_schema.statistics " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'student_council_fee' AND non_unique = 0",
+                String.class
+        );
 
         // then
         // Flyway 이력 테이블과 핵심 도메인 테이블이 모두 생성되어야 한다.
@@ -112,11 +129,15 @@ class FlywayMigrationIntegrationTest {
                 "comment_like",
                 "post_daily_visitor",
                 "post_image",
-                "report"
+                "report",
+                "student_council_fee"
         );
         assertThat(reportColumns).contains("deleted_at");
         assertThat(memberColumns).contains("status", "suspended_until", "name", "phone", "major_track", "agreed_at", "comit_role");
         assertThat(postColumns).contains("hidden_by_admin");
         assertThat(commentColumns).contains("hidden_by_admin", "like_count");
+        assertThat(studentCouncilFeeColumns).containsExactly("id", "student_number", "is_paid");
+        assertThat(studentCouncilFeeColumns).doesNotContain("member_id");
+        assertThat(studentCouncilFeeUniqueIndexes).contains("uk_student_council_fee_student_number");
     }
 }

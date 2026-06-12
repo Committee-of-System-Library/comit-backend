@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -14,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.controller.RegisterController;
@@ -36,6 +38,9 @@ import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.service.MemberRegistrationService;
 import kr.ac.knu.comit.member.service.MemberService;
+import kr.ac.knu.comit.report.controller.AdminReportController;
+import kr.ac.knu.comit.report.dto.AdminReportPageResponse;
+import kr.ac.knu.comit.report.service.AdminReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,14 +53,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@WebMvcTest({SsoAuthController.class, RegisterController.class, MemberController.class})
+@WebMvcTest({SsoAuthController.class, RegisterController.class, MemberController.class, AdminReportController.class})
 @Import({
         WebMvcConfig.class,
         MemberArgumentResolver.class,
         GlobalExceptionHandler.class,
         ComitSsoProperties.class,
         AuthCookieManager.class,
-        kr.ac.knu.comit.auth.config.AdminEmailProperties.class,
         ExternalIdentityMapper.class,
         RegisterService.class,
         SsoAuthService.class,
@@ -98,6 +102,9 @@ class SsoAuthWebTest {
 
     @MockitoBean
     private ImageService imageService;
+
+    @MockitoBean
+    private AdminReportService adminReportService;
 
     @BeforeEach
     void setUp() {
@@ -249,7 +256,7 @@ class SsoAuthWebTest {
     @Test
     @DisplayName("미가입 회원은 회원가입 전용 프로필 이미지 presigned URL을 발급받을 수 있다")
     void createsProfileImagePresignedUploadForPendingRegistration() throws Exception {
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
         given(imageService.generatePresignedUrl(any())).willReturn(
                 new PresignedUploadResponse(
                         "https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png?signature=test",
@@ -340,10 +347,42 @@ class SsoAuthWebTest {
     }
 
     @Test
+    @DisplayName("SSO JWT role claim이 ADMIN이어도 DB role이 STUDENT면 관리자 API를 거부한다")
+    void blocksAdminApiWhenJwtRoleIsAdminButDbRoleIsStudent() throws Exception {
+        // given
+        given(externalAuthClient.verify(any())).willReturn(externalIdentity("ADMIN"));
+        given(memberService.findBySso(any())).willReturn(Optional.of(authenticatedMember()));
+
+        // when & then
+        mockMvc.perform(get("/admin/reports")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("/problems/common/forbidden"))
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
+    }
+
+    @Test
+    @DisplayName("SSO JWT role claim이 STUDENT여도 DB role이 ADMIN이면 관리자 API를 허용한다")
+    void allowsAdminApiWhenJwtRoleIsStudentButDbRoleIsAdmin() throws Exception {
+        // given
+        given(externalAuthClient.verify(any())).willReturn(externalIdentity("STUDENT"));
+        given(memberService.findBySso(any())).willReturn(Optional.of(adminMember()));
+        given(adminReportService.getReports(isNull(), isNull(), any()))
+                .willReturn(new AdminReportPageResponse(List.of(), 0, 20, 0, 0));
+
+        // when & then
+        mockMvc.perform(get("/admin/reports")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
     @DisplayName("prefill API는 JWT에서 name, studentNumber, major를 반환한다")
     void returnsRegisterPrefillFromVerifiedToken() throws Exception {
         // given
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
 
         // when & then
         mockMvc.perform(get("/auth/register/prefill")
@@ -359,7 +398,7 @@ class SsoAuthWebTest {
     @DisplayName("register API는 JWT claim과 요청 본문으로 회원가입을 완료한다")
     void registersMemberUsingTokenClaimsAndRequestBody() throws Exception {
         // given
-        given(memberService.hasAnyMember("sso-sub-1")).willReturn(false);
+        given(memberService.hasActiveMember("sso-sub-1")).willReturn(false);
 
         // when & then
         mockMvc.perform(post("/auth/register")
@@ -442,6 +481,20 @@ class SsoAuthWebTest {
     }
 
     @Test
+    @DisplayName("회원탈퇴하면 SSO token cookie를 제거한다")
+    void clearsSsoCookieOnWithdraw() throws Exception {
+        MvcResult result = mockMvc.perform(delete("/members/me")
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andReturn();
+
+        then(memberService).should().withdraw(1L);
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
+    }
+
+    @Test
     @DisplayName("로그아웃하면 SSO token cookie를 제거한다")
     void clearsSsoCookieOnLogout() throws Exception {
         MvcResult result = mockMvc.perform(post("/auth/sso/logout"))
@@ -467,7 +520,27 @@ class SsoAuthWebTest {
         return member;
     }
 
+    private Member adminMember() {
+        Member member = Member.create(
+                "sso-sub-1",
+                "관리자",
+                "010-0000-0000",
+                "admin-user",
+                "2023012780",
+                null,
+                null,
+                LocalDateTime.now()
+        );
+        ReflectionTestUtils.setField(member, "id", 1L);
+        ReflectionTestUtils.setField(member, "comitRole", ComitRole.ADMIN);
+        return member;
+    }
+
     private ExternalIdentity externalIdentity() {
+        return externalIdentity("STUDENT");
+    }
+
+    private ExternalIdentity externalIdentity(String role) {
         return new ExternalIdentity(
                 "sso-sub-1",
                 "홍길동",
@@ -475,7 +548,7 @@ class SsoAuthWebTest {
                 "2023012780",
                 "심화",
                 "CSE_STUDENT",
-                "STUDENT"
+                role
         );
     }
 }

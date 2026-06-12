@@ -25,6 +25,8 @@ Architecture Decision Records. 기술적으로 중요한 결정을 내렸을 때
 
 | 번호 | 제목 | 상태 |
 |---|---|---|
-| ADR-001 | API 문서 자동화 방식 선택 | 채택 |
+| ADR-001 | API 문서 자동화 방식 선택 | 채택 (CI 검증 방식은 ADR-005로 대체) |
 | ADR-002 | ProblemDetail 기반 에러 응답 표준 채택 | 채택 |
 | ADR-003 | KNU CSE SSO 인증 전략 | 채택 |
+| ADR-004 | 신고 기능 설계 결정 | 채택 |
+| ADR-005 | API 문서 생성물(docs/api) git 제거 · 빌드 시점 생성 | 채택 |

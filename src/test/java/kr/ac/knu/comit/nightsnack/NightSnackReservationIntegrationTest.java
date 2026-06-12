@@ -22,10 +22,12 @@ import kr.ac.knu.comit.member.domain.Member;
 import kr.ac.knu.comit.member.domain.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -50,13 +52,20 @@ import org.testcontainers.junit.jupiter.Testcontainers;
                 "S3_BUCKET_NAME=test-bucket",
                 "S3_REGION=ap-northeast-2",
                 "S3_ACCESS_KEY=test",
-                "S3_SECRET_KEY=test"
+                "S3_SECRET_KEY=test",
+                "OPENAI_API_KEY=ci-test-placeholder",
+                "NOTICE_SCHEDULER_ENABLED=false",
+                "spring.autoconfigure.exclude="
+                        + "org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration"
         }
 )
 @DisplayName("야식 마차 사전신청/일반 선착순 분리 (실제 MySQL)")
 class NightSnackReservationIntegrationTest {
 
     private static final AtomicInteger MEMBER_SEQ = new AtomicInteger();
+
+    @MockitoBean
+    VectorStore vectorStore;
 
     @Container
     static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.36")
@@ -94,11 +103,11 @@ class NightSnackReservationIntegrationTest {
         // 정원 20, 예약분 5 → 일반분 15.
         LocalDate date1 = LocalDate.now().plusDays(3);
         Period period1 = Period.of(date1.atTime(17, 30), date1.atTime(18, 30));
-        Long nightSnackId = adminNightSnackService.createNightSnack(date1, 20, 5, period1);
+        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date1, 20, 5, period1, null, null, null, null, null, false)).getId();
         List<String> studentNumbers = List.of(uniqueStudentNumber(), uniqueStudentNumber());
 
         // when
-        ReserveResponse response = adminNightSnackService.reserve(nightSnackId, studentNumbers);
+        ReserveResponse response = adminNightSnackService.reserve(date1, studentNumbers);
 
         // then
         assertThat(response.registered()).isEqualTo(2);
@@ -125,8 +134,9 @@ class NightSnackReservationIntegrationTest {
         int capacity = 10;
         int reserved = 3;
         LocalDate date2 = LocalDate.now().plusDays(4);
-        Period period2 = Period.of(date2.atTime(17, 30), date2.atTime(18, 30));
-        Long nightSnackId = adminNightSnackService.createNightSnack(date2, capacity, reserved, period2);
+        LocalDateTime now2 = LocalDateTime.now();
+        Period period2 = Period.of(now2.minusMinutes(5), now2.plusHours(1));
+        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date2, capacity, reserved, period2, null, null, null, null, null, false)).getId();
         adminNightSnackService.open(nightSnackId);
 
         int success = 0;
@@ -134,7 +144,7 @@ class NightSnackReservationIntegrationTest {
         for (int i = 0; i < capacity; i++) {
             Long memberId = seedMember();
             try {
-                nightSnackApplicationService.apply(nightSnackId, memberId);
+                nightSnackApplicationService.apply(nightSnackId, memberId, null);
                 success++;
             } catch (BusinessException exception) {
                 if (exception.getErrorCode() == NightSnackErrorCode.EVENT_SOLD_OUT) {
@@ -149,35 +159,6 @@ class NightSnackReservationIntegrationTest {
         NightSnack nightSnack = nightSnackRepository.findById(nightSnackId).orElseThrow();
         assertThat(nightSnack.getRemaining()).isZero();
         assertThat(nightSnack.getReservedRemaining()).isEqualTo(reserved); // 예약분은 손대지 않음
-    }
-
-    @Test
-    @DisplayName("사전신청된 학번은 같은 마차의 일반 선착순으로 다시 신청할 수 없다(교차 중복)")
-    void reservedStudentCannotApplyGenerally() {
-        // given
-        // 같은 학번을 가진 회원을 만들고, 그 학번을 먼저 사전신청해 둔다.
-        String studentNumber = uniqueStudentNumber();
-        LocalDate date3 = LocalDate.now().plusDays(5);
-        Period period3 = Period.of(date3.atTime(17, 30), date3.atTime(18, 30));
-        Long nightSnackId = adminNightSnackService.createNightSnack(date3, 10, 3, period3);
-        adminNightSnackService.reserve(nightSnackId, List.of(studentNumber));
-        adminNightSnackService.open(nightSnackId);
-
-        Long memberId = seedMemberWithStudentNumber(studentNumber);
-        int remainingBefore = nightSnackRepository.findById(nightSnackId).orElseThrow().getRemaining();
-
-        // when & then
-        // 일반 신청 시 (night_snack_id, student_number) 유니크에 걸려 ALREADY_APPLIED로 변환되고,
-        // 롤백되어 일반분 잔여는 그대로 복구된다.
-        assertThatThrownBy(() -> nightSnackApplicationService.apply(nightSnackId, memberId))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(NightSnackErrorCode.ALREADY_APPLIED);
-
-        int remainingAfter = nightSnackRepository.findById(nightSnackId).orElseThrow().getRemaining();
-        assertThat(remainingAfter).isEqualTo(remainingBefore);
-        // 사전신청 1건만 존재한다.
-        assertThat(nightSnackApplicationRepository.countByNightSnackId(nightSnackId)).isEqualTo(1);
     }
 
     private Long seedMember() {

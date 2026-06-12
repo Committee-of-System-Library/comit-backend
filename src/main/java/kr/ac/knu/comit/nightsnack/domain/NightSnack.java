@@ -60,6 +60,25 @@ public class NightSnack {
     @Column(nullable = false, length = 20)
     private NightSnackStatus status;
 
+    @Column(length = 200)
+    private String title;
+
+    @Column(columnDefinition = "TEXT")
+    private String contents;
+
+    @Column(length = 500)
+    private String menu;
+
+    @Column(name = "pickup_location", length = 200)
+    private String pickupLocation;
+
+    @Column(name = "pickup_deadline")
+    private LocalDateTime pickupDeadline;
+
+    /** 신청자격: 학생회비 납부 여부. 등록하지 않으면 false. */
+    @Column(name = "requires_student_council_fee", nullable = false)
+    private boolean requiresStudentCouncilFee;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -67,21 +86,14 @@ public class NightSnack {
     }
 
     /**
-     * 예약분 없는 야식 마차(전량 일반 선착순).
+     * 관리자 생성 전용 팩토리. 부가 정보(제목·내용·메뉴·수령장소·수령마감·신청자격)를 함께 등록한다.
      *
-     * @param period 오픈·마감 시각 ({@link Period#of(LocalDateTime, LocalDateTime)} 로 생성)
+     * @param requiresStudentCouncilFee 신청자격 — 학생회비 납부 여부. 미등록 시 {@code false}.
      */
-    public static NightSnack create(LocalDate nightSnackDate, int capacity, Period period) {
-        return create(nightSnackDate, capacity, 0, period);
-    }
-
-    /**
-     * 정원을 예약분(사전신청)과 일반분(선착순)으로 나눠 생성한다(요구사항 4-3).
-     *
-     * @param reservedCapacity 사전신청용 예약 정원. {@code 0 <= reservedCapacity <= capacity} 여야 한다.
-     * @param period           오픈·마감 시각
-     */
-    public static NightSnack create(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period) {
+    public static NightSnack create(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period,
+                                    String title, String contents, String menu,
+                                    String pickupLocation, LocalDateTime pickupDeadline,
+                                    boolean requiresStudentCouncilFee) {
         if (nightSnackDate == null || capacity <= 0
                 || reservedCapacity < 0 || reservedCapacity > capacity
                 || period == null) {
@@ -95,6 +107,12 @@ public class NightSnack {
         nightSnack.remaining = capacity - reservedCapacity;
         nightSnack.period = period;
         nightSnack.status = NightSnackStatus.SCHEDULED;
+        nightSnack.title = title;
+        nightSnack.contents = contents;
+        nightSnack.menu = menu;
+        nightSnack.pickupLocation = pickupLocation;
+        nightSnack.pickupDeadline = pickupDeadline;
+        nightSnack.requiresStudentCouncilFee = requiresStudentCouncilFee;
         nightSnack.createdAt = LocalDateTime.now();
         return nightSnack;
     }
@@ -116,6 +134,10 @@ public class NightSnack {
 
     public boolean isOpen() {
         return this.status == NightSnackStatus.OPEN;
+    }
+
+    public boolean isOpenAt(LocalDateTime now) {
+        return period.contains(now);
     }
 
     public boolean isScheduled() {
@@ -178,6 +200,30 @@ public class NightSnack {
 
     public NightSnackStatus getStatus() {
         return status;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getContents() {
+        return contents;
+    }
+
+    public String getMenu() {
+        return menu;
+    }
+
+    public String getPickupLocation() {
+        return pickupLocation;
+    }
+
+    public LocalDateTime getPickupDeadline() {
+        return pickupDeadline;
+    }
+
+    public boolean isRequiresStudentCouncilFee() {
+        return requiresStudentCouncilFee;
     }
 
     public LocalDateTime getCreatedAt() {

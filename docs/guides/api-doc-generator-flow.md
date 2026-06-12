@@ -221,11 +221,11 @@ required 판단 규칙
 - 필드 정렬: 필드명 기준
 - 산출 폴더 재생성: 기존 `docs/api` 삭제 후 전체 생성
 
-이 규칙 덕분에 같은 입력에서 같은 HTML/JS가 나와 `git diff`가 안정적으로 유지된다.
+이 규칙 덕분에 같은 입력에서는 항상 같은 HTML/JS가 나온다(결정적 생성).
 
 ## 8. GitHub Pages 배포
 
-API 문서는 저장소 안에 커밋될 뿐 아니라 `main` 브랜치 기준으로 GitHub Pages에도 배포된다.
+API 문서는 git에 커밋하지 않고 빌드 때 생성되며([ADR-005](../adr/005-api-doc-build-time-generation.md)), `main` 브랜치 기준으로 GitHub Pages에도 배포된다.
 
 배포 워크플로
 
@@ -241,7 +241,7 @@ API 문서는 저장소 안에 커밋될 뿐 아니라 `main` 브랜치 기준�
 주의할 점
 
 - 저장소 Settings > Pages 에서 source를 `GitHub Actions`로 한 번 설정해야 한다.
-- Pages는 workflow 안에서 다시 문서를 생성하므로, 로컬 커밋본과 CI 생성 결과가 달라지지 않게 `validate-api-docs.yml` 검증을 계속 통과해야 한다.
+- Pages는 workflow 안에서 문서를 다시 생성해 업로드하므로, git에 커밋된 산출물이 따로 필요 없다([ADR-005](../adr/005-api-doc-build-time-generation.md)).
 - 공개 URL 루트는 `docs/api/index.html`이 아니라 Pages 사이트 루트다.
 
 ## 9. 현재 지원 범위
@@ -346,7 +346,7 @@ API 문서는 저장소 안에 커밋될 뿐 아니라 `main` 브랜치 기준�
 
 - web test: 인터페이스에 선언한 어노테이션이 실제 런타임 매핑에 반영되는가
 - generator test: 생성된 HTML에 새 섹션/타입/경로가 들어가는가
-- generated docs: `docs/api` diff가 의도한 내용만 바뀌는가
+- generated docs: 로컬 `generateApiDocs` 후 `docs/api` 산출물이 의도한 내용만 담는가 (git 추적 안 함 — diff 아님)
 
 ## 12. 나중에 문서가 이상할 때 디버깅 순서
 

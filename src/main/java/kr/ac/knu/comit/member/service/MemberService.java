@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.member.service;
 
+import java.util.Optional;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.MemberErrorCode;
@@ -9,7 +10,6 @@ import kr.ac.knu.comit.member.dto.MemberProfileResponse;
 import kr.ac.knu.comit.member.dto.UpdateNicknameRequest;
 import kr.ac.knu.comit.member.dto.UpdateProfileRequest;
 import kr.ac.knu.comit.member.dto.UpdateStudentNumberVisibilityRequest;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +25,8 @@ public class MemberService {
         return MemberProfileResponse.from(findMemberOrThrow(memberId));
     }
 
-    @Transactional
     public Optional<Member> findBySso(MemberPrincipal principal) {
-        return memberRepository.findBySsoSubAndDeletedAtIsNull(principal.ssoSub())
-                .map(member -> syncStudentNumber(member, principal.studentNumber()));
+        return memberRepository.findBySsoSubAndDeletedAtIsNull(principal.ssoSub());
     }
 
     public boolean hasActiveMember(String ssoSub) {
@@ -82,6 +80,11 @@ public class MemberService {
         findMemberOrThrow(memberId).updateStudentNumberVisibility(request.visible());
     }
 
+    @Transactional
+    public void withdraw(Long memberId) {
+        findMemberOrThrow(memberId).delete();
+    }
+
     public void checkNicknameAvailability(String nickname) {
         if (memberRepository.existsByNickname(nickname)) {
             throw new BusinessException(MemberErrorCode.DUPLICATE_NICKNAME);
@@ -92,10 +95,5 @@ public class MemberService {
         return memberRepository.findById(memberId)
                 .filter(m -> !m.isDeleted())
                 .orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
-
-    private Member syncStudentNumber(Member member, String studentNumber) {
-        member.syncStudentNumber(studentNumber);
-        return member;
     }
 }

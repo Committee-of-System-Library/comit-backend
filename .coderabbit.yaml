@@ -1,7 +1,12 @@
 reviews:
+  # 자동 리뷰 끄기 — 모든 PR을 자동으로 리뷰하지 않는다.
+  # 리뷰가 필요한 PR에서만 아래 코멘트로 직접 호출한다:
+  #   @coderabbitai review        (변경분 증분 리뷰)
+  #   @coderabbitai full review   (전체 다시 리뷰)
+  auto_review:
+    enabled: false
   path_instructions:
     - path: "src/main/java/**/controller/**"
       instructions: |
-        컨트롤러가 수정됐다면 controller/api/ 하위 해당 인터페이스 파일과
-        docs/api/ 하위 HTML 파일도 함께 변경됐는지 확인하세요.
-        누락 시 ./gradlew generateApiDocs 실행이 필요합니다.
+        컨트롤러가 수정됐다면 controller/api/ 하위 해당 인터페이스 파일도
+        함께 변경됐는지 확인하세요.

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT@latest/fonts/variable/woff2/SUIT-Variable.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COMIT Docs</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #1b2a41;
+      --muted: #607086;
+      --line: #d8e2ef;
+      --accent: #3182f6;
+      --accent-soft: #e9f2ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "SUIT", "Pretendard", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 50%, #edf3fa 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 48px 24px 80px;
+    }
+    .shell { max-width: 1000px; margin: 0 auto; }
+
+    .hero { text-align: center; margin-bottom: 48px; }
+    .logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .logo-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #6ba4ff);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 900; font-size: 1.1rem;
+    }
+    .logo-name { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+    .hero h1 { font-size: clamp(1.6rem, 3.5vw, 2.2rem); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; }
+    .hero p { color: var(--muted); font-size: 0.95rem; line-height: 1.65; }
+
+    .section { margin-bottom: 40px; }
+    .section-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+    .section-title { font-size: 1rem; font-weight: 700; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .card {
+      display: flex; flex-direction: column;
+      padding: 28px; border-radius: 24px;
+      border: 1px solid var(--line); background: var(--panel);
+      text-decoration: none; color: inherit;
+      box-shadow: 0 16px 48px rgba(15,23,42,0.07);
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(49,130,246,0.4);
+      box-shadow: 0 28px 56px rgba(49,130,246,0.13);
+    }
+    .card-icon {
+      width: 52px; height: 52px; border-radius: 15px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 18px;
+    }
+    .card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
+    .card p { color: var(--muted); font-size: 0.88rem; line-height: 1.65; flex: 1; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 16px; }
+    .tag {
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .tag.blue  { background: var(--accent-soft); color: var(--accent); }
+    .tag.green { background: #f0fdf4; color: #166534; }
+    .tag.purple { background: #faf5ff; color: #6b21a8; }
+    .tag.orange { background: #fff7ed; color: #9a3412; }
+    .arrow { margin-top: 18px; font-size: 0.82rem; font-weight: 700; }
+    .arrow.blue { color: var(--accent); }
+    .arrow.green { color: #16a34a; }
+    .arrow.purple { color: #7c3aed; }
+    .arrow.orange { color: #ea580c; }
+
+    .bg-blue   { background: #e9f2ff; }
+    .bg-green  { background: #f0fdf4; }
+    .bg-purple { background: #faf5ff; }
+    .bg-orange { background: #fff7ed; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="hero">
+    <div class="logo">
+      <div class="logo-icon">C</div>
+      <span class="logo-name">COMIT</span>
+    </div>
+    <h1>개발 문서 포털</h1>
+    <p>확인하고 싶은 문서를 선택하세요.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">📋 레퍼런스</span>
+    </div>
+    <div class="grid-2">
+      <a class="card" href="./api/index.html">
+        <div class="card-icon bg-blue">📡</div>
+        <h2>API 문서</h2>
+        <p>엔드포인트, 요청/응답 필드, 예시 JSON, 기능 명세를 확인할 수 있습니다.</p>
+        <div class="tag-row">
+          <span class="tag blue">REST API</span>
+          <span class="tag blue">기능 명세</span>
+          <span class="tag blue">JSON 예시</span>
+        </div>
+        <div class="arrow blue">바로가기 →</div>
+      </a>
+
+      <a class="card" href="./config-overview.html">
+        <div class="card-icon bg-green">⚙️</div>
+        <h2>환경설정 레퍼런스</h2>
+        <p>환경변수 전체 목록, 프로필별 활성화 상태, 인증 구조, AI·Vector Store 구성.</p>
+        <div class="tag-row">
+          <span class="tag green">환경변수</span>
+          <span class="tag green">인증 구조</span>
+          <span class="tag green">AI / Vector</span>
+        </div>
+        <div class="arrow green">바로가기 →</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">🏗️ 시각화</span>
+    </div>
+    <div class="grid-2">
+      <a class="card" href="./guides/comit-architecture-visualization.html">
+        <div class="card-icon bg-purple">🗺️</div>
+        <h2>아키텍처 시각화</h2>
+        <p>전체 서버 구성, 컴포넌트 관계, 인프라 레이아웃을 시각적으로 표현한 문서입니다.</p>
+        <div class="tag-row">
+          <span class="tag purple">인프라</span>
+          <span class="tag purple">컴포넌트</span>
+        </div>
+        <div class="arrow purple">바로가기 →</div>
+      </a>
+
+      <a class="card" href="./ops/backend-self-hosted-runner-flow.html">
+        <div class="card-icon bg-orange">🔄</div>
+        <h2>Self-hosted Runner 흐름</h2>
+        <p>GitHub Actions self-hosted runner의 CI/CD 파이프라인 흐름을 다이어그램으로 설명합니다.</p>
+        <div class="tag-row">
+          <span class="tag orange">CI/CD</span>
+          <span class="tag orange">GitHub Actions</span>
+        </div>
+        <div class="arrow orange">바로가기 →</div>
+      </a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

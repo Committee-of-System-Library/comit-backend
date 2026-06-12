@@ -1,5 +1,6 @@
 package kr.ac.knu.comit.member.controller;
 
+import kr.ac.knu.comit.auth.service.SsoAuthService;
 import kr.ac.knu.comit.global.auth.MemberPrincipal;
 import kr.ac.knu.comit.global.exception.ApiResponse;
 import kr.ac.knu.comit.member.controller.api.MemberControllerApi;
@@ -8,6 +9,7 @@ import kr.ac.knu.comit.member.dto.UpdateProfileRequest;
 import kr.ac.knu.comit.member.dto.UpdateStudentNumberVisibilityRequest;
 import kr.ac.knu.comit.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController implements MemberControllerApi {
 
     private final MemberService memberService;
+    private final SsoAuthService ssoAuthService;
 
     @Override
     public ResponseEntity<ApiResponse<MemberProfileResponse>> getMyProfile(MemberPrincipal principal) {
@@ -38,5 +41,13 @@ public class MemberController implements MemberControllerApi {
     ) {
         memberService.updateStudentNumberVisibility(principal.memberId(), request);
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Void>> withdraw(MemberPrincipal principal) {
+        memberService.withdraw(principal.memberId());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, ssoAuthService.clearAuthenticationCookie())
+                .body(ApiResponse.success());
     }
 }

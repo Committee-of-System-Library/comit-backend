@@ -1,6 +1,10 @@
 package kr.ac.knu.comit.nightsnack.controller;
 
+import java.time.LocalDate;
+import java.util.List;
 import kr.ac.knu.comit.nightsnack.controller.api.AdminNightSnackControllerApi;
+import kr.ac.knu.comit.nightsnack.dto.ApplicationCheckResponse;
+import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackRequest;
 import kr.ac.knu.comit.nightsnack.dto.CreateNightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.ReserveRequest;
@@ -25,7 +29,9 @@ public class AdminNightSnackController implements AdminNightSnackControllerApi {
             CreateNightSnackRequest request, MemberPrincipal principal) {
         validateAdmin(principal);
         Long nightSnackId = adminNightSnackService.createNightSnack(
-                request.nightSnackDate(), request.capacity(), request.reservedCapacity(), request.toPeriod());
+                request.nightSnackDate(), request.capacity(), request.toPeriod(),
+                request.title(), request.contents(), request.menu(),
+                request.pickupLocation(), request.pickupDeadline(), request.requiresStudentCouncilFee());
         return ResponseEntity.ok(ApiResponse.success(CreateNightSnackResponse.from(nightSnackId)));
     }
 
@@ -38,10 +44,23 @@ public class AdminNightSnackController implements AdminNightSnackControllerApi {
 
     @Override
     public ResponseEntity<ApiResponse<ReserveResponse>> reserve(
-            Long nightSnackId, ReserveRequest request, MemberPrincipal principal) {
+            LocalDate date, ReserveRequest request, MemberPrincipal principal) {
         validateAdmin(principal);
-        ReserveResponse response = adminNightSnackService.reserve(nightSnackId, request.studentNumbers());
+        ReserveResponse response = adminNightSnackService.reserve(date, request.studentNumbers());
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<List<NightSnackResponse>>> listNightSnacks(MemberPrincipal principal) {
+        validateAdmin(principal);
+        return ResponseEntity.ok(ApiResponse.success(adminNightSnackService.listNightSnacks()));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<ApplicationCheckResponse>> checkApplication(
+            Long nightSnackId, String studentNumber, MemberPrincipal principal) {
+        validateAdmin(principal);
+        return ResponseEntity.ok(ApiResponse.success(adminNightSnackService.checkApplication(nightSnackId, studentNumber)));
     }
 
     private void validateAdmin(MemberPrincipal principal) {

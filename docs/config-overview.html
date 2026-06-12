@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT@latest/fonts/variable/woff2/SUIT-Variable.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COMIT 환경설정 레퍼런스</title>
+  <style>
+    body {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #111;
+      background: #fff;
+    }
+    h1 { font-size: 1.7rem; margin: 0 0 6px; }
+    h2 { font-size: 1.2rem; margin: 44px 0 10px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+    h3 { font-size: 0.95rem; margin: 20px 0 6px; color: #374151; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+    p  { color: #444; margin: 0 0 12px; }
+    code {
+      font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.86em;
+    }
+    .subtitle { color: #666; font-size: 0.92rem; margin: 0 0 28px; }
+    hr { border: none; border-top: 1px solid #e5e7eb; margin: 40px 0; }
+
+    /* Nav */
+    nav { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 18px; margin-bottom: 32px; }
+    nav ul { margin: 0; padding-left: 20px; }
+    nav li { margin: 3px 0; }
+    nav a { color: #2563eb; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; white-space: nowrap; }
+    .on     { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+    .off    { background: #f9fafb; color: #6b7280; border: 1px solid #d1d5db; }
+    .mock   { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .env    { background: #eff6ff; color: #1e40af; border: 1px solid #93c5fd; }
+    .warn-badge { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+
+    /* Callouts */
+    .info  { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+    .warn  { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+    .info p, .warn p { margin: 0; color: #333; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 12px 0 24px; }
+    th { text-align: left; padding: 8px 12px; background: #f9fafb; border-bottom: 2px solid #e5e7eb; font-size: 0.78rem; color: #555; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+    td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    td code { font-size: 0.83em; }
+    .section-row td { background: #f9fafb; font-weight: 600; font-size: 0.8rem; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 12px; border-bottom: 1px solid #e5e7eb; }
+
+    /* Profile tabs */
+    .tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 2px solid #e5e7eb; }
+    .tab-btn {
+      padding: 10px 22px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: #6b7280;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s;
+    }
+    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
+    .tab-btn:hover:not(.active) { color: #374151; }
+    .tab-panel { display: none; padding-top: 20px; }
+    .tab-panel.active { display: block; }
+
+    /* Env var table layout */
+    .env-key { font-family: "SFMono-Regular", Consolas, Menlo, monospace; font-size: 0.83em; color: #1d4ed8; }
+    .default-val { color: #6b7280; font-size: 0.83em; font-family: "SFMono-Regular", Consolas, Menlo, monospace; }
+    .required { color: #dc2626; font-size: 0.78rem; font-weight: 700; }
+
+    /* Feature comparison grid */
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+    .feature-card { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+    .feature-card-header { background: #f9fafb; padding: 8px 14px; font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #374151; border-bottom: 1px solid #e5e7eb; }
+    .feature-card-body { padding: 4px 0; }
+    .feature-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 14px; border-bottom: 1px solid #f5f5f5; }
+    .feature-row:last-child { border-bottom: none; }
+    .feature-name { font-size: 0.875rem; color: #374151; }
+  </style>
+</head>
+<body>
+
+<h1>COMIT 환경설정 레퍼런스</h1>
+<p class="subtitle">application.yml / application-local.yml / application-staging.yml 전체 환경변수 및 프로필별 활성화 상태. 작성일: 2026-06-04</p>
+
+<nav>
+  <strong>목차</strong>
+  <ul>
+    <li><a href="#profiles">1. 프로필별 기능 비교</a></li>
+    <li><a href="#envvars">2. 환경변수 전체 목록</a></li>
+    <li><a href="#auth">3. 인증 구조</a></li>
+    <li><a href="#ai">4. AI / Vector Store</a></li>
+  </ul>
+</nav>
+
+<!-- ──────────────────────────────────────────── -->
+<h2 id="profiles">1. 프로필별 기능 비교</h2>
+
+<p>탭을 클릭하면 해당 프로필의 설정 상태를 확인할 수 있습니다.</p>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('compare')">전체 비교</button>
+  <button class="tab-btn" onclick="switchTab('local')">local</button>
+  <button class="tab-btn" onclick="switchTab('staging')">staging (prod)</button>
+</div>
+
+<!-- Compare tab -->
+<div id="tab-compare" class="tab-panel active">
+  <table>
+    <tr>
+      <th>기능 / 설정</th>
+      <th>local</th>
+      <th>staging (prod)</th>
+      <th>비고</th>
+    </tr>
+    <tr>
+      <td>서버 포트</td>
+      <td><code>53080</code></td>
+      <td><code>${SPRING_PORT:8080}</code></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Virtual Threads</td>
+      <td><span class="badge on">ON</span></td>
+      <td><span class="badge on">ON</span> <span class="default-val">(default true)</span></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Dev Auth</td>
+      <td><span class="badge on">ON</span></td>
+      <td><span class="badge on">ON</span> <span class="default-val">(default true)</span></td>
+      <td>헤더 기반 개발용 인증</td>
+    </tr>
+    <tr>
+      <td>Bridge Auth</td>
+      <td><span class="badge on">ON</span></td>
+      <td><span class="badge on">ON</span> <span class="default-val">(default true)</span></td>
+      <td><code>X-Member-*</code> 헤더 인증</td>
+    </tr>
+    <tr>
+      <td>SSO Auth</td>
+      <td><span class="badge off">OFF</span></td>
+      <td><span class="badge off">OFF</span> <span class="default-val">(default false)</span></td>
+      <td>쿠키 기반 외부 SSO</td>
+    </tr>
+    <tr>
+      <td>Load Test 모드</td>
+      <td><span class="badge off">없음</span></td>
+      <td><span class="badge off">OFF</span> <span class="default-val">(default false)</span></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>OpenAI Embedding</td>
+      <td><span class="badge mock">MOCK</span></td>
+      <td><span class="badge env">실제 API</span></td>
+      <td>local: <code>LocalAiConfig</code> 제로벡터 반환</td>
+    </tr>
+    <tr>
+      <td>OpenAI Chat</td>
+      <td><span class="badge mock">MOCK</span></td>
+      <td><span class="badge env">실제 API</span></td>
+      <td>local: <code>LocalAiConfig</code> 빈 문자열 반환</td>
+    </tr>
+    <tr>
+      <td>Qdrant</td>
+      <td><code>localhost:6334</code></td>
+      <td><span class="badge env">env var</span></td>
+      <td><code>QDRANT_HOST / QDRANT_PORT</code></td>
+    </tr>
+    <tr>
+      <td>Database</td>
+      <td><code>localhost:53306</code></td>
+      <td><span class="badge env">env var</span> <span class="required">필수</span></td>
+      <td><code>DB_URL / DB_USERNAME / DB_PASSWORD</code></td>
+    </tr>
+    <tr>
+      <td>forward-headers</td>
+      <td><span class="badge off">없음</span></td>
+      <td><code>framework</code></td>
+      <td>nginx 리버스 프록시 헤더 처리</td>
+    </tr>
+    <tr>
+      <td>Flyway seed</td>
+      <td><span class="badge on">ON</span></td>
+      <td><span class="badge on">ON</span></td>
+      <td><code>db/migration + db/seed</code></td>
+    </tr>
+    <tr>
+      <td>Notice 스케줄러</td>
+      <td><span class="badge on">ON</span> <span class="default-val">(default true)</span></td>
+      <td><span class="badge on">ON</span> <span class="default-val">(default true)</span></td>
+      <td><code>NOTICE_SCHEDULER_ENABLED</code></td>
+    </tr>
+    <tr>
+      <td>S3 Storage</td>
+      <td><span class="badge warn-badge">env 없으면 미작동</span></td>
+      <td><span class="badge env">env var</span></td>
+      <td><code>S3_BUCKET_NAME</code> 등</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Local tab -->
+<div id="tab-local" class="tab-panel">
+  <div class="info"><p>📁 <strong>application-local.yml</strong> — <code>spring.profiles.active=local</code> 로 실행 시 활성화. <code>LocalAiConfig</code>가 OpenAI/Embedding을 mock으로 대체합니다.</p></div>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-card-header">인증</div>
+      <div class="feature-card-body">
+        <div class="feature-row"><span class="feature-name">Dev Auth</span><span class="badge on">ON</span></div>
+        <div class="feature-row"><span class="feature-name">Bridge Auth</span><span class="badge on">ON</span></div>
+        <div class="feature-row"><span class="feature-name">SSO Auth</span><span class="badge off">OFF</span></div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-header">AI / Vector</div>
+      <div class="feature-card-body">
+        <div class="feature-row"><span class="feature-name">OpenAI Embedding</span><span class="badge mock">MOCK</span></div>
+        <div class="feature-row"><span class="feature-name">OpenAI Chat</span><span class="badge mock">MOCK</span></div>
+        <div class="feature-row"><span class="feature-name">Qdrant</span><span class="badge on">localhost:6334</span></div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-header">인프라</div>
+      <div class="feature-card-body">
+        <div class="feature-row"><span class="feature-name">포트</span><code>53080</code></div>
+        <div class="feature-row"><span class="feature-name">DB</span><code>localhost:53306</code></div>
+        <div class="feature-row"><span class="feature-name">Virtual Threads</span><span class="badge on">ON</span></div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-header">기타</div>
+      <div class="feature-card-body">
+        <div class="feature-row"><span class="feature-name">Flyway seed</span><span class="badge on">ON</span></div>
+        <div class="feature-row"><span class="feature-name">Notice 스케줄러</span><span class="badge on">ON</span></div>
+        <div class="feature-row"><span class="feature-name">Load Test 모드</span><span class="badge off">없음</span></div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>설정 키</th><th>로컬 값</th></tr>
+    <tr><td><code>server.port</code></td><td><code>53080</code></td></tr>
+    <tr><td><code>spring.datasource.url</code></td><td><code>jdbc:mysql://localhost:53306/comit</code></td></tr>
+    <tr><td><code>spring.ai.openai.api-key</code></td><td><code>local-placeholder</code> → mock으로 대체됨</td></tr>
+    <tr><td><code>comit.dev.auth.enabled</code></td><td><code>true</code></td></tr>
+    <tr><td><code>comit.auth.bridge.enabled</code></td><td><code>true</code></td></tr>
+    <tr><td><code>comit.auth.sso.enabled</code></td><td><code>false</code></td></tr>
+  </table>
+</div>
+
+<!-- Staging tab -->
+<div id="tab-staging" class="tab-panel">
+  <div class="info"><p>📁 <strong>application-staging.yml</strong> — 실질적인 운영(prod) 환경. 컨테이너 이름이 <code>comit-backend</code>, URL 경로는 <code>/comit-staging/api/*</code>.</p></div>
+  <div class="warn"><p>⚠️ <code>DB_URL</code>, <code>DB_USERNAME</code>, <code>DB_PASSWORD</code>, <code>OPENAI_API_KEY</code> 는 반드시 env로 주입해야 합니다. 없으면 앱이 시작되지 않습니다.</p></div>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-card-header">인증</div>
+      <div class="feature-card-body">
+        <div class="feature-row"><span class="feature-name">Dev Auth</span><span class="badge on">ON</span><span class="default-val">default true</span></div>
+        <div class="feature-row"><span class="feature-name">Bridge Auth</span><span class="badge on">ON</span><span class="default-val">default true</span></div>
+        <div class="feature-row"><span class="feature-name">SSO Auth</span><span class="badge off">OFF</span><span class="default-val">default false</span></div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-header">AI / Vector</div>
+      <div class="feature-card-body">
+        <div class="feature-row"><span class="feature-name">OpenAI Embedding</span><span class="badge env">실제 API</span></div>
+        <div class="feature-row"><span class="feature-name">OpenAI Chat</span><span class="badge env">실제 API</span></div>
+        <div class="feature-row"><span class="feature-name">Qdrant</span><span class="badge env">env var</span></div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-header">인프라</div>
+      <div class="feature-card-body">
+        <div class="feature-row"><span class="feature-name">포트</span><code>${SPRING_PORT:8080}</code></div>
+        <div class="feature-row"><span class="feature-name">DB</span><span class="badge env">env var</span> <span class="required">필수</span></div>
+        <div class="feature-row"><span class="feature-name">Virtual Threads</span><span class="badge on">ON</span><span class="default-val">default true</span></div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-header">기타</div>
+      <div class="feature-card-body">
+        <div class="feature-row"><span class="feature-name">Flyway seed</span><span class="badge on">ON</span></div>
+        <div class="feature-row"><span class="feature-name">Notice 스케줄러</span><span class="badge on">ON</span><span class="default-val">default true</span></div>
+        <div class="feature-row"><span class="feature-name">Load Test 모드</span><span class="badge off">OFF</span><span class="default-val">default false</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ──────────────────────────────────────────── -->
+<h2 id="envvars">2. 환경변수 전체 목록</h2>
+<p>기본값이 없는 항목은 <span class="required">필수</span> 표시. 기본값이 빈 문자열(<code>""</code>)인 경우는 선택 사항이지만 기능이 동작하지 않을 수 있습니다.</p>
+
+<h3>Server / Tomcat</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">SPRING_PORT</td><td class="default-val">8080</td><td>HTTP 포트</td></tr>
+  <tr><td class="env-key">TOMCAT_MAX_CONNECTIONS</td><td class="default-val">20000</td><td>최대 동시 연결 수</td></tr>
+  <tr><td class="env-key">TOMCAT_MAX_THREADS</td><td class="default-val">600</td><td>스레드 풀 최대값</td></tr>
+  <tr><td class="env-key">TOMCAT_MIN_SPARE_THREADS</td><td class="default-val">100</td><td>스레드 풀 최솟값</td></tr>
+  <tr><td class="env-key">VIRTUAL_THREADS_ENABLED</td><td class="default-val">false <em>(staging: true)</em></td><td>Java 21 Virtual Threads</td></tr>
+  <tr><td class="env-key">LOG_FILE_PATH</td><td class="default-val">./logs/app.log</td><td>로그 파일 경로</td></tr>
+</table>
+
+<h3>Database (HikariCP)</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">DB_URL</td><td><span class="required">필수</span></td><td>JDBC URL</td></tr>
+  <tr><td class="env-key">DB_USERNAME</td><td><span class="required">필수</span></td><td>DB 사용자명</td></tr>
+  <tr><td class="env-key">DB_PASSWORD</td><td><span class="required">필수</span></td><td>DB 비밀번호</td></tr>
+  <tr><td class="env-key">HIKARI_MAX_POOL_SIZE</td><td class="default-val">8</td><td>커넥션 풀 최대 크기</td></tr>
+  <tr><td class="env-key">HIKARI_MIN_IDLE</td><td class="default-val">8</td><td>최소 유휴 커넥션</td></tr>
+  <tr><td class="env-key">HIKARI_CONNECTION_TIMEOUT</td><td class="default-val">3000ms</td><td>커넥션 획득 타임아웃</td></tr>
+  <tr><td class="env-key">DDL_AUTO</td><td class="default-val">none</td><td>Hibernate DDL 정책</td></tr>
+  <tr><td class="env-key">MAX_FILE_SIZE</td><td class="default-val">10MB</td><td>업로드 파일 최대 크기</td></tr>
+  <tr><td class="env-key">MAX_REQUEST_SIZE</td><td class="default-val">10MB</td><td>요청 최대 크기</td></tr>
+</table>
+
+<h3>Async Thread Pool</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">ASYNC_CORE_POOL_SIZE</td><td class="default-val">5</td><td>비동기 실행 코어 스레드 수</td></tr>
+  <tr><td class="env-key">ASYNC_MAX_POOL_SIZE</td><td class="default-val">5</td><td>비동기 실행 최대 스레드 수</td></tr>
+  <tr><td class="env-key">ASYNC_QUEUE_CAPACITY</td><td class="default-val">100</td><td>비동기 큐 용량</td></tr>
+</table>
+
+<h3>Spring AI — OpenAI</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">OPENAI_API_KEY</td><td><span class="required">필수</span> <em>(local: mock)</em></td><td>OpenAI API 키. local에서는 LocalAiConfig가 대체</td></tr>
+</table>
+
+<h3>Spring AI — Qdrant Vector Store</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">QDRANT_HOST</td><td class="default-val">localhost</td><td>Qdrant 호스트</td></tr>
+  <tr><td class="env-key">QDRANT_PORT</td><td class="default-val">6334</td><td>Qdrant gRPC 포트</td></tr>
+  <tr><td class="env-key">NOTICE_VECTOR_COLLECTION</td><td class="default-val">official-notices</td><td>벡터 컬렉션 이름</td></tr>
+</table>
+
+<h3>인증 (Auth)</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">COMIT_DEV_AUTH_ENABLED</td><td class="default-val">false <em>(staging/local: true)</em></td><td>개발용 헤더 인증 활성화</td></tr>
+  <tr><td class="env-key">COMIT_DEV_AUTH_COOKIE_SAME_SITE</td><td class="default-val">None</td><td>개발 인증 쿠키 SameSite</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_BRIDGE_ENABLED</td><td class="default-val">false <em>(staging/local: true)</em></td><td>X-Member-* 헤더 브릿지 인증</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_SSO_ENABLED</td><td class="default-val">false</td><td>외부 SSO 쿠키 인증</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_SSO_CLIENT_ID</td><td class="default-val">""</td><td>SSO 클라이언트 ID</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_SSO_CLIENT_SECRET</td><td class="default-val">""</td><td>SSO 클라이언트 시크릿</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_SSO_REDIRECT_URI</td><td class="default-val">""</td><td>SSO 리다이렉트 URI</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_SSO_TOKEN_MAX_AGE_SECONDS</td><td class="default-val">3600</td><td>SSO 토큰 쿠키 만료(초)</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_SSO_STATE_TTL_SECONDS</td><td class="default-val">300</td><td>SSO state 유효 시간(초)</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_SSO_COOKIE_SECURE</td><td class="default-val">true</td><td>SSO 쿠키 Secure 플래그</td></tr>
+  <tr><td class="env-key">COMIT_AUTH_SSO_COOKIE_SAME_SITE</td><td class="default-val">None</td><td>SSO 쿠키 SameSite</td></tr>
+  <tr><td class="env-key">COMIT_WEB_CORS_ALLOWED_ORIGINS</td><td class="default-val">localhost:5173, vercel.app, chcse.knu.ac.kr</td><td>CORS 허용 Origin 목록</td></tr>
+</table>
+
+<h3>야식 마차 (NightSnack)</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">COMIT_NIGHT_SNACK_RESERVED_CAPACITY_RATIO</td><td class="default-val">0.1 (10%)</td><td>사전신청 예약분 비율. 전체 정원 × ratio = 예약 정원</td></tr>
+</table>
+
+<h3>Notice RAG</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">NOTICE_RETRIEVAL_TOP_K</td><td class="default-val">10</td><td>벡터 검색 상위 K개</td></tr>
+  <tr><td class="env-key">NOTICE_QUERY_TRANSFORM_THRESHOLD</td><td class="default-val">0.7</td><td>쿼리 변환 신뢰도 임계값</td></tr>
+  <tr><td class="env-key">NOTICE_QUERY_TRANSFORM_MODEL</td><td class="default-val">gpt-4.1-nano</td><td>쿼리 변환 모델</td></tr>
+  <tr><td class="env-key">NOTICE_RERANK_MODEL</td><td class="default-val">gpt-4o-mini</td><td>재랭킹 모델</td></tr>
+  <tr><td class="env-key">NOTICE_ANSWER_NANO_MODEL</td><td class="default-val">gpt-4.1-nano</td><td>답변 생성 (nano)</td></tr>
+  <tr><td class="env-key">NOTICE_ANSWER_MINI_MODEL</td><td class="default-val">gpt-4o-mini</td><td>답변 생성 (mini)</td></tr>
+  <tr><td class="env-key">NOTICE_ANSWER_MODEL</td><td class="default-val">gpt-4o</td><td>답변 생성 (full)</td></tr>
+  <tr><td class="env-key">NOTICE_SUMMARIZER_MODEL</td><td class="default-val">gpt-4o-mini</td><td>공지 요약 모델</td></tr>
+  <tr><td class="env-key">NOTICE_CHAT_OPENAI_TIMEOUT</td><td class="default-val">15s</td><td>OpenAI 요청 타임아웃</td></tr>
+  <tr><td class="env-key">NOTICE_CHAT_MAX_CONCURRENCY</td><td class="default-val">5</td><td>동시 요청 최대 수</td></tr>
+  <tr><td class="env-key">NOTICE_CHAT_ACQUIRE_TIMEOUT_SECONDS</td><td class="default-val">1</td><td>세마포어 획득 타임아웃(초)</td></tr>
+  <tr><td class="env-key">NOTICE_CHAT_RESPONSE_TIMEOUT_SECONDS</td><td class="default-val">30</td><td>응답 대기 타임아웃(초)</td></tr>
+  <tr><td class="env-key">NOTICE_SCHEDULER_ENABLED</td><td class="default-val">true</td><td>공지 동기화 스케줄러</td></tr>
+  <tr><td class="env-key">NOTICE_INITIAL_SYNC_MAX</td><td class="default-val">200</td><td>초기 동기화 최대 건수</td></tr>
+  <tr><td class="env-key">NOTICE_LATEST_SYNC_MAX_PAGES</td><td class="default-val">3</td><td>최신 동기화 최대 페이지</td></tr>
+  <tr><td class="env-key">NOTICE_REINDEX_EMBEDDINGS_ON_STARTUP</td><td class="default-val">false</td><td>시작 시 임베딩 재인덱싱</td></tr>
+  <tr><td class="env-key">NOTICE_REINDEX_EMBEDDINGS_LIMIT</td><td class="default-val">0</td><td>재인덱싱 건수 제한 (0=무제한)</td></tr>
+</table>
+
+<h3>게시판 (Post)</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">COMIT_POST_PREVIEW_MAX_LINES</td><td class="default-val">2</td><td>미리보기 최대 줄 수</td></tr>
+  <tr><td class="env-key">COMIT_POST_HOT_WINDOW_DAYS</td><td class="default-val">7</td><td>인기글 집계 기간(일)</td></tr>
+  <tr><td class="env-key">COMIT_POST_HOT_LIKE_WEIGHT</td><td class="default-val">5</td><td>좋아요 가중치</td></tr>
+  <tr><td class="env-key">COMIT_POST_HOT_COMMENT_WEIGHT</td><td class="default-val">3</td><td>댓글 가중치</td></tr>
+  <tr><td class="env-key">COMIT_POST_HOT_VISITOR_WEIGHT</td><td class="default-val">2</td><td>조회 가중치</td></tr>
+  <tr><td class="env-key">COMIT_POST_HOT_LIMIT</td><td class="default-val">5</td><td>인기글 최대 개수</td></tr>
+  <tr><td class="env-key">COMIT_POST_HOT_EXCLUDED_BOARD_TYPES</td><td class="default-val">NOTICE, EVENT</td><td>인기글 제외 게시판 타입</td></tr>
+</table>
+
+<h3>Storage (S3)</h3>
+<table>
+  <tr><th>환경변수</th><th>기본값</th><th>설명</th></tr>
+  <tr><td class="env-key">S3_BUCKET_NAME</td><td class="default-val">""</td><td>S3 버킷 이름</td></tr>
+  <tr><td class="env-key">S3_REGION</td><td class="default-val">ap-northeast-2</td><td>AWS 리전</td></tr>
+  <tr><td class="env-key">S3_ACCESS_KEY</td><td class="default-val">""</td><td>AWS Access Key</td></tr>
+  <tr><td class="env-key">S3_SECRET_KEY</td><td class="default-val">""</td><td>AWS Secret Key</td></tr>
+  <tr><td class="env-key">S3_BASE_URL</td><td class="default-val">""</td><td>파일 접근 Base URL</td></tr>
+</table>
+
+<hr>
+
+<!-- ──────────────────────────────────────────── -->
+<h2 id="auth">3. 인증 구조</h2>
+
+<p>세 가지 인증 필터가 있으며, 각각 별도 <code>@ConditionalOnProperty</code>로 활성화됩니다. 상호 배타적이지 않아 동시에 활성화될 수 있습니다.</p>
+
+<table>
+  <tr><th>필터</th><th>활성화 조건</th><th>local</th><th>staging</th><th>설명</th></tr>
+  <tr>
+    <td><code>DevAuthenticationFilter</code></td>
+    <td><code>comit.dev.auth.enabled=true</code></td>
+    <td><span class="badge on">ON</span></td>
+    <td><span class="badge on">ON</span></td>
+    <td>개발용 쿠키 인증. 운영에서는 반드시 <code>false</code>로 변경 필요</td>
+  </tr>
+  <tr>
+    <td><code>MemberAuthenticationFilter</code></td>
+    <td><code>comit.auth.bridge.enabled=true</code></td>
+    <td><span class="badge on">ON</span></td>
+    <td><span class="badge on">ON</span></td>
+    <td><code>X-Member-*</code> 헤더로 멤버 식별. nginx 브릿지 환경에서 사용</td>
+  </tr>
+  <tr>
+    <td><code>SsoAuthenticationFilter</code></td>
+    <td><code>comit.auth.sso.enabled=true</code></td>
+    <td><span class="badge off">OFF</span></td>
+    <td><span class="badge off">OFF</span></td>
+    <td>외부 SSO 쿠키 인증. 현재 미사용</td>
+  </tr>
+</table>
+
+<div class="info">
+  <p><strong>미등록 사용자 주의:</strong> <code>/members/nicknames/check</code>는 회원가입 전 닉네임 확인 용도로 <code>SsoAuthenticationFilter</code>와 <code>MemberAuthenticationFilter</code> 모두에서 인증을 건너뜁니다.</p>
+</div>
+
+<hr>
+
+<!-- ──────────────────────────────────────────── -->
+<h2 id="ai">4. AI / Vector Store</h2>
+
+<table>
+  <tr><th>컴포넌트</th><th>local</th><th>staging</th><th>비고</th></tr>
+  <tr>
+    <td>Embedding Model</td>
+    <td><span class="badge mock">MOCK</span> <code>LocalAiConfig</code></td>
+    <td><span class="badge env">OpenAI</span> <code>text-embedding-3-small</code></td>
+    <td>local: 1536차원 제로벡터 반환</td>
+  </tr>
+  <tr>
+    <td>Chat Model</td>
+    <td><span class="badge mock">MOCK</span> <code>LocalAiConfig</code></td>
+    <td><span class="badge env">OpenAI</span> 모델별 설정</td>
+    <td>local: 빈 문자열 반환, 스케줄러 오류 없음</td>
+  </tr>
+  <tr>
+    <td>Qdrant</td>
+    <td><code>localhost:6334</code></td>
+    <td><code>${QDRANT_HOST}:${QDRANT_PORT}</code></td>
+    <td>컬렉션: <code>${NOTICE_VECTOR_COLLECTION:official-notices}</code></td>
+  </tr>
+</table>
+
+<div class="warn">
+  <p>⚠️ <code>LocalAiConfig</code>는 <code>@Profile("local")</code>로만 로드됩니다. <code>spring.profiles.active=local</code> 없이 실행하면 실제 OpenAI 호출이 발생합니다.</p>
+</div>
+
+<script>
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>
