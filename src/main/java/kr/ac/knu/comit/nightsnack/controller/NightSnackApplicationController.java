@@ -34,14 +34,13 @@ public class NightSnackApplicationController implements NightSnackApplicationCon
 
     @Override
     public ResponseEntity<ApiResponse<ApplyResponse>> apply(Long nightSnackId, MemberPrincipal principal) {
-        ApplyResponse response = nightSnackApplicationService.apply(
-                nightSnackId, principal.memberId(), principal.studentNumber());
+        ApplyResponse response = nightSnackApplicationService.apply(nightSnackId, principal.memberId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @Override
     public ResponseEntity<ApiResponse<StudentCouncilFeeResponse>> getStudentCouncilFeeStatus(MemberPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
-                nightSnackQueryService.getStudentCouncilFeeStatus(principal.studentNumber())));
+                nightSnackQueryService.getStudentCouncilFeeStatus(principal.memberId())));
     }
 }

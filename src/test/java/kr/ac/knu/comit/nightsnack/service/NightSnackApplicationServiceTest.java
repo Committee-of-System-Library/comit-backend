@@ -18,7 +18,6 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnack;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
-import kr.ac.knu.comit.nightsnack.domain.StudentCouncilFeeRepository;
 import kr.ac.knu.comit.nightsnack.dto.ApplyResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,13 +37,10 @@ class NightSnackApplicationServiceTest {
     private NightSnackApplicationRepository nightSnackApplicationRepository;
 
     @Mock
-    private StudentCouncilFeeRepository studentCouncilFeeRepository;
-
-    @Mock
     private MemberService memberService;
 
     @Mock
-    private ReservationStrategy reservationStrategy;
+    private NightSnackReservationWriter reservationWriter;
 
     @InjectMocks
     private NightSnackApplicationService nightSnackApplicationService;
@@ -61,16 +57,16 @@ class NightSnackApplicationServiceTest {
                 .willReturn(Optional.of(beforeDecrement), Optional.of(afterDecrement));
         given(nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(1L, 10L)).willReturn(false);
         given(memberService.findMemberOrThrow(1L)).willReturn(member);
-        given(reservationStrategy.reserve(any(Member.class), any(NightSnack.class))).willReturn(application);
+        given(reservationWriter.reserve(any(Member.class), any(NightSnack.class))).willReturn(application);
 
         // when
-        ApplyResponse response = nightSnackApplicationService.apply(10L, 1L, null);
+        ApplyResponse response = nightSnackApplicationService.apply(10L, 1L);
 
         // then
         assertThat(response.sequence()).isEqualTo(37);
         assertThat(response.remaining()).isEqualTo(63);
         assertThat(response.ticketToken()).isNotBlank();
-        then(reservationStrategy).should().reserve(any(Member.class), any(NightSnack.class));
+        then(reservationWriter).should().reserve(any(Member.class), any(NightSnack.class));
     }
 
     @Test
@@ -80,12 +76,12 @@ class NightSnackApplicationServiceTest {
         given(nightSnackRepository.findById(99L)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> nightSnackApplicationService.apply(99L, 1L, null))
+        assertThatThrownBy(() -> nightSnackApplicationService.apply(99L, 1L))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(NightSnackErrorCode.EVENT_NOT_FOUND);
 
-        then(reservationStrategy).should(never()).reserve(any(), any());
+        then(reservationWriter).should(never()).reserve(any(), any());
     }
 
     @Test
@@ -97,55 +93,12 @@ class NightSnackApplicationServiceTest {
         given(nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(1L, 10L)).willReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> nightSnackApplicationService.apply(10L, 1L, null))
+        assertThatThrownBy(() -> nightSnackApplicationService.apply(10L, 1L))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(NightSnackErrorCode.ALREADY_APPLIED);
 
         then(memberService).should(never()).findMemberOrThrow(any());
-        then(reservationStrategy).should(never()).reserve(any(), any());
-    }
-
-    @Test
-    @DisplayName("학생회비 납부자 전용 야식 마차는 is_paid=1인 학번만 신청할 수 있다")
-    void appliesWhenStudentCouncilFeePaid() {
-        // given
-        NightSnack beforeDecrement = NightSnackFixture.openNightSnackRequiringStudentCouncilFee(10L, 100, 64);
-        NightSnack afterDecrement = NightSnackFixture.openNightSnackRequiringStudentCouncilFee(10L, 100, 63);
-        Member member = MemberFixture.member(1L, "applicant");
-        NightSnackApplication application = NightSnackApplication.general(member, beforeDecrement);
-        given(nightSnackRepository.findById(10L))
-                .willReturn(Optional.of(beforeDecrement), Optional.of(afterDecrement));
-        given(studentCouncilFeeRepository.existsPaidByStudentNumber("20230001")).willReturn(true);
-        given(nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(1L, 10L)).willReturn(false);
-        given(memberService.findMemberOrThrow(1L)).willReturn(member);
-        given(reservationStrategy.reserve(any(Member.class), any(NightSnack.class))).willReturn(application);
-
-        // when
-        ApplyResponse response = nightSnackApplicationService.apply(10L, 1L, "20230001");
-
-        // then
-        assertThat(response.sequence()).isEqualTo(37);
-        then(studentCouncilFeeRepository).should().existsPaidByStudentNumber("20230001");
-        then(reservationStrategy).should().reserve(any(Member.class), any(NightSnack.class));
-    }
-
-    @Test
-    @DisplayName("학생회비 납부자 전용 야식 마차는 is_paid=0이거나 납부 행이 없으면 신청할 수 없다")
-    void throwsWhenStudentCouncilFeeNotPaid() {
-        // given
-        given(nightSnackRepository.findById(10L))
-                .willReturn(Optional.of(NightSnackFixture.openNightSnackRequiringStudentCouncilFee(10L, 100, 100)));
-        given(studentCouncilFeeRepository.existsPaidByStudentNumber("20230001")).willReturn(false);
-
-        // when & then
-        assertThatThrownBy(() -> nightSnackApplicationService.apply(10L, 1L, "20230001"))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(NightSnackErrorCode.STUDENT_COUNCIL_FEE_REQUIRED);
-
-        then(nightSnackApplicationRepository).should(never()).existsByMemberIdAndNightSnackId(any(), any());
-        then(memberService).should(never()).findMemberOrThrow(any());
-        then(reservationStrategy).should(never()).reserve(any(), any());
+        then(reservationWriter).should(never()).reserve(any(), any());
     }
 }

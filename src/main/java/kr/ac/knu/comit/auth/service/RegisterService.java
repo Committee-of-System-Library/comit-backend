@@ -84,7 +84,7 @@ public class RegisterService {
     }
 
     private void validateMemberDoesNotExist(String ssoSub) {
-        if (memberService.hasActiveMember(ssoSub)) {
+        if (memberService.hasAnyMember(ssoSub)) {
             throw new BusinessException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
     }

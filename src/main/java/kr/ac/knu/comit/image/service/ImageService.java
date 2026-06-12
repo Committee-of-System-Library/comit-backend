@@ -21,15 +21,11 @@ public class ImageService {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/gif"
     );
-    private static final Set<String> ALLOWED_FOLDERS = Set.of("posts", "members");
 
     private final StorageUploader storageUploader;
     private final S3StorageUploader s3StorageUploader;
 
     public UploadImageResponse upload(MultipartFile file, String folder) {
-        if (!ALLOWED_FOLDERS.contains(folder)) {
-            throw new BusinessException(StorageErrorCode.INVALID_FOLDER);
-        }
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new BusinessException(StorageErrorCode.FILE_SIZE_EXCEEDED);
         }
@@ -41,9 +37,6 @@ public class ImageService {
     }
 
     public PresignedUploadResponse generatePresignedUrl(PresignedUploadRequest request) {
-        if (!ALLOWED_FOLDERS.contains(request.folder())) {
-            throw new BusinessException(StorageErrorCode.INVALID_FOLDER);
-        }
         if (!ALLOWED_CONTENT_TYPES.contains(request.contentType())) {
             throw new BusinessException(StorageErrorCode.UNSUPPORTED_FILE_TYPE);
         }

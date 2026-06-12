@@ -129,7 +129,7 @@ class NightSnackConcurrencyIntegrationTest {
                 ready.countDown();
                 try {
                     start.await();
-                    nightSnackApplicationService.apply(nightSnackId, memberId, null);
+                    nightSnackApplicationService.apply(nightSnackId, memberId);
                     success.incrementAndGet();
                 } catch (BusinessException exception) {
                     if (exception.getErrorCode() == NightSnackErrorCode.EVENT_SOLD_OUT) {
@@ -181,7 +181,7 @@ class NightSnackConcurrencyIntegrationTest {
             pool.submit(() -> {
                 try {
                     start.await();
-                    nightSnackApplicationService.apply(nightSnackId, memberId, null);
+                    nightSnackApplicationService.apply(nightSnackId, memberId);
                     success.incrementAndGet();
                 } catch (BusinessException exception) {
                     if (exception.getErrorCode() == NightSnackErrorCode.ALREADY_APPLIED) {

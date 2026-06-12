@@ -130,8 +130,7 @@ public interface NightSnackApplicationControllerApi {
                     @ApiError(code = "EVENT_NOT_FOUND", when = "존재하지 않는 야식 마차 ID로 요청할 때"),
                     @ApiError(code = "EVENT_NOT_OPEN", when = "아직 오픈되지 않았거나 마감된 야식 마차에 신청할 때"),
                     @ApiError(code = "EVENT_SOLD_OUT", when = "정원이 모두 소진되어 마감되었을 때"),
-                    @ApiError(code = "ALREADY_APPLIED", when = "이미 신청한 야식 마차에 다시 신청할 때"),
-                    @ApiError(code = "STUDENT_COUNCIL_FEE_REQUIRED", when = "학생회비 납부자 전용 야식 마차에서 로그인 회원의 학번이 납부 상태가 아닐 때")
+                    @ApiError(code = "ALREADY_APPLIED", when = "이미 신청한 야식 마차에 다시 신청할 때")
             },
             example = @Example(
                     response = """
@@ -154,9 +153,9 @@ public interface NightSnackApplicationControllerApi {
 
     @ApiDoc(
             summary = "학생회비 납부 여부 조회",
-            description = "로그인한 회원의 학번으로 학생회비 납부 여부를 조회합니다.",
+            description = "로그인한 회원의 학생회비 납부 여부를 조회합니다.",
             descriptions = {
-                    @FieldDesc(name = "paid", value = "학생회비 납부 여부입니다. is_paid=1이면 true, 미납 또는 납부 행이 없으면 false를 반환합니다.")
+                    @FieldDesc(name = "paid", value = "학생회비 납부 여부입니다. 납부하지 않은 경우 false를 반환합니다.")
             },
             example = @Example(
                     response = """

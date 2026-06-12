@@ -144,7 +144,7 @@ class NightSnackReservationIntegrationTest {
         for (int i = 0; i < capacity; i++) {
             Long memberId = seedMember();
             try {
-                nightSnackApplicationService.apply(nightSnackId, memberId, null);
+                nightSnackApplicationService.apply(nightSnackId, memberId);
                 success++;
             } catch (BusinessException exception) {
                 if (exception.getErrorCode() == NightSnackErrorCode.EVENT_SOLD_OUT) {

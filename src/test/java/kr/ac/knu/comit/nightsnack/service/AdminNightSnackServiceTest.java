@@ -8,11 +8,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import kr.ac.knu.comit.fixture.MemberFixture;
@@ -28,8 +24,8 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationSource;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationStatus;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackStatus;
+import kr.ac.knu.comit.nightsnack.dto.AdminApplicationListResponse;
 import kr.ac.knu.comit.nightsnack.dto.ApplicationCheckResponse;
-import kr.ac.knu.comit.nightsnack.dto.NightSnackResponse;
 import kr.ac.knu.comit.nightsnack.dto.ReserveResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -57,9 +53,6 @@ class AdminNightSnackServiceTest {
 
     @Mock
     private NightSnackProperties nightSnackProperties;
-
-    @Mock
-    private Clock clock;
 
     @InjectMocks
     private AdminNightSnackService adminNightSnackService;
@@ -204,38 +197,61 @@ class AdminNightSnackServiceTest {
     }
 
     @Nested
-    @DisplayName("listNightSnacks (야식 마차 목록 조회)")
-    class ListNightSnacks {
+    @DisplayName("listApplications (신청자 목록 조회)")
+    class ListApplications {
 
         @Test
-        @DisplayName("야식 마차 목록을 날짜 내림차순으로 반환한다")
-        void returnsNightSnacksSortedByDateDesc() {
+        @DisplayName("RESERVED·GENERAL 신청이 모두 포함된 전체 목록을 반환한다")
+        void returnsAllApplications() {
             // given
-            NightSnack older = NightSnackFixture.scheduledNightSnack(1L, 100);
-            NightSnack newer = NightSnackFixture.scheduledNightSnack(2L, 50);
-            given(nightSnackRepository.findAllByOrderByNightSnackDateDesc())
-                    .willReturn(List.of(newer, older));
+            NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
+            NightSnackApplication reserved = NightSnackFixture.reservedApplication(1L, nightSnack, "2026000001");
+            NightSnackApplication general = NightSnackFixture.generalApplication(2L, nightSnack, MemberFixture.member(1L));
+            given(nightSnackRepository.existsById(10L)).willReturn(true);
+            given(nightSnackApplicationRepository.findAllByNightSnackIdOrderByCreatedAtAsc(10L))
+                    .willReturn(List.of(reserved, general));
 
             // when
-            List<NightSnackResponse> response = adminNightSnackService.listNightSnacks();
+            AdminApplicationListResponse response = adminNightSnackService.listApplications(10L);
 
             // then
-            assertThat(response).hasSize(2);
-            assertThat(response.get(0).nightSnackId()).isEqualTo(2L);
-            assertThat(response.get(1).nightSnackId()).isEqualTo(1L);
+            assertThat(response.total()).isEqualTo(2);
+            assertThat(response.applications()).hasSize(2);
+            assertThat(response.applications().get(0).applicationId()).isEqualTo(1L);
+            assertThat(response.applications().get(0).studentNumber()).isEqualTo("2026000001");
+            assertThat(response.applications().get(0).source()).isEqualTo(NightSnackApplicationSource.RESERVED);
+            assertThat(response.applications().get(0).status()).isEqualTo(NightSnackApplicationStatus.PENDING);
+            assertThat(response.applications().get(0).ticketToken()).isNotBlank();
+            assertThat(response.applications().get(1).source()).isEqualTo(NightSnackApplicationSource.GENERAL);
         }
 
         @Test
-        @DisplayName("등록된 야식 마차가 없으면 빈 목록을 반환한다")
-        void returnsEmptyListWhenNone() {
+        @DisplayName("신청자가 없으면 빈 목록을 반환한다")
+        void returnsEmptyList() {
             // given
-            given(nightSnackRepository.findAllByOrderByNightSnackDateDesc()).willReturn(List.of());
+            given(nightSnackRepository.existsById(10L)).willReturn(true);
+            given(nightSnackApplicationRepository.findAllByNightSnackIdOrderByCreatedAtAsc(10L))
+                    .willReturn(List.of());
 
             // when
-            List<NightSnackResponse> response = adminNightSnackService.listNightSnacks();
+            AdminApplicationListResponse response = adminNightSnackService.listApplications(10L);
 
             // then
-            assertThat(response).isEmpty();
+            assertThat(response.total()).isZero();
+            assertThat(response.applications()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 야식 마차 ID면 EVENT_NOT_FOUND를 던진다")
+        void throwsWhenNotFound() {
+            // given
+            given(nightSnackRepository.existsById(99L)).willReturn(false);
+
+            // when & then
+            assertThatThrownBy(() -> adminNightSnackService.listApplications(99L))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(NightSnackErrorCode.EVENT_NOT_FOUND);
         }
     }
 
@@ -249,7 +265,7 @@ class AdminNightSnackServiceTest {
             // given
             NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
             NightSnackApplication application = NightSnackFixture.reservedApplication(1L, nightSnack, "2026000001");
-            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
+            given(nightSnackRepository.existsById(10L)).willReturn(true);
             given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "2026000001"))
                     .willReturn(Optional.of(application));
 
@@ -264,73 +280,10 @@ class AdminNightSnackServiceTest {
         }
 
         @Test
-        @DisplayName("신청 내역이 없고 수령 마감 전이면 applied: false를 반환한다")
-        void returnsFalseWhenNotAppliedBeforePickupDeadline() {
+        @DisplayName("신청 내역이 없으면 applied: false를 반환하며 예외를 던지지 않는다")
+        void returnsFalseWhenNotApplied() {
             // given
-            mockClockAt(LocalDateTime.of(2026, 5, 20, 18, 29, 59));
-            NightSnack nightSnack = nightSnackWithPickupDeadline(LocalDateTime.of(2026, 5, 20, 18, 30));
-            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
-            given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "9999999999"))
-                    .willReturn(Optional.empty());
-
-            // when
-            ApplicationCheckResponse response = adminNightSnackService.checkApplication(10L, "9999999999");
-
-            // then
-            assertThat(response.applied()).isFalse();
-            assertThat(response.source()).isNull();
-            assertThat(response.status()).isNull();
-            assertThat(response.ticketToken()).isNull();
-        }
-
-        @Test
-        @DisplayName("신청 내역이 없고 서버 시간이 수령 마감 시각과 같으면 applied: true와 null 상세 정보를 반환한다")
-        void returnsTrueWhenNotAppliedAtPickupDeadline() {
-            // given
-            LocalDateTime pickupDeadline = LocalDateTime.of(2026, 5, 20, 18, 30);
-            mockClockAt(pickupDeadline);
-            NightSnack nightSnack = nightSnackWithPickupDeadline(pickupDeadline);
-            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
-            given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "9999999999"))
-                    .willReturn(Optional.empty());
-
-            // when
-            ApplicationCheckResponse response = adminNightSnackService.checkApplication(10L, "9999999999");
-
-            // then
-            assertThat(response.applied()).isTrue();
-            assertThat(response.source()).isNull();
-            assertThat(response.status()).isNull();
-            assertThat(response.ticketToken()).isNull();
-        }
-
-        @Test
-        @DisplayName("신청 내역이 없고 서버 시간이 수령 마감 이후면 applied: true와 null 상세 정보를 반환한다")
-        void returnsTrueWhenNotAppliedAfterPickupDeadline() {
-            // given
-            LocalDateTime pickupDeadline = LocalDateTime.of(2026, 5, 20, 18, 30);
-            mockClockAt(pickupDeadline.plusSeconds(1));
-            NightSnack nightSnack = nightSnackWithPickupDeadline(pickupDeadline);
-            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
-            given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "9999999999"))
-                    .willReturn(Optional.empty());
-
-            // when
-            ApplicationCheckResponse response = adminNightSnackService.checkApplication(10L, "9999999999");
-
-            // then
-            assertThat(response.applied()).isTrue();
-            assertThat(response.source()).isNull();
-            assertThat(response.status()).isNull();
-            assertThat(response.ticketToken()).isNull();
-        }
-
-        @Test
-        @DisplayName("신청 내역이 없고 수령 마감 시각이 없으면 applied: false를 반환한다")
-        void returnsFalseWhenNotAppliedAndPickupDeadlineIsNull() {
-            // given
-            NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
-            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
+            given(nightSnackRepository.existsById(10L)).willReturn(true);
             given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "9999999999"))
                     .willReturn(Optional.empty());
 
@@ -348,26 +301,13 @@ class AdminNightSnackServiceTest {
         @DisplayName("존재하지 않는 야식 마차 ID면 EVENT_NOT_FOUND를 던진다")
         void throwsWhenNotFound() {
             // given
-            given(nightSnackRepository.findById(99L)).willReturn(Optional.empty());
+            given(nightSnackRepository.existsById(99L)).willReturn(false);
 
             // when & then
             assertThatThrownBy(() -> adminNightSnackService.checkApplication(99L, "2026000001"))
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(NightSnackErrorCode.EVENT_NOT_FOUND);
-        }
-
-        private NightSnack nightSnackWithPickupDeadline(LocalDateTime pickupDeadline) {
-            NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
-            ReflectionTestUtils.setField(nightSnack, "pickupDeadline", pickupDeadline);
-            return nightSnack;
-        }
-
-        private void mockClockAt(LocalDateTime dateTime) {
-            ZoneId zone = ZoneId.of("Asia/Seoul");
-            Instant instant = dateTime.atZone(zone).toInstant();
-            given(clock.instant()).willReturn(instant);
-            given(clock.getZone()).willReturn(zone);
         }
     }
 }
