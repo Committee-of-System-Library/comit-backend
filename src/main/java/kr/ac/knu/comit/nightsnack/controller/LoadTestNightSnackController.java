@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,7 +54,9 @@ public class LoadTestNightSnackController {
     @Transactional
     public ResponseEntity<ApiResponse<SetupResult>> setup(
             @RequestParam(defaultValue = "100") int capacity,
-            @RequestParam(defaultValue = "400") int memberCount
+            @RequestParam(defaultValue = "400") int memberCount,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime openAt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime closeAt
     ) {
         List<Long> memberIds = new ArrayList<>(memberCount);
         for (int i = 1; i <= memberCount; i++) {
@@ -78,15 +81,16 @@ public class LoadTestNightSnackController {
                 .map(latest -> latest.plusDays(1))
                 .orElse(LocalDate.now());
 
-        Period period = Period.of(
-                LocalDateTime.now().minusMinutes(1),
-                LocalDateTime.now().plusHours(2)
-        );
-        NightSnack nightSnack = NightSnack.create(date, capacity, period);
+        LocalDateTime resolvedOpenAt = openAt != null ? openAt : LocalDateTime.now().minusMinutes(1);
+        LocalDateTime resolvedCloseAt = closeAt != null ? closeAt : LocalDateTime.now().plusHours(2);
+        Period period = Period.of(resolvedOpenAt, resolvedCloseAt);
+        NightSnack nightSnack = NightSnack.create(date, capacity, 0, period,
+                null, null, null, null, null, false);
         nightSnackRepository.save(nightSnack);
         nightSnack.open();
 
-        return ResponseEntity.ok(ApiResponse.success(new SetupResult(nightSnack.getId(), memberIds)));
+        return ResponseEntity.ok(ApiResponse.success(
+                new SetupResult(nightSnack.getId(), memberIds, resolvedOpenAt, resolvedCloseAt)));
     }
 
     /**
@@ -98,7 +102,7 @@ public class LoadTestNightSnackController {
             @PathVariable Long nightSnackId,
             @RequestParam Long memberId
     ) {
-        ApplyResponse response = nightSnackApplicationService.apply(nightSnackId, memberId);
+        ApplyResponse response = nightSnackApplicationService.apply(nightSnackId, memberId, null);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -115,5 +119,5 @@ public class LoadTestNightSnackController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
-    public record SetupResult(Long nightSnackId, List<Long> memberIds) {}
+    public record SetupResult(Long nightSnackId, List<Long> memberIds, LocalDateTime openAt, LocalDateTime closeAt) {}
 }
