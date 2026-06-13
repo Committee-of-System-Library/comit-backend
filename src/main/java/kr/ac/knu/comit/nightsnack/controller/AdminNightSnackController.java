@@ -31,7 +31,7 @@ public class AdminNightSnackController implements AdminNightSnackControllerApi {
         Long nightSnackId = adminNightSnackService.createNightSnack(
                 request.nightSnackDate(), request.capacity(), request.toPeriod(),
                 request.title(), request.contents(), request.menu(),
-                request.pickupLocation(), request.pickupDeadline(), request.requiresStudentCouncilFee());
+                request.pickupLocation(), request.pickupStartTime(), request.pickupDeadline(), request.requiresStudentCouncilFee());
         return ResponseEntity.ok(ApiResponse.success(CreateNightSnackResponse.from(nightSnackId)));
     }
 

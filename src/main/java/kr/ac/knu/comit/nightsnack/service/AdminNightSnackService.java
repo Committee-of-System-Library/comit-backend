@@ -43,11 +43,11 @@ public class AdminNightSnackService {
     @Transactional
     public Long createNightSnack(LocalDate nightSnackDate, int capacity, Period period,
                                  String title, String contents, String menu,
-                                 String pickupLocation, LocalDateTime pickupDeadline,
+                                 String pickupLocation, LocalDateTime pickupStartTime, LocalDateTime pickupDeadline,
                                  boolean requiresStudentCouncilFee) {
         int reservedCapacity = (int) Math.round(capacity * nightSnackProperties.getReservedCapacityRatio());
         NightSnack nightSnack = NightSnack.create(nightSnackDate, capacity, reservedCapacity, period,
-                title, contents, menu, pickupLocation, pickupDeadline, requiresStudentCouncilFee);
+                title, contents, menu, pickupLocation, pickupStartTime, pickupDeadline, requiresStudentCouncilFee);
         return nightSnackRepository.save(nightSnack).getId();
     }
 
