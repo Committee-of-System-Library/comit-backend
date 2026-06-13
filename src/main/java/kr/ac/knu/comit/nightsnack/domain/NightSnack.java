@@ -72,6 +72,9 @@ public class NightSnack {
     @Column(name = "pickup_location", length = 200)
     private String pickupLocation;
 
+    @Column(name = "pickup_start_time")
+    private LocalDateTime pickupStartTime;
+
     @Column(name = "pickup_deadline")
     private LocalDateTime pickupDeadline;
 
@@ -92,7 +95,7 @@ public class NightSnack {
      */
     public static NightSnack create(LocalDate nightSnackDate, int capacity, int reservedCapacity, Period period,
                                     String title, String contents, String menu,
-                                    String pickupLocation, LocalDateTime pickupDeadline,
+                                    String pickupLocation, LocalDateTime pickupStartTime, LocalDateTime pickupDeadline,
                                     boolean requiresStudentCouncilFee) {
         if (nightSnackDate == null || capacity <= 0
                 || reservedCapacity < 0 || reservedCapacity > capacity
@@ -111,6 +114,7 @@ public class NightSnack {
         nightSnack.contents = contents;
         nightSnack.menu = menu;
         nightSnack.pickupLocation = pickupLocation;
+        nightSnack.pickupStartTime = pickupStartTime;
         nightSnack.pickupDeadline = pickupDeadline;
         nightSnack.requiresStudentCouncilFee = requiresStudentCouncilFee;
         nightSnack.createdAt = LocalDateTime.now();
@@ -228,5 +232,9 @@ public class NightSnack {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getPickupStartTime() {
+        return pickupStartTime;
     }
 }

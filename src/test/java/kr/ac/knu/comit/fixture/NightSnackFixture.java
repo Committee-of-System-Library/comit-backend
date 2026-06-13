@@ -21,7 +21,7 @@ public class NightSnackFixture {
 
     /** SCHEDULED 상태의 야식 마차(예약분 없음). */
     public static NightSnack scheduledNightSnack(Long id, int capacity) {
-        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, 0, defaultPeriod(), null, null, null, null, null, false);
+        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, 0, defaultPeriod(), null, null, null, null, null, null, false);
         ReflectionTestUtils.setField(nightSnack, "id", id);
         return nightSnack;
     }
@@ -36,7 +36,7 @@ public class NightSnackFixture {
 
     /** OPEN 상태의 학생회비 납부자 전용 야식 마차. */
     public static NightSnack openNightSnackRequiringStudentCouncilFee(Long id, int capacity, int remaining) {
-        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, 0, defaultPeriod(), null, null, null, null, null, true);
+        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, 0, defaultPeriod(), null, null, null, null, null, null, true);
         ReflectionTestUtils.setField(nightSnack, "id", id);
         ReflectionTestUtils.setField(nightSnack, "status", NightSnackStatus.OPEN);
         ReflectionTestUtils.setField(nightSnack, "remaining", remaining);
@@ -45,7 +45,7 @@ public class NightSnackFixture {
 
     /** SCHEDULED 상태의 예약분이 있는 야식 마차. */
     public static NightSnack reservedNightSnack(Long id, int capacity, int reservedCapacity) {
-        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, reservedCapacity, defaultPeriod(), null, null, null, null, null, false);
+        NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, reservedCapacity, defaultPeriod(), null, null, null, null, null, null, false);
         ReflectionTestUtils.setField(nightSnack, "id", id);
         return nightSnack;
     }

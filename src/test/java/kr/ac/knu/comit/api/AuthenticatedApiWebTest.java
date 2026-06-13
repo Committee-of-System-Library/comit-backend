@@ -104,6 +104,9 @@ class AuthenticatedApiWebTest {
     private MemberService memberService;
 
     @MockitoBean
+    private SsoAuthService ssoAuthService;
+
+    @MockitoBean
     private PostService postService;
 
     @MockitoBean
