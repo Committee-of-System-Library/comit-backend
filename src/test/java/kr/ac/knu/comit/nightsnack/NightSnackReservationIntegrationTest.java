@@ -103,7 +103,7 @@ class NightSnackReservationIntegrationTest {
         // 정원 20, 예약분 5 → 일반분 15.
         LocalDate date1 = LocalDate.now().plusDays(3);
         Period period1 = Period.of(date1.atTime(17, 30), date1.atTime(18, 30));
-        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date1, 20, 5, period1, null, null, null, null, null, false)).getId();
+        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date1, 20, 5, period1, null, null, null, null, null, null, false)).getId();
         List<String> studentNumbers = List.of(uniqueStudentNumber(), uniqueStudentNumber());
 
         // when
@@ -136,7 +136,7 @@ class NightSnackReservationIntegrationTest {
         LocalDate date2 = LocalDate.now().plusDays(4);
         LocalDateTime now2 = LocalDateTime.now();
         Period period2 = Period.of(now2.minusMinutes(5), now2.plusHours(1));
-        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date2, capacity, reserved, period2, null, null, null, null, null, false)).getId();
+        Long nightSnackId = nightSnackRepository.save(NightSnack.create(date2, capacity, reserved, period2, null, null, null, null, null, null, false)).getId();
         adminNightSnackService.open(nightSnackId);
 
         int success = 0;

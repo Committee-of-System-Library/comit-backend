@@ -209,7 +209,7 @@ class NightSnackConcurrencyIntegrationTest {
         LocalDateTime now = LocalDateTime.now();
         Period period = Period.of(now.minusMinutes(5), now.plusHours(1));
         NightSnack nightSnack = nightSnackRepository.save(
-                NightSnack.create(date, capacity, 0, period, null, null, null, null, null, false));
+                NightSnack.create(date, capacity, 0, period, null, null, null, null, null, null, false));
         nightSnack.open();
         nightSnackRepository.save(nightSnack);
         return nightSnack.getId();
