@@ -130,9 +130,6 @@ class AuthenticatedApiWebTest {
     @MockitoBean
     private MemberRepository memberRepository;
 
-    @MockitoBean
-    private SsoAuthService ssoAuthService;
-
     @BeforeEach
     void setUp() {
         given(memberService.findBySso(any())).willReturn(Optional.of(authenticatedMember()));

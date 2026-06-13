@@ -85,7 +85,7 @@ public class LoadTestNightSnackController {
         LocalDateTime resolvedCloseAt = closeAt != null ? closeAt : LocalDateTime.now().plusHours(2);
         Period period = Period.of(resolvedOpenAt, resolvedCloseAt);
         NightSnack nightSnack = NightSnack.create(date, capacity, 0, period,
-                null, null, null, null, null, false);
+                null, null, null, null, null,null, false);
         nightSnackRepository.save(nightSnack);
         nightSnack.open();
 
