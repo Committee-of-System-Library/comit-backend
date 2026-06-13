@@ -43,6 +43,7 @@ public interface AdminNightSnackControllerApi {
                     @FieldDesc(name = "contents", value = "야식 마차 안내 내용입니다. 생략 가능합니다."),
                     @FieldDesc(name = "menu", value = "제공 메뉴입니다. 생략 가능합니다. (최대 500자, 예: 떡볶이, 순대)"),
                     @FieldDesc(name = "pickupLocation", value = "수령 장소입니다. 생략 가능합니다. (최대 200자)"),
+                    @FieldDesc(name = "pickupStartTime", value = "수령 시작 시각입니다. 신청 시작(openAt) (yyyy-MM-ddTHH:mm:ss)"),
                     @FieldDesc(name = "pickupDeadline", value = "수령 마감 시각입니다. 신청 마감(closeAt)과 별개로 현장 수령 가능 시각 상한입니다. 생략 가능합니다. (yyyy-MM-ddTHH:mm:ss)"),
                     @FieldDesc(name = "requiresStudentCouncilFee", value = "신청자격 — 학생회비 납부 여부입니다. 생략 시 false(자격 제한 없음)입니다."),
                     @FieldDesc(name = "nightSnackId", value = "생성된 야식 마차 ID입니다.")

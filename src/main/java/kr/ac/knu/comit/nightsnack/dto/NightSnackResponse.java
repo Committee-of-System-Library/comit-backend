@@ -19,6 +19,7 @@ public record NightSnackResponse(
         String contents,
         String menu,
         String pickupLocation,
+        LocalDateTime pickupStartTime,
         LocalDateTime pickupDeadline,
         boolean requiresStudentCouncilFee
 ) {
@@ -37,6 +38,7 @@ public record NightSnackResponse(
                 nightSnack.getContents(),
                 nightSnack.getMenu(),
                 nightSnack.getPickupLocation(),
+                nightSnack.getPickupStartTime(),
                 nightSnack.getPickupDeadline(),
                 nightSnack.isRequiresStudentCouncilFee()
         );
