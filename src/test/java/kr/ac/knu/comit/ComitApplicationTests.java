@@ -3,6 +3,7 @@ package kr.ac.knu.comit;
 import kr.ac.knu.comit.comment.service.AdminCommentService;
 import kr.ac.knu.comit.comment.service.CommentQueryService;
 import kr.ac.knu.comit.comment.service.CommentService;
+import kr.ac.knu.comit.inquiry.service.InquiryService;
 import kr.ac.knu.comit.main.service.MainPageQueryService;
 import kr.ac.knu.comit.main.service.MainService;
 import kr.ac.knu.comit.nightsnack.service.AdminNightSnackService;
@@ -56,6 +57,9 @@ class ComitApplicationTests {
 
     @MockitoBean
     MemberRegistrationService memberRegistrationService;
+
+    @MockitoBean
+    InquiryService inquiryService;
 
     @MockitoBean
     PostService postService;
