@@ -66,7 +66,7 @@ public class SsoAuthController implements SsoAuthControllerApi {
     @Override
     public ResponseEntity<Void> logout() {
         return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, ssoAuthService.clearAuthenticationCookie())
+                .header(HttpHeaders.SET_COOKIE, ssoAuthService.clearAuthenticationCookies().toArray(String[]::new))
                 .build();
     }
 }

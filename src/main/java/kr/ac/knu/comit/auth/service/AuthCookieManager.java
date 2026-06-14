@@ -2,6 +2,7 @@ package kr.ac.knu.comit.auth.service;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AuthCookieManager {
+
+    private static final String LEGACY_ACCESS_TOKEN_COOKIE_NAME = "ACCESS_TOKEN";
 
     private final ComitSsoProperties ssoProperties;
 
@@ -52,6 +55,13 @@ public class AuthCookieManager {
 
     public String clearAuthenticationCookie() {
         return clearCookie(ssoProperties.getTokenCookieName());
+    }
+
+    public List<String> clearAuthenticationCookies() {
+        if (LEGACY_ACCESS_TOKEN_COOKIE_NAME.equals(ssoProperties.getTokenCookieName())) {
+            return List.of(clearAuthenticationCookie());
+        }
+        return List.of(clearAuthenticationCookie(), clearCookie(LEGACY_ACCESS_TOKEN_COOKIE_NAME));
     }
 
     public String clearRedirectUriCookie() {
