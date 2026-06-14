@@ -47,7 +47,7 @@ public class MemberController implements MemberControllerApi {
     public ResponseEntity<ApiResponse<Void>> withdraw(MemberPrincipal principal) {
         memberService.withdraw(principal.memberId());
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, ssoAuthService.clearAuthenticationCookie())
+                .header(HttpHeaders.SET_COOKIE, ssoAuthService.clearAuthenticationCookies().toArray(String[]::new))
                 .body(ApiResponse.success());
     }
 }

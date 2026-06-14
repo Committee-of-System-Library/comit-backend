@@ -1,6 +1,7 @@
 package kr.ac.knu.comit.auth.service;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import kr.ac.knu.comit.auth.dto.SsoCallbackPendingRegistration;
@@ -87,6 +88,10 @@ public class SsoAuthService {
 
     public String clearAuthenticationCookie() {
         return authCookieManager.clearAuthenticationCookie();
+    }
+
+    public List<String> clearAuthenticationCookies() {
+        return authCookieManager.clearAuthenticationCookies();
     }
 
     private void validateState(String state, String storedState) {

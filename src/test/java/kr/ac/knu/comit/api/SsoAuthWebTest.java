@@ -481,10 +481,11 @@ class SsoAuthWebTest {
     }
 
     @Test
-    @DisplayName("회원탈퇴하면 SSO token cookie를 제거한다")
+    @DisplayName("회원탈퇴하면 인증 token cookie를 제거한다")
     void clearsSsoCookieOnWithdraw() throws Exception {
         MvcResult result = mockMvc.perform(delete("/members/me")
-                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123")))
+                        .cookie(new jakarta.servlet.http.Cookie("COMIT_SSO_TOKEN", "token-123"))
+                        .cookie(new jakarta.servlet.http.Cookie("ACCESS_TOKEN", "legacy-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andReturn();
@@ -492,10 +493,12 @@ class SsoAuthWebTest {
         then(memberService).should().withdraw(1L);
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("ACCESS_TOKEN=").contains("Max-Age=0"));
     }
 
     @Test
-    @DisplayName("로그아웃하면 SSO token cookie를 제거한다")
+    @DisplayName("로그아웃하면 인증 token cookie를 제거한다")
     void clearsSsoCookieOnLogout() throws Exception {
         MvcResult result = mockMvc.perform(post("/auth/sso/logout"))
                 .andExpect(status().isNoContent())
@@ -503,6 +506,8 @@ class SsoAuthWebTest {
 
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("ACCESS_TOKEN=").contains("Max-Age=0"));
     }
 
     private Member authenticatedMember() {
