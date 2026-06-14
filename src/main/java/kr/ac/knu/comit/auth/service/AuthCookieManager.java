@@ -2,7 +2,9 @@ package kr.ac.knu.comit.auth.service;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import kr.ac.knu.comit.auth.config.ComitSsoProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class AuthCookieManager {
 
     private static final String LEGACY_ACCESS_TOKEN_COOKIE_NAME = "ACCESS_TOKEN";
+    private static final String SESSION_COOKIE_NAME = "JSESSIONID";
 
     private final ComitSsoProperties ssoProperties;
 
@@ -58,10 +61,15 @@ public class AuthCookieManager {
     }
 
     public List<String> clearAuthenticationCookies() {
-        if (LEGACY_ACCESS_TOKEN_COOKIE_NAME.equals(ssoProperties.getTokenCookieName())) {
-            return List.of(clearAuthenticationCookie());
-        }
-        return List.of(clearAuthenticationCookie(), clearCookie(LEGACY_ACCESS_TOKEN_COOKIE_NAME));
+        Set<String> cookieNames = new LinkedHashSet<>();
+        cookieNames.add(ssoProperties.getTokenCookieName());
+        cookieNames.add(LEGACY_ACCESS_TOKEN_COOKIE_NAME);
+        cookieNames.add(SESSION_COOKIE_NAME);
+
+        return cookieNames.stream()
+                .filter(cookieName -> cookieName != null && !cookieName.isBlank())
+                .map(this::clearCookie)
+                .toList();
     }
 
     public String clearRedirectUriCookie() {

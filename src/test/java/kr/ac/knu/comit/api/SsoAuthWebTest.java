@@ -495,6 +495,8 @@ class SsoAuthWebTest {
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("ACCESS_TOKEN=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("JSESSIONID=").contains("Max-Age=0"));
     }
 
     @Test
@@ -508,6 +510,8 @@ class SsoAuthWebTest {
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
         assertThat(result.getResponse().getHeaders("Set-Cookie"))
                 .anySatisfy(cookie -> assertThat(cookie).contains("ACCESS_TOKEN=").contains("Max-Age=0"));
+        assertThat(result.getResponse().getHeaders("Set-Cookie"))
+                .anySatisfy(cookie -> assertThat(cookie).contains("JSESSIONID=").contains("Max-Age=0"));
     }
 
     private Member authenticatedMember() {

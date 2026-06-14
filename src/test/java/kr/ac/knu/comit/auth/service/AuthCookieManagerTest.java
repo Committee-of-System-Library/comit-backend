@@ -11,28 +11,32 @@ import org.junit.jupiter.api.Test;
 class AuthCookieManagerTest {
 
     @Test
-    @DisplayName("인증 쿠키 제거 시 설정된 token cookie와 legacy ACCESS_TOKEN을 함께 제거한다")
-    void clearsConfiguredTokenCookieAndLegacyAccessTokenCookie() {
+    @DisplayName("인증 쿠키 제거 시 설정된 token cookie와 legacy ACCESS_TOKEN, JSESSIONID를 함께 제거한다")
+    void clearsConfiguredTokenCookieAndLegacyAccessTokenCookieAndSessionCookie() {
         AuthCookieManager authCookieManager = new AuthCookieManager(ssoProperties("COMIT_SSO_TOKEN"));
 
         List<String> cookies = authCookieManager.clearAuthenticationCookies();
 
-        assertThat(cookies).hasSize(2);
+        assertThat(cookies).hasSize(3);
         assertThat(cookies)
                 .anySatisfy(cookie -> assertThat(cookie).contains("COMIT_SSO_TOKEN=").contains("Max-Age=0"));
         assertThat(cookies)
                 .anySatisfy(cookie -> assertThat(cookie).contains("ACCESS_TOKEN=").contains("Max-Age=0"));
+        assertThat(cookies)
+                .anySatisfy(cookie -> assertThat(cookie).contains("JSESSIONID=").contains("Max-Age=0"));
     }
 
     @Test
-    @DisplayName("설정된 token cookie가 ACCESS_TOKEN이면 제거 쿠키를 중복 생성하지 않는다")
+    @DisplayName("설정된 token cookie가 ACCESS_TOKEN이면 ACCESS_TOKEN 제거 쿠키를 중복 생성하지 않는다")
     void doesNotDuplicateLegacyAccessTokenCookieWhenConfiguredTokenCookieIsAccessToken() {
         AuthCookieManager authCookieManager = new AuthCookieManager(ssoProperties("ACCESS_TOKEN"));
 
         List<String> cookies = authCookieManager.clearAuthenticationCookies();
 
-        assertThat(cookies).hasSize(1);
+        assertThat(cookies).hasSize(2);
         assertThat(cookies.getFirst()).contains("ACCESS_TOKEN=").contains("Max-Age=0");
+        assertThat(cookies)
+                .anySatisfy(cookie -> assertThat(cookie).contains("JSESSIONID=").contains("Max-Age=0"));
     }
 
     private ComitSsoProperties ssoProperties(String tokenCookieName) {
