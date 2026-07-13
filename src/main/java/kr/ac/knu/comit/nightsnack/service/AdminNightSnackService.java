@@ -38,6 +38,7 @@ public class AdminNightSnackService {
     private final NightSnackRepository nightSnackRepository;
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
     private final NightSnackProperties nightSnackProperties;
+    private final ReservationStrategy reservationStrategy;
     private final Clock clock;
 
     @Transactional
@@ -48,7 +49,9 @@ public class AdminNightSnackService {
         int reservedCapacity = (int) Math.round(capacity * nightSnackProperties.getReservedCapacityRatio());
         NightSnack nightSnack = NightSnack.create(nightSnackDate, capacity, reservedCapacity, period,
                 title, contents, menu, pickupLocation, pickupStartTime, pickupDeadline, requiresStudentCouncilFee);
-        return nightSnackRepository.save(nightSnack).getId();
+        nightSnackRepository.save(nightSnack);
+        reservationStrategy.prepareSeats(nightSnack);
+        return nightSnack.getId();
     }
 
     @Transactional

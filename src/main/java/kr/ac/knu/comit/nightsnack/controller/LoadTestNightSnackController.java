@@ -14,6 +14,7 @@ import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
 import kr.ac.knu.comit.nightsnack.dto.ApplyResponse;
 import kr.ac.knu.comit.nightsnack.service.NightSnackApplicationService;
+import kr.ac.knu.comit.nightsnack.service.ReservationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,7 @@ public class LoadTestNightSnackController {
     private final NightSnackApplicationRepository nightSnackApplicationRepository;
     private final MemberRepository memberRepository;
     private final NightSnackApplicationService nightSnackApplicationService;
+    private final ReservationStrategy reservationStrategy;
 
     /**
      * 야식 마차 생성 + 오픈, 테스트용 회원 생성.
@@ -87,6 +89,7 @@ public class LoadTestNightSnackController {
         NightSnack nightSnack = NightSnack.create(date, capacity, 0, period,
                 null, null, null, null, null,null, false);
         nightSnackRepository.save(nightSnack);
+        reservationStrategy.prepareSeats(nightSnack);
         nightSnack.open();
 
         return ResponseEntity.ok(ApiResponse.success(

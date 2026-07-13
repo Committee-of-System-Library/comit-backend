@@ -25,7 +25,7 @@ logging:
   file:
     name: ./logs/app-local.log
   level:
-    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL: TRACE
     org.hibernate.orm.jdbc.bind: TRACE
 
 comit:
@@ -40,3 +40,5 @@ comit:
       frontend-success-url: http://localhost:5173
       frontend-error-url: http://localhost:5173/error
       cookie-secure: false
+  load-test:
+    enabled: ${COMIT_LOAD_TEST_ENABLED:false}

@@ -90,6 +90,27 @@ public class NightSnackApplication {
         return create(null, nightSnack, studentNumber.trim(), NightSnackApplicationSource.RESERVED);
     }
 
+    /**
+     * {@code skip-locked} 전략 전용 — 신청자 없는 빈 좌석 1개. {@code member}/{@code studentNumber} 는
+     * 아직 없으므로 {@code null} 이고 상태는 {@link NightSnackApplicationStatus#AVAILABLE}이다.
+     *
+     * <p>선점({@code FOR UPDATE SKIP LOCKED} 로 이 행을 잡은 뒤)은 엔티티 메서드가 아니라
+     * {@code NightSnackApplicationRepository#claimSeat} 의 네이티브 UPDATE로 처리한다 — {@link NightSnack}의
+     * {@code remaining} 감소가 엔티티 setter가 아닌 원자적 UPDATE로 처리되는 것과 같은 이유다.
+     */
+    public static NightSnackApplication seat(NightSnack nightSnack) {
+        if (nightSnack == null) {
+            throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
+        }
+        NightSnackApplication application = new NightSnackApplication();
+        application.nightSnack = nightSnack;
+        application.source = NightSnackApplicationSource.GENERAL;
+        application.ticketToken = UUID.randomUUID().toString();
+        application.status = NightSnackApplicationStatus.AVAILABLE;
+        application.createdAt = LocalDateTime.now();
+        return application;
+    }
+
     private static NightSnackApplication create(
             Member member, NightSnack nightSnack, String studentNumber, NightSnackApplicationSource source) {
         NightSnackApplication application = new NightSnackApplication();

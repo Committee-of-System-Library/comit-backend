@@ -59,6 +59,9 @@ class AdminNightSnackServiceTest {
     private NightSnackProperties nightSnackProperties;
 
     @Mock
+    private ReservationStrategy reservationStrategy;
+
+    @Mock
     private Clock clock;
 
     @InjectMocks
