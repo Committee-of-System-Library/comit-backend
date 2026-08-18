@@ -28,11 +28,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface NightSnackApplicationControllerApi {
 
     @ApiDoc(
-            summary = "날짜별 야식 마차 단건 조회",
-            description = "날짜(yyyy-MM-dd)로 야식 마차 정보를 조회합니다. 인증 없이 호출 가능합니다. "
-                    + "openAt을 이용해 클라이언트 카운트다운 타이머를 구성할 수 있습니다.",
+            summary = "다가오는 야식 마차 단건 조회",
+            description = "기준 날짜(yyyy-MM-dd) 당일을 포함해 그 이후로 가장 가까운 야식 마차 1건을 조회합니다. "
+                    + "당일에 야식 마차가 있으면 그것을, 없으면 다음 예정 야식 마차를 반환합니다. "
+                    + "인증 없이 호출 가능합니다. openAt을 이용해 클라이언트 카운트다운 타이머를 구성할 수 있습니다.",
             descriptions = {
-                    @FieldDesc(name = "date", value = "조회할 야식 마차 날짜입니다. (yyyy-MM-dd)"),
+                    @FieldDesc(name = "date", value = "조회 기준 날짜입니다. 이 날짜 당일부터 이후로 가장 가까운 야식 마차를 찾습니다. (yyyy-MM-dd)"),
                     @FieldDesc(name = "nightSnackId", value = "야식 마차 ID입니다."),
                     @FieldDesc(name = "status", value = "야식 마차 상태입니다. (SCHEDULED / OPEN / CLOSED)"),
                     @FieldDesc(name = "openAt", value = "신청 오픈 시각입니다. 클라이언트 카운트다운 기준으로 사용합니다."),
@@ -40,7 +41,7 @@ public interface NightSnackApplicationControllerApi {
                     @FieldDesc(name = "requiresStudentCouncilFee", value = "학생회비 납부 여부 신청자격입니다.")
             },
             errors = {
-                    @ApiError(code = "EVENT_NOT_FOUND", when = "해당 날짜의 야식 마차가 존재하지 않을 때")
+                    @ApiError(code = "EVENT_NOT_FOUND", when = "기준 날짜 이후로 예정된 야식 마차가 하나도 없을 때")
             },
             example = @Example(
                     response = """

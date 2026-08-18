@@ -13,6 +13,15 @@ public interface NightSnackRepository extends JpaRepository<NightSnack, Long> {
 
     Optional<NightSnack> findByNightSnackDate(LocalDate nightSnackDate);
 
+    /**
+     * 지정한 날짜(당일 포함) 이후로 가장 가까운 야식 마차 1건을 조회한다.
+     *
+     * <p>클라이언트는 "오늘" 날짜만 보내고, 서버가 그 시점 기준 다음 야식 마차를 골라 준다.
+     * 당일에 야식 마차가 있으면 그것이 선택되므로 기존 당일 조회 동작을 그대로 포함한다.
+     */
+    Optional<NightSnack> findFirstByNightSnackDateGreaterThanEqualOrderByNightSnackDateAsc(
+            LocalDate nightSnackDate);
+
     List<NightSnack> findAllByOrderByNightSnackDateDesc();
 
     /**
