@@ -23,7 +23,7 @@ public class NightSnackApplicationController implements NightSnackApplicationCon
 
     @Override
     public ResponseEntity<ApiResponse<NightSnackResponse>> getNightSnack(LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.success(nightSnackQueryService.getByDate(date)));
+        return ResponseEntity.ok(ApiResponse.success(nightSnackQueryService.getUpcomingFrom(date)));
     }
 
     @Override
