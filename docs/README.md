@@ -13,12 +13,15 @@
 - [Java 주석 규칙](./guides/java-comment-convention.md)
 - [SSO 인증 흐름 가이드](./guides/sso-auth-flow.md)
 - [테스트 전략 가이드](./guides/testing-strategy.md)
-- [로컬 실행 가이드](./ops/local-development.md)
-- [Comit prod-like 백엔드 롤아웃 계획](./ops/comit-prod-like-backend-rollout.md)
-- [Comit SSO 연동 롤아웃 계획](./ops/comit-sso-integration-rollout.md)
-- [Comit staging 검증 기록](./ops/comit-staging-verification.md)
-- [Sidowi Pinpoint 롤아웃 계획](./ops/sidowi-pinpoint-rollout.md)
-- [Backend self-hosted runner 배포 흐름 HTML](./ops/backend-self-hosted-runner-flow.html) - 상단 Mermaid 미니맵과 카드형 상세 설명으로 push -> runner -> server 흐름을 설명
+- [로컬 실행 가이드](./ops/02_local-development.md)
+- [sidowi nginx 프록시 설정 구조](./ops/00_sidowi-nginx-proxy-layout.md)
+- [Comit prod-like 백엔드 롤아웃 계획](./ops/06_comit-prod-like-backend-rollout.md)
+- [Comit SSO 연동 롤아웃 계획](./ops/07_comit-sso-integration-rollout.md)
+- [Comit staging 검증 기록](./ops/04_comit-staging-verification.md)
+- [Sidowi Pinpoint 롤아웃 계획](./ops/08_sidowi-pinpoint-rollout.md)
+- [Backend self-hosted runner 배포 흐름 HTML](./ops/01_backend-self-hosted-runner-flow.html) - 상단 Mermaid 미니맵과 카드형 상세 설명으로 push -> runner -> server 흐름을 설명
+- [AI 기능 운영 배포 장애 기록](./ops/09_comit-backend-ai-features-prod-deploy.md)
+- [명칭 혼재 및 인프라 드리프트 분석](./ops/10_comit-naming-and-infra-drift.md)
 - [ADR-002 ProblemDetail 기반 에러 응답 표준 채택](./adr/002-problem-detail-error-response.md)
 
 ## 디렉토리 구조
