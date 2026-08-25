@@ -129,16 +129,29 @@ public class PostService {
         );
     }
 
+    /**
+     * 게시글 상세를 조회하고 조회수를 1 증가시킨다.
+     *
+     * @implNote 조회할 것을 모두 읽은 뒤 {@code incrementViewCount}를 <b>마지막</b>에 실행한다.
+     * 이 UPDATE는 {@code post} 행의 X-lock을 커밋까지 유지하므로, 앞에 두면 인기 게시글에 몰린
+     * 동시 조회가 뒤따르는 SELECT 구간만큼 직렬화된다. 순서를 되돌리지 말 것.
+     *
+     * <p>{@code post_daily_visitor} INSERT는 UPDATE보다 앞에 둔다 — {@code removeMemberInteractions}가
+     * 자식/이력 테이블을 먼저 잠그므로 그 순서에 맞춘다.
+     *
+     * <p>응답 조회수는 방금 증가시킨 값을 다시 읽지 않고 메모리에서 {@code +1} 한다. UPDATE 뒤에
+     * 재조회하면 SELECT가 락 구간 안으로 들어와 개선이 무의미해진다.
+     */
     @Transactional
     public PostDetailResponse getPost(Long postId, Long memberId) {
-        findPostOrThrow(postId);
-        postRepository.incrementViewCount(postId);
         Post post = findPostOrThrow(postId);
-        recordDailyVisitor(postId, memberId);
         boolean likedByMe = postLikeRepository.existsByPostIdAndMemberId(postId, memberId);
         List<String> imageUrls = postImageRepository.findByPost_IdOrderBySortOrderAsc(postId)
                 .stream().map(PostImage::getImageUrl).toList();
-        return PostDetailResponse.of(post, likedByMe, imageUrls);
+        recordDailyVisitor(postId, memberId);
+
+        postRepository.incrementViewCount(postId);
+        return PostDetailResponse.of(post, likedByMe, imageUrls, post.getViewCount() + 1);
     }
 
     @Transactional

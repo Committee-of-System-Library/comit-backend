@@ -86,15 +86,11 @@ class PostServiceTest {
     private PostService postService;
 
     @Test
-    @DisplayName("상세 조회 시 조회수를 증가시키고 최신 게시글로 응답한다")
-    void returnsReloadedPostAfterIncrementingViewCount() {
+    @DisplayName("상세 조회 시 조회수 증가분을 반영해 응답하고 게시글을 한 번만 읽는다")
+    void returnsIncrementedViewCountWithoutReloadingPost() {
         // given
-        // 조회 전/후 게시글 상태와 좋아요 여부를 준비한다.
-        Post initialPost = PostFixture.post(10L, 7);
-        Post reloadedPost = PostFixture.post(10L, 8);
-        given(postRepository.findActiveById(10L))
-                .willReturn(Optional.of(initialPost))
-                .willReturn(Optional.of(reloadedPost));
+        // 조회수 7인 게시글과 좋아요 여부를 준비한다.
+        given(postRepository.findActiveById(10L)).willReturn(Optional.of(PostFixture.post(10L, 7)));
         given(postLikeRepository.existsByPostIdAndMemberId(10L, 1L)).willReturn(true);
 
         // when
@@ -102,18 +98,34 @@ class PostServiceTest {
         PostDetailResponse response = postService.getPost(10L, 1L);
 
         // then
-        // 최신 조회수와 후속 저장 호출 순서가 기대대로인지 확인한다.
+        // 재조회 없이 메모리에서 +1 한 조회수가 응답에 실려야 한다.
         assertThat(response.id()).isEqualTo(10L);
         assertThat(response.viewCount()).isEqualTo(8);
         assertThat(response.likedByMe()).isTrue();
+        then(postRepository).should().findActiveById(10L);
+    }
 
+    @Test
+    @DisplayName("상세 조회는 읽기를 모두 마친 뒤 마지막에 조회수를 증가시킨다")
+    void incrementsViewCountAsTheLastStatement() {
+        // given
+        // 조회 대상 게시글을 준비한다.
+        given(postRepository.findActiveById(10L)).willReturn(Optional.of(PostFixture.post(10L, 7)));
+
+        // when
+        // 게시글 상세 조회를 실행한다.
+        postService.getPost(10L, 1L);
+
+        // then
+        // post 행의 락을 잡는 incrementViewCount가 모든 조회 뒤에 와야 한다.
+        // 순서가 앞당겨지면 인기 게시글의 동시 조회가 직렬화된다.
         InOrder inOrder = org.mockito.Mockito.inOrder(
-                postRepository, postDailyVisitorRepository, postLikeRepository);
+                postRepository, postLikeRepository, postImageRepository, postDailyVisitorRepository);
         inOrder.verify(postRepository).findActiveById(10L);
-        inOrder.verify(postRepository).incrementViewCount(10L);
-        inOrder.verify(postRepository).findActiveById(10L);
-        inOrder.verify(postDailyVisitorRepository).insertIgnore(eq(10L), eq(1L), any(LocalDate.class));
         inOrder.verify(postLikeRepository).existsByPostIdAndMemberId(10L, 1L);
+        inOrder.verify(postImageRepository).findByPost_IdOrderBySortOrderAsc(10L);
+        inOrder.verify(postDailyVisitorRepository).insertIgnore(eq(10L), eq(1L), any(LocalDate.class));
+        inOrder.verify(postRepository).incrementViewCount(10L);
     }
 
     @Test
