@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RegisterService")
@@ -180,6 +181,27 @@ class RegisterServiceTest {
         assertThat(response.imageUrl()).isEqualTo("https://bucket.s3.ap-northeast-2.amazonaws.com/members/profile.png");
         assertThat(response.presignedUrl()).contains("signature=test");
         then(imageService).should().generatePresignedUrl(any());
+    }
+
+    @Test
+    @DisplayName("RegisterService에는 트랜잭션 경계를 두지 않는다")
+    void doesNotDeclareTransactionBoundary() throws NoSuchMethodException {
+        // given
+        // 회원 등록은 REQUIRES_NEW인 MemberRegistrationService에 위임된다.
+        // 여기에 트랜잭션이 있으면 바깥 트랜잭션이 커넥션을 붙잡은 채 중단되어
+        // 가입 1건이 커넥션 2개를 점유한다(pool 8 → 동시 8건이면 connection-timeout).
+        // 배경은 docs/ops/transaction-boundary-convention.md L1 참고.
+
+        // when & then
+        // 클래스에도 register 메서드에도 @Transactional이 없어야 한다.
+        assertThat(RegisterService.class.getAnnotation(Transactional.class))
+                .as("RegisterService는 파사드이므로 클래스 레벨 트랜잭션을 갖지 않는다")
+                .isNull();
+        assertThat(RegisterService.class
+                .getDeclaredMethod("register", String.class, RegisterRequest.class)
+                .getAnnotation(Transactional.class))
+                .as("register()는 REQUIRES_NEW 호출을 감싸므로 트랜잭션을 갖지 않는다")
+                .isNull();
     }
 
     private ExternalIdentity identity() {
