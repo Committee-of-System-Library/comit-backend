@@ -201,14 +201,18 @@ public class PostService {
     /**
      * 회원 삭제 시 게시글 좋아요와 방문 기록을 정리한다.
      *
-     * @implNote 좋아요 row를 먼저 조회해 likeCount를 맞춘 뒤, 좋아요/방문 기록을 제거한다.
+     * @implNote 락 획득 순서가 고정되어 있다 — 자식/이력 테이블({@code post_like},
+     * {@code post_daily_visitor})을 먼저 지우고, 집계 테이블({@code post})의 likeCount를 마지막에 보정한다.
+     * {@link #toggleLike}가 {@code post_like → post} 순서로 락을 잡으므로 여기서 순서를 뒤집으면
+     * (집계 먼저, 이력 나중) 두 경로 사이에 데드락 사이클이 생긴다.
+     * {@code likedPostIds}는 첫 줄에서 이미 메모리로 읽어두므로 삭제를 앞당겨도 결과가 같다.
      */
     @Transactional
     public void removeMemberInteractions(Long memberId) {
         List<Long> likedPostIds = postLikeRepository.findPostIdsByMemberId(memberId);
-        likedPostIds.forEach(postRepository::decrementLikeCount);
         postLikeRepository.deleteAllByMemberId(memberId);
         postDailyVisitorRepository.deleteAllByMemberId(memberId);
+        likedPostIds.forEach(postRepository::decrementLikeCount);
     }
 
     private Map<Long, List<String>> imageUrlsByPostId(List<Long> postIds) {

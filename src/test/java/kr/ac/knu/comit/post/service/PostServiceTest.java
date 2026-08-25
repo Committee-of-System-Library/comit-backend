@@ -219,11 +219,15 @@ class PostServiceTest {
 
         // then
         // 좋아요 집계를 먼저 보정하고 row 및 방문 기록을 제거해야 한다.
-        then(postLikeRepository).should().findPostIdsByMemberId(1L);
-        then(postRepository).should().decrementLikeCount(10L);
-        then(postRepository).should().decrementLikeCount(20L);
-        then(postLikeRepository).should().deleteAllByMemberId(1L);
-        then(postDailyVisitorRepository).should().deleteAllByMemberId(1L);
+        // 자식/이력 테이블을 먼저 지우고 집계(post)를 마지막에 보정해야 한다.
+        // 순서가 뒤집히면 toggleLike(post_like → post)와 데드락 사이클이 생긴다.
+        InOrder inOrder = org.mockito.Mockito.inOrder(
+                postLikeRepository, postDailyVisitorRepository, postRepository);
+        inOrder.verify(postLikeRepository).findPostIdsByMemberId(1L);
+        inOrder.verify(postLikeRepository).deleteAllByMemberId(1L);
+        inOrder.verify(postDailyVisitorRepository).deleteAllByMemberId(1L);
+        inOrder.verify(postRepository).decrementLikeCount(10L);
+        inOrder.verify(postRepository).decrementLikeCount(20L);
     }
 
     @Nested

@@ -109,12 +109,16 @@ public class CommentService {
 
     /**
      * 회원 삭제 시 댓글 좋아요 이력과 집계를 정리한다.
+     *
+     * @implNote 락 획득 순서가 고정되어 있다 — 이력 테이블({@code comment_like})을 먼저 지우고
+     * 집계 테이블({@code comment})의 likeCount를 마지막에 보정한다. {@link #toggleLike}가
+     * {@code comment_like → comment} 순서로 락을 잡으므로 여기서 순서를 뒤집으면 데드락 사이클이 생긴다.
      */
     @Transactional
     public void removeMemberLikes(Long memberId) {
         List<Long> likedCommentIds = commentLikeRepository.findCommentIdsByMemberId(memberId);
-        likedCommentIds.forEach(commentRepository::decrementLikeCount);
         commentLikeRepository.deleteAllByMemberId(memberId);
+        likedCommentIds.forEach(commentRepository::decrementLikeCount);
     }
 
     private Comment findCommentOrThrow(Long commentId) {
