@@ -248,6 +248,77 @@ public void register(String token, RegisterRequest request) {
 - 회귀 방지: `RegisterServiceTest.doesNotDeclareTransactionBoundary`가 클래스/메서드 양쪽에
   `@Transactional`이 없음을 단언한다. 어노테이션을 되돌리면 즉시 red가 된다.
 
+#### 무엇이 달라지는가
+
+**변경 전 — 커넥션 2개를 겹쳐 점유**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Controller
+    participant R as RegisterService
+    participant MS as MemberService
+    participant MR as MemberRegistrationService
+    participant H as Hikari Pool - 최대 8
+    C->>R: register
+    Note over R: TX1 시작 - @Transactional
+    R->>R: externalAuthClient.verify - CPU 연산, DB 아님
+    R->>MS: hasActiveMember
+    MS->>H: 커넥션 요청
+    H-->>MS: C1 대여
+    activate H
+    MS-->>R: false
+    R->>MR: register - REQUIRES_NEW
+    Note over R,MR: TX1 중단. 단 C1은 반납되지 않는다
+    MR->>H: 커넥션 요청
+    H-->>MR: C2 대여
+    activate H
+    Note over H: 요청 1건이 커넥션 2개 점유<br/>동시 8건이면 pool 고갈 후 connection-timeout
+    MR->>MR: saveAndFlush - INSERT member
+    MR-->>H: C2 반납
+    deactivate H
+    MR-->>R: Member
+    Note over R: TX1 재개 후 커밋
+    R-->>H: C1 반납
+    deactivate H
+    R-->>C: 완료
+```
+
+**변경 후 — 점유가 1개로 직렬화**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Controller
+    participant R as RegisterService
+    participant MS as MemberService
+    participant MR as MemberRegistrationService
+    participant H as Hikari Pool - 최대 8
+    C->>R: register
+    Note over R: 트랜잭션 없음 - 순수 파사드
+    R->>R: externalAuthClient.verify - CPU 연산, DB 아님
+    R->>MS: hasActiveMember
+    MS->>H: 커넥션 요청
+    H-->>MS: C1 대여
+    activate H
+    MS-->>H: C1 반납
+    deactivate H
+    MS-->>R: false
+    R->>MR: register - REQUIRES_NEW
+    MR->>H: 커넥션 요청
+    H-->>MR: C1 재대여
+    activate H
+    MR->>MR: saveAndFlush - INSERT member
+    MR-->>H: C1 반납
+    deactivate H
+    Note over H: 어느 시점에도 점유 커넥션은 1개
+    MR-->>R: Member
+    R-->>C: 완료
+```
+
+`Hikari Pool` 라인의 활성 바를 보면 된다. 변경 전에는 C1 바가 살아 있는 동안 C2 바가 겹쳐 그려지고, 변경 후에는 한 번에 하나만 그려진다. 겹치는 구간이 pool을 고갈시키던 구간이다.
+
+
 ---
 
 ### L2 — `PostService.getPost`: 핫 row 락을 4문장 넘게 들고 있다 🔴
@@ -301,6 +372,57 @@ public PostDetailResponse getPost(Long postId, Long memberId) {
 `incrementViewCount`가 마지막임을 고정하고, `returnsIncrementedViewCountWithoutReloadingPost`가
 재조회 없이 `+1`이 반영되는지 확인한다.
 
+#### 무엇이 달라지는가
+
+**변경 전 — 락을 잡고 문장 4개를 더 실행**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant S as PostService
+    participant DB as MySQL
+    participant L as post 행 X-lock
+    Note over S: TX 시작
+    S->>DB: SELECT post - JOIN FETCH member, tags
+    S->>DB: UPDATE post SET view_count 증가
+    DB->>L: 락 획득
+    activate L
+    S->>DB: SELECT post 재조회 - clearAutomatically 때문
+    S->>DB: INSERT IGNORE post_daily_visitor
+    S->>DB: SELECT post_like 존재 여부
+    S->>DB: SELECT post_image 목록
+    Note over L: 락 유지 구간에 문장 4개가 들어 있다<br/>인기글 동시 조회가 이만큼 직렬화된다
+    Note over S: COMMIT
+    L-->>DB: 락 해제
+    deactivate L
+```
+
+**변경 후 — 락 구간에 남은 문장이 없음**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant S as PostService
+    participant DB as MySQL
+    participant L as post 행 X-lock
+    Note over S: TX 시작
+    S->>DB: SELECT post - JOIN FETCH member, tags
+    S->>DB: SELECT post_like 존재 여부
+    S->>DB: SELECT post_image 목록
+    S->>DB: INSERT IGNORE post_daily_visitor
+    S->>DB: UPDATE post SET view_count 증가
+    DB->>L: 락 획득
+    activate L
+    Note over L: 락 유지 구간에 남은 문장이 없다
+    Note over S: COMMIT
+    L-->>DB: 락 해제
+    deactivate L
+    Note over S: 응답 조회수는 재조회 없이 메모리에서 1을 더한다<br/>문장 6개가 5개로 줄었다
+```
+
+`post 행 X-lock` 라인의 활성 바 길이가 곧 다른 요청이 대기하는 시간이다. 변경 전에는 SELECT 3개와 INSERT 1개가 그 안에 들어 있고, 변경 후에는 커밋만 남는다.
+
+
 > ⚠️ **L3와 함께 적용해야 한다.** 이 재배치는 `getPost`의 순서를 `post_daily_visitor → post`로 바꾼다.
 > L3를 적용하지 않으면 `removeMemberInteractions`의 `post → post_daily_visitor`와 역전되어
 > **새 데드락 사이클이 생긴다.** 그래서 §7 적용 순서에서 L3가 L2보다 앞이다.
@@ -342,6 +464,58 @@ L2 수정 후의 `getPost`(`post_daily_visitor → post`)와도 사이클이 없
 
 회귀 방지: `PostServiceTest`/`CommentServiceTest`의 회원 삭제 정리 테스트를 `InOrder`로 바꿔
 자식/이력 테이블 삭제가 집계 보정보다 먼저 오는지 고정했다.
+
+#### 무엇이 달라지는가
+
+**변경 전 — 교차 대기로 데드락**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as 사용자 A - toggleLike postId 7
+    participant PL as post_like 행 락
+    participant P as post 행 락
+    participant B as 관리자 - deleteMember A
+    A->>PL: INSERT post_like 7 A
+    activate PL
+    Note right of PL: A가 점유
+    B->>P: UPDATE post 7 likeCount 감소
+    activate P
+    Note left of P: 관리자가 점유
+    A->>P: UPDATE post 7 likeCount 증가
+    Note over A,P: A는 관리자가 놓기를 대기
+    B->>PL: DELETE post_like memberId A
+    Note over PL,B: 관리자는 A가 놓기를 대기
+    Note over A,B: 순환 대기 - InnoDB가 한쪽을 1213으로 롤백한다
+    deactivate PL
+    deactivate P
+```
+
+**변경 후 — 같은 순서라 단순 대기**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as 사용자 A - toggleLike postId 7
+    participant PL as post_like 행 락
+    participant P as post 행 락
+    participant B as 관리자 - deleteMember A
+    A->>PL: INSERT post_like 7 A
+    activate PL
+    B->>PL: DELETE post_like memberId A
+    Note over B: post 락을 잡기 전에 여기서 대기한다
+    A->>P: UPDATE post 7 likeCount 증가
+    activate P
+    Note over A: COMMIT - 두 락 모두 해제
+    deactivate PL
+    deactivate P
+    PL-->>B: 대기 해제
+    B->>P: UPDATE post 7 likeCount 감소
+    Note over A,B: 두 경로 모두 post_like 다음 post 순서라 사이클이 없다
+```
+
+변경 전 다이어그램의 화살표 두 개가 X자로 교차하는 것이 사이클이다. 변경 후에는 관리자가 `post` 락을 잡기 **전에** `post_like`에서 먼저 막히므로 교차가 생기지 않는다. `comment` 쪽도 참여자 이름만 바뀔 뿐 같은 그림이다.
+
 
 ---
 
