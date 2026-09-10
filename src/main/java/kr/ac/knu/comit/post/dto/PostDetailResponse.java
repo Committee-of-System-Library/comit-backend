@@ -21,7 +21,14 @@ public record PostDetailResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static PostDetailResponse of(Post post, boolean likedByMe, List<String> imageUrls) {
+    /**
+     * 게시글 상세 응답을 만든다.
+     *
+     * @param viewCount 응답에 실을 조회수. 조회수 증가 UPDATE는 락 구간을 줄이려고 트랜잭션 마지막에
+     * 실행되므로, 호출부가 {@code post.getViewCount() + 1}을 계산해 넘긴다
+     * ({@code PostService#getPost} 참고).
+     */
+    public static PostDetailResponse of(Post post, boolean likedByMe, List<String> imageUrls, int viewCount) {
         return new PostDetailResponse(
                 post.getId(),
                 post.getBoardType(),
@@ -30,7 +37,7 @@ public record PostDetailResponse(
                 post.getMember().getDisplayNickname(),
                 post.getMember().getProfileImageUrl(),
                 post.getLikeCount(),
-                post.getViewCount(),
+                viewCount,
                 likedByMe,
                 post.getTags().stream().map(t -> t.getName()).toList(),
                 imageUrls,

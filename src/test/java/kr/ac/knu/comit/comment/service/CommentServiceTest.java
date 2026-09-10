@@ -225,10 +225,13 @@ class CommentServiceTest {
 
         // then
         // 좋아요 수 보정 후 좋아요 이력을 제거해야 한다.
-        then(commentLikeRepository).should().findCommentIdsByMemberId(1L);
-        then(commentRepository).should().decrementLikeCount(201L);
-        then(commentRepository).should().decrementLikeCount(202L);
-        then(commentLikeRepository).should().deleteAllByMemberId(1L);
+        // 이력 테이블(comment_like)을 먼저 지우고 집계(comment)를 마지막에 보정해야 한다.
+        // 순서가 뒤집히면 toggleLike(comment_like → comment)와 데드락 사이클이 생긴다.
+        org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(commentLikeRepository, commentRepository);
+        inOrder.verify(commentLikeRepository).findCommentIdsByMemberId(1L);
+        inOrder.verify(commentLikeRepository).deleteAllByMemberId(1L);
+        inOrder.verify(commentRepository).decrementLikeCount(201L);
+        inOrder.verify(commentRepository).decrementLikeCount(202L);
     }
 
     @Nested

@@ -129,16 +129,29 @@ public class PostService {
         );
     }
 
+    /**
+     * 게시글 상세를 조회하고 조회수를 1 증가시킨다.
+     *
+     * @implNote 조회할 것을 모두 읽은 뒤 {@code incrementViewCount}를 <b>마지막</b>에 실행한다.
+     * 이 UPDATE는 {@code post} 행의 X-lock을 커밋까지 유지하므로, 앞에 두면 인기 게시글에 몰린
+     * 동시 조회가 뒤따르는 SELECT 구간만큼 직렬화된다. 순서를 되돌리지 말 것.
+     *
+     * <p>{@code post_daily_visitor} INSERT는 UPDATE보다 앞에 둔다 — {@code removeMemberInteractions}가
+     * 자식/이력 테이블을 먼저 잠그므로 그 순서에 맞춘다.
+     *
+     * <p>응답 조회수는 방금 증가시킨 값을 다시 읽지 않고 메모리에서 {@code +1} 한다. UPDATE 뒤에
+     * 재조회하면 SELECT가 락 구간 안으로 들어와 개선이 무의미해진다.
+     */
     @Transactional
     public PostDetailResponse getPost(Long postId, Long memberId) {
-        findPostOrThrow(postId);
-        postRepository.incrementViewCount(postId);
         Post post = findPostOrThrow(postId);
-        recordDailyVisitor(postId, memberId);
         boolean likedByMe = postLikeRepository.existsByPostIdAndMemberId(postId, memberId);
         List<String> imageUrls = postImageRepository.findByPost_IdOrderBySortOrderAsc(postId)
                 .stream().map(PostImage::getImageUrl).toList();
-        return PostDetailResponse.of(post, likedByMe, imageUrls);
+        recordDailyVisitor(postId, memberId);
+
+        postRepository.incrementViewCount(postId);
+        return PostDetailResponse.of(post, likedByMe, imageUrls, post.getViewCount() + 1);
     }
 
     @Transactional
@@ -201,14 +214,18 @@ public class PostService {
     /**
      * 회원 삭제 시 게시글 좋아요와 방문 기록을 정리한다.
      *
-     * @implNote 좋아요 row를 먼저 조회해 likeCount를 맞춘 뒤, 좋아요/방문 기록을 제거한다.
+     * @implNote 락 획득 순서가 고정되어 있다 — 자식/이력 테이블({@code post_like},
+     * {@code post_daily_visitor})을 먼저 지우고, 집계 테이블({@code post})의 likeCount를 마지막에 보정한다.
+     * {@link #toggleLike}가 {@code post_like → post} 순서로 락을 잡으므로 여기서 순서를 뒤집으면
+     * (집계 먼저, 이력 나중) 두 경로 사이에 데드락 사이클이 생긴다.
+     * {@code likedPostIds}는 첫 줄에서 이미 메모리로 읽어두므로 삭제를 앞당겨도 결과가 같다.
      */
     @Transactional
     public void removeMemberInteractions(Long memberId) {
         List<Long> likedPostIds = postLikeRepository.findPostIdsByMemberId(memberId);
-        likedPostIds.forEach(postRepository::decrementLikeCount);
         postLikeRepository.deleteAllByMemberId(memberId);
         postDailyVisitorRepository.deleteAllByMemberId(memberId);
+        likedPostIds.forEach(postRepository::decrementLikeCount);
     }
 
     private Map<Long, List<String>> imageUrlsByPostId(List<Long> postIds) {

@@ -14,6 +14,7 @@
 - [SSO 인증 흐름 가이드](./guides/sso-auth-flow.md)
 - [테스트 전략 가이드](./guides/testing-strategy.md)
 - [로컬 실행 가이드](./ops/local-development.md)
+- [트랜잭션·락 구간 최소화 컨벤션](./ops/transaction-boundary-convention.md) - `@Transactional` 작성 규칙과 현재 코드 감사 결과
 - [Comit prod-like 백엔드 롤아웃 계획](./ops/comit-prod-like-backend-rollout.md)
 - [Comit SSO 연동 롤아웃 계획](./ops/comit-sso-integration-rollout.md)
 - [Comit staging 검증 기록](./ops/comit-staging-verification.md)
@@ -59,3 +60,4 @@
 | API 문서 생성기/어노테이션 규칙 | `guides/api-doc-generator-flow.md`, `docs/api/` |
 | 테스트 전략, 테스트 작성 규칙 | `guides/testing-strategy.md`, `guides/README.md`, `docs/README.md` |
 | 로컬 실행, 배포, 환경 변수 | `ops/` 하위 문서와 해당 `README.md` |
+| 트랜잭션 경계, 락 순서, 커넥션 풀 설정 | `ops/transaction-boundary-convention.md`, 필요 시 `retention/concurrency-solution.md` |
