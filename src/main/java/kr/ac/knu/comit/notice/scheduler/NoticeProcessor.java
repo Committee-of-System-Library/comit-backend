@@ -8,8 +8,10 @@ import kr.ac.knu.comit.notice.infrastructure.rag.indexing.NoticeEmbedder;
 import kr.ac.knu.comit.notice.infrastructure.rag.indexing.NoticeSummarizer;
 import kr.ac.knu.comit.notice.service.OfficialNoticeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class NoticeProcessor {
@@ -21,6 +23,12 @@ public class NoticeProcessor {
 
     public void process(NoticeListItem item) {
         NoticeDetail detail = crawler.crawlDetail(item.wrId());
+
+        if (detail.content() == null || detail.content().isBlank()) {
+            log.debug("공지 본문 없음, 스킵: wrId={}, title={}", item.wrId(), item.title());
+            return;
+        }
+
         LocalDateTime postedAt = resolvePostedAt(detail, item);
 
         String summary = summarizer.generate(item.title(), detail.content());

@@ -39,6 +39,9 @@ public class OfficialNotice {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
+    private Integer academicYear;
+    private Integer semester;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -61,6 +64,8 @@ public class OfficialNotice {
         notice.originalUrl = originalUrl;
         notice.postedAt = postedAt;
         notice.summary = summary;
+        notice.academicYear = NoticeTermExtractor.extractAcademicYear(title);
+        notice.semester = NoticeTermExtractor.extractSemester(title);
         notice.createdAt = LocalDateTime.now();
         return notice;
     }
@@ -136,5 +141,13 @@ public class OfficialNotice {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public Integer getAcademicYear() {
+        return academicYear;
+    }
+
+    public Integer getSemester() {
+        return semester;
     }
 }

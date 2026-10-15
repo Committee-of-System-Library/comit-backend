@@ -37,22 +37,14 @@ public class OfficialNoticeInitializer {
     }
 
     private void syncInitial() {
-        int page = 1;
-        int saved = 0;
-
-        while (saved < properties.getInitialSyncMax()) {
-            List<NoticeListItem> items = crawler.crawlListPage(page++);
+        for (int page = 1; page <= properties.getInitialSyncMaxPages(); page++) {
+            List<NoticeListItem> items = crawler.crawlListPage(page);
             if (items.isEmpty()) {
                 break;
             }
 
             for (NoticeListItem item : items) {
-                if (saved >= properties.getInitialSyncMax()) {
-                    break;
-                }
-
                 noticeProcessor.process(item);
-                saved++;
             }
         }
     }
