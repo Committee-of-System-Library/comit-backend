@@ -61,3 +61,7 @@
 | 테스트 전략, 테스트 작성 규칙 | `guides/testing-strategy.md`, `guides/README.md`, `docs/README.md` |
 | 로컬 실행, 배포, 환경 변수 | `ops/` 하위 문서와 해당 `README.md` |
 | 트랜잭션 경계, 락 순서, 커넥션 풀 설정 | `ops/transaction-boundary-convention.md`, 필요 시 `retention/concurrency-solution.md` |
+
+## 야식마차 PR 분리
+
+- [단계별 PR 구성과 검증 계획](./features/night-snack-pr-plan.md)
