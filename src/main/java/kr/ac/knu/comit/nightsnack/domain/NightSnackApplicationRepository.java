@@ -25,4 +25,7 @@ public interface NightSnackApplicationRepository extends JpaRepository<NightSnac
     List<String> findStudentNumbersByNightSnackId(@Param("nightSnackId") Long nightSnackId);
 
     Optional<NightSnackApplication> findByNightSnackIdAndStudentNumber(Long nightSnackId, String studentNumber);
+    /** OPEN 전에 조회하는 ID 하한. 미커밋·롤백으로 낮아져도 정원 초과를 만들지 않는다. */
+    @Query(value = "SELECT COALESCE(MAX(id), 0) + 1 FROM night_snack_application", nativeQuery = true)
+    long nextId();
 }
