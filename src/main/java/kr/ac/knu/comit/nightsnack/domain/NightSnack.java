@@ -44,6 +44,10 @@ public class NightSnack {
     @Column(nullable = false)
     private int remaining;
 
+    /** 신규 INSERT 경로의 즉시 확정 구간에 사용할 ID 하한. */
+    @Column(name = "id_base")
+    private Long idBase;
+
     /** 사전신청용으로 떼어 둔 정원(요구사항 4-3, 기본 10% — 생성 시 관리자가 지정). */
     @Column(name = "reserved_capacity", nullable = false)
     private int reservedCapacity;
@@ -130,6 +134,18 @@ public class NightSnack {
             throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
         }
         this.status = NightSnackStatus.OPEN;
+    }
+
+    /** 새 접수 경로는 OPEN 전이와 ID 하한 저장을 같은 배타 잠금 트랜잭션에서 수행한다. */
+    public void open(long idBase) {
+        open();
+        this.idBase = idBase;
+    }
+
+    /** ID의 빈 번호는 즉시 확정 수만 줄인다. 최종 선정은 실제 신청 행을 기준으로 수행한다. */
+    public boolean isInstantAccepted(Long applicationId) {
+        return applicationId != null && idBase != null && applicationId >= idBase
+                && applicationId - idBase < generalCapacity() / 2;
     }
 
     public void close() {

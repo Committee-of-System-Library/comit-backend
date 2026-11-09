@@ -201,6 +201,20 @@ class NightSnackTest {
         }
     }
 
+    @Test
+    @DisplayName("일반 정원 절반의 ID 구간만 즉시 확정하고 큰 ID를 정수 오버플로 없이 처리한다")
+    void acceptsOnlyFirstHalfIdRange() {
+        // given: 예약분을 제외한 일반 정원 91명, 즉시 확정은 최대 45명이다.
+        NightSnack nightSnack = NightSnack.create(DATE, 101, 10, PERIOD, null, null, null, null, null, null, false);
+        nightSnack.open(1000L);
+        // when / then: 하한 미만과 상한부터는 대기한다.
+        assertThat(nightSnack.isInstantAccepted(999L)).isFalse();
+        assertThat(nightSnack.isInstantAccepted(1000L)).isTrue();
+        assertThat(nightSnack.isInstantAccepted(1044L)).isTrue();
+        assertThat(nightSnack.isInstantAccepted(1045L)).isFalse();
+        assertThat(nightSnack.isInstantAccepted(Long.MAX_VALUE)).isFalse();
+    }
+
     @Nested
     @DisplayName("Period")
     class PeriodTest {
