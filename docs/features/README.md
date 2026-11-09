@@ -37,3 +37,6 @@ ProblemDetail 에러 응답 설계는 기능 문서가 아니라 [ADR-002](../ad
 ## 템플릿
 
 새 기능은 [feature-spec-template.md](./feature-spec-template.md)를 복사해 작성한다.
+
+- [night-snack-pr-plan.md](./night-snack-pr-plan.md)
+  야식마차 INSERT·선정 모델·스케줄러·수동 검증의 PR 분리와 의존 순서
