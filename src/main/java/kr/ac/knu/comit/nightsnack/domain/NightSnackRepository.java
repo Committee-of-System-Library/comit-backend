@@ -1,5 +1,7 @@
 package kr.ac.knu.comit.nightsnack.domain;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +12,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface NightSnackRepository extends JpaRepository<NightSnack, Long> {
+
+    /** 접수끼리는 공유하고 마감과는 배타적이다. INSERT 커밋까지 보유한다. */
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("SELECT n FROM NightSnack n WHERE n.id = :id")
+    Optional<NightSnack> findForApplication(@Param("id") Long id);
 
     Optional<NightSnack> findByNightSnackDate(LocalDate nightSnackDate);
 
