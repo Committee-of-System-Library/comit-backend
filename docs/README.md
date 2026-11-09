@@ -5,6 +5,7 @@
 ## 먼저 볼 문서
 
 - [Comit CPS (왜 만드는지 / 누구를 위한 것인지)](./features/comit-cps.md)
+- [야식마차 INSERT 접수와 스케줄러 확정 설계](./features/night-snack-async-selection.md)
 - [게시글·댓글 신고 기능 명세](./features/post-comment-report.md)
 - [SSO 2단계 회원가입 및 동적 redirectUri 기능 명세](./features/sso-registration-flow.md)
 - [API 계약 가이드](./guides/api-contract.md)
@@ -14,6 +15,7 @@
 - [SSO 인증 흐름 가이드](./guides/sso-auth-flow.md)
 - [테스트 전략 가이드](./guides/testing-strategy.md)
 - [로컬 실행 가이드](./ops/local-development.md)
+- [야식마차 로컬 수동 테스트](./guides/night-snack-manual-test.md)
 - [트랜잭션·락 구간 최소화 컨벤션](./ops/transaction-boundary-convention.md) - `@Transactional` 작성 규칙과 현재 코드 감사 결과
 - [Comit prod-like 백엔드 롤아웃 계획](./ops/comit-prod-like-backend-rollout.md)
 - [Comit SSO 연동 롤아웃 계획](./ops/comit-sso-integration-rollout.md)

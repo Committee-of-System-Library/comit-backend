@@ -1,96 +1,69 @@
-# 야식 마차(NightSnack) 선착순 신청 시스템 테스트 가이드
+# 야식마차 INSERT 접수와 스케줄러 선정 검증
 
-이 문서는 새롭게 리팩토링된 야식 마차(NightSnack) 선착순 신청 시스템의 API를 호출하고 테스트하는 방법을 안내합니다.
+직접 서버를 실행해 확인하려면 [로컬 수동 테스트](./night-snack-manual-test.md)를 따른다.
 
-## 1. 개요
-선착순 신청은 다음 3단계로 이루어집니다.
-1. **관리자**: 야식 마차 이벤트 생성 (`SCHEDULED` 상태)
-2. **관리자**: 야식 마차 신청 오픈 (`OPEN` 상태로 변경)
-3. **일반 유저**: 오픈된 야식 마차에 선착순 신청
+기준 설계는 [야식마차 비동기 선정](../features/night-snack-async-selection.md)이다.
+일반 정원은 전체 정원에서 예약분을 뺀 값이다. 일반 정원의 최대 절반은 즉시 확정되며,
+나머지는 마감 시 ID 오름차순으로 선정된다. 일반 정원보다 많은 접수 행이 저장될 수 있다.
 
-## 2. API 요청 방법 (curl 예시)
+## 자동 검증
 
-> **주의사항**:
-> - 모든 API 요청은 로그인이 필요합니다. 헤더에 유효한 세션 쿠키(`JSESSIONID`) 또는 인증 토큰을 포함해야 합니다.
-> - 아래 예시는 로컬 개발 환경(`localhost:53080`)을 기준으로 작성되었습니다.
+Docker를 실행하고 다음 명령을 사용한다. 테스트는 실제 MySQL 컨테이너를 생성한다.
 
-### 단계 1: 야식 마차 생성 (관리자 전용)
-관리자가 날짜와 정원(capacity)을 설정하여 새로운 야식 마차 이벤트를 생성합니다.
-
-**요청 (Request)**
 ```bash
-curl -X POST http://localhost:53080/admin/night-snacks \
--H "Content-Type: application/json" \
--b "JSESSIONID=관리자_세션_아이디" \
--d '{
-  "nightSnackDate": "2026-05-20",
-  "capacity": 100
-}'
+./gradlew test --tests 'kr.ac.knu.comit.nightsnack.*' --tests 'kr.ac.knu.comit.api.NightSnackApiWebTest'
+./gradlew generateApiDocs
 ```
 
-**응답 (Response)**
+구형 Testcontainers 클라이언트와 Docker 29의 API 버전이 충돌하는 환경에서는 다음처럼 실행한다.
+
+```bash
+JAVA_TOOL_OPTIONS=-Dapi.version=1.44 ./gradlew test --tests 'kr.ac.knu.comit.nightsnack.*'
+```
+
+주요 검증은 동시 접수 300건 중 100건 확정, 동일 회원 중복, 지연 커밋과 마감 경합,
+롤백·타 행사로 생긴 ID 공백, 예약분 격리, 기간 오픈·마감과 정원 0명 처리다.
+
+## API 확인
+
+1. 관리자 생성 API로 신청 기간과 정원을 지정한다. 예약분은 설정 비율로 분리된다.
+2. 기간 시작 시 스케줄러가 자동 오픈한다. 관리자 PATCH `/admin/night-snacks/{id}/open`도 사용할 수 있다.
+3. 로그인한 학생이 POST `/night-snacks/{id}/applications`를 호출한다.
+4. 아래처럼 PENDING이면 GET `/night-snacks/{id}/my-ticket`을 1초 간격으로 조회한다.
+5. ACCEPTED이면 티켓을 표시하고, REJECTED이면 탈락을 안내한다. 두 경우 모두 폴링을 끝낸다.
+
 ```json
 {
   "result": "SUCCESS",
   "data": {
-    "nightSnackId": 1
+    "applicationId": 42,
+    "selectionStatus": "PENDING",
+    "ticketToken": null
   }
 }
 ```
 
-### 단계 2: 야식 마차 오픈 (관리자 전용)
-생성된 야식 마차(예: `nightSnackId: 1`)의 신청을 받기 위해 상태를 `OPEN`으로 변경합니다.
+selectionStatus는 당락이고 기존 status는 수령 상태다. 신청 HTTP 200은 접수 완료를 뜻한다.
+일반 정원 100명에 300명이 접수하면 최종 성공은 100명, 탈락은 200명이어야 한다.
+즉시 성공한 신청은 최종 선정 후에도 성공이어야 한다. ID 공백으로 즉시 성공이 50명보다 적어도
+최종 성공은 실제 접수 행 기준으로 100명을 채워야 한다.
 
-**요청 (Request)**
-```bash
-curl -X PATCH http://localhost:53080/admin/night-snacks/1/open \
--b "JSESSIONID=관리자_세션_아이디"
-```
+## 설정과 마이그레이션
 
-**응답 (Response)**
-```json
-{
-  "result": "SUCCESS",
-  "data": null
-}
-```
+- `NIGHT_SNACK_SCHEDULER_ENABLED=true`, `NIGHT_SNACK_SCHEDULER_DELAY_MS=1000`이 기본값이다.
+- 전략 선택 설정은 제거했다. 자동 스케줄러를 끈 테스트에서는 LifecycleService.refresh를 직접 호출한다.
+- V116은 기존 신청을 ACCEPTED로 이관하고 일반 remaining 컬럼을 제거한다.
+- 이전 서버 바이너리는 remaining 컬럼에 의존하므로 마이그레이션과 새 서버·클라이언트 배포를 맞춘다.
 
-### 단계 3: 야식 마차 선착순 신청 (일반 유저)
-오픈된 야식 마차에 일반 유저가 선착순으로 신청합니다.
+## 검증 기록 (2026-11-08)
 
-**요청 (Request)**
-```bash
-curl -X POST http://localhost:53080/night-snacks/1/applications \
--b "JSESSIONID=일반유저_세션_아이디"
-```
+관련 도메인·서비스·웹 API·애플리케이션 컨텍스트 테스트 63개가 실패·스킵 없이 통과했다.
+이 중 MySQL 8.0.36 통합 테스트는 8개이며, 마감 저장 실패 시 당락 갱신 롤백과 재실행 복구를 포함한다.
+API 문서 생성과 전체 테스트 소스 컴파일도 확인했다.
 
-**응답 (Response) - 성공 시**
-```json
-{
-  "result": "SUCCESS",
-  "data": {
-    "ticketToken": "9f1c2e4a-7b8d-4c2a-9e3f-1a2b3c4d5e6f",
-    "sequence": 1,
-    "remaining": 99
-  }
-}
-```
-* `ticketToken`: 야식 수령 시 사용할 고유 QR 티켓 값입니다.
-* `sequence`: 본인의 대기 순번입니다.
-* `remaining`: 현재 남은 수량입니다.
 
-**응답 (Response) - 실패 예외 코드**
-- `EVENT_NOT_FOUND`: 존재하지 않는 야식 마차 ID
-- `EVENT_NOT_OPEN`: 아직 오픈되지 않았거나 이미 마감/종료된 경우
-- `EVENT_SOLD_OUT`: 준비된 정원이 모두 소진된 경우
-- `ALREADY_APPLIED`: 동일한 야식 마차에 이미 신청한 경우
+## PR 분리 후 검증 (2026-11-09)
 
----
-
-## 3. 테스트용 계정 안내
-`V100__dev_seed.sql`에 의해 생성된 로컬 개발용 테스트 계정을 사용하여 로그인 후 위 API를 테스트할 수 있습니다.
-
-- **관리자 계정**: `dev-admin-001`
-- **일반 유저 계정**: `dev-user-001`, `dev-user-002`
-
-(로컬 개발 환경의 인증 로그인 방식에 따라 먼저 로그인을 수행하여 쿠키를 획득한 후 테스트를 진행해 주세요.)
+INSERT 전용 Writer를 `NightSnackInsertWriter`로 독립시킨 뒤 각 코드 단계에서 야식마차 회귀 테스트와
+전체 테스트 소스 컴파일·API 문서 생성을 확인했다. 최종 단계에서는 실제 MySQL 통합 9개를 포함해
+관련 테스트 64개가 실패·스킵 없이 통과했다. 원래 V115·V116 SQL 내용은 그대로 보존했다.

@@ -91,31 +91,25 @@ public void process(NoticeListItem item) {          // ← @Transactional 없음
 크롤링과 LLM 호출은 수 초가 걸린다. 그게 트랜잭션 안에 있었다면 커넥션 8개는 공지 동기화 배치 하나에 다 먹혔을 것이다.
 **오케스트레이션 메서드는 트랜잭션이 아니고, 그 안의 DB 저장 한 줄만 트랜잭션이다.** 이게 파사드 패턴이다.
 
-### 2-2. `NightSnackApplicationService.apply()` — 임계구역만 트랜잭션
+### 2-2. `NightSnackApplicationService.apply()` — 접수와 마감의 트랜잭션 경계
 
-`src/main/java/kr/ac/knu/comit/nightsnack/service/NightSnackApplicationService.java:26`
-+ `NightSnackReservationWriter.java:44`
+신청 서비스는 인증·납부·중복을 사전 확인하고 `NightSnackInsertWriter.reserve`에 쓰기를 위임한다.
+일반 정원 카운터 UPDATE와 전략 분기를 제거하고 다음 경계로 변경했다.
 
-```java
-public ApplyResponse apply(...) {                   // ← @Transactional 없음
-    NightSnack nightSnack = ...;                    // 사전 검증 (읽기)
-    if (...requiresStudentCouncilFee...) throw ...; // 학생회비 확인
-    if (...existsByMemberIdAndNightSnackId...) throw ...; // 중복 확인
-    Member member = memberService.findMemberOrThrow(memberId);
-
-    reservationStrategy.reserve(member, nightSnack); // ← 여기만 트랜잭션 (decrement → INSERT)
-
-    int remaining = ...;                             // 사후 조회
-}
+```text
+신청: 행사 FOR SHARE → 최신 OPEN·기간 확인 → 신청 INSERT → COMMIT
+마감: 행사 FOR UPDATE → COUNT → 정원까지 ID 조회 → 최종 당락 일괄 UPDATE → CLOSED → COMMIT
 ```
 
-`NightSnackReservationWriter`에는 이유가 Javadoc으로 이미 적혀 있다.
+신청끼리는 행사 공유 잠금을 함께 보유할 수 있다. 마감의 배타 잠금은 진행 중 신청의 커밋·롤백을 기다려
+결과 공개 후 더 작은 ID가 뒤늦게 나타나는 것을 막는다. 이 게이트 잠금은 C2의 일반적인 마지막 쓰기 원칙에
+앞서 필요한 접수·마감 정합성 조건이다. 모든 경로에서 **행사 → 신청** 순서로 잠금을 잡는다(C3의 도메인 예외).
+사전신청 등록과 관리자 오픈도 동일 행사 잠금을 사용한다.
 
-> 핫 row 락(remaining 행)은 `decrementRemaining`에서 잡혀 커밋까지 유지되므로,
-> 이 트랜잭션 안에는 (성공 경로 기준) `decrement → INSERT` 외 **어떤 조회도 두지 않는다.**
-
-별도 빈으로 분리한 것도 의도된 것이다 — `@Transactional`은 스프링 프록시로만 적용되므로
-같은 클래스 안에서 부르면(self-invocation) 짧은 트랜잭션이 생기지 않는다.
+별도 LifecycleService 빈이 READ COMMITTED 쓰기 트랜잭션을 소유한다.
+관리자 서비스의 open은 NOT_SUPPORTED로 위임해 클래스의 readOnly 트랜잭션을 전파하지 않는다.
+최종 당락은 C4에 따라 단건 UPDATE 루프 대신 한 번의 일괄 UPDATE로 저장한다.
+상세 정책과 MySQL 검증은 [야식마차 비동기 선정](../features/night-snack-async-selection.md)을 따른다.
 
 ---
 
@@ -597,7 +591,7 @@ JWKS 조회나 토큰 introspection 방식으로 교체되는 순간 — 즉 `ve
 - `spring.jpa.open-in-view: false` — 커넥션을 뷰 렌더링까지 붙잡는 최대 footgun이 **이미 꺼져 있다.**
 - `NoticeChatService` — RAG/LLM 호출. `@Transactional`이 없고 세마포어로 동시성을 따로 제한한다. 의도된 설계.
 - `OfficialNoticeService.searchNotices` — 벡터 검색(임베딩 API)이 트랜잭션 밖에 있다. 정상.
-- `NightSnackReservationWriter`, `TimeBasedReservationStrategy` — §2-2. 이 컨벤션의 레퍼런스 구현.
+- `NightSnackInsertWriter`, `NightSnackLifecycleService` — §2-2. 접수·마감 게이트와 짧은 쓰기 트랜잭션.
 - 600 Tomcat threads : 8 connections — 의도된 bulkhead이지 결함이 아니다.
 
 ---
@@ -722,7 +716,7 @@ SHOW GLOBAL STATUS LIKE 'Innodb_row_lock_time_avg';
 
 L1의 "요청당 커넥션 1개"는 **실측하지 못했다.** Testcontainers 기반 통합 테스트를 작성했으나
 이 개발 환경에서 테스트 JVM이 Docker를 찾지 못해(`Could not find a valid Docker environment`)
-기존 `NightSnackConcurrencyIntegrationTest`를 포함한 모든 통합 테스트가 skip된다.
+기존 일부 통합 테스트는 Docker가 없으면 skip되지만, `NightSnackAsyncSelectionIntegrationTest`는 실제 DB 검증을 필수로 수행한다.
 그래서 검증하지 못한 테스트는 넣지 않고, 어노테이션 부재를 단언하는 결정적 가드로 대체했다.
 
 Docker가 되는 환경에서 아래를 확인하면 이 문서의 L1 주장이 실증된다.
