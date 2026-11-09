@@ -26,20 +26,25 @@ public class NightSnackFixture {
         return nightSnack;
     }
 
-    /** OPEN 상태의 야식 마차. remaining을 명시적으로 지정한다. */
-    public static NightSnack openNightSnack(Long id, int capacity, int remaining) {
+    /** OPEN 상태의 야식 마차. */
+    public static NightSnack openNightSnack(Long id, int capacity) {
         NightSnack nightSnack = scheduledNightSnack(id, capacity);
         ReflectionTestUtils.setField(nightSnack, "status", NightSnackStatus.OPEN);
-        ReflectionTestUtils.setField(nightSnack, "remaining", remaining);
+        return nightSnack;
+    }
+
+    /** 즉시 확정 ID 구간을 가진 OPEN 행사. */
+    public static NightSnack instantSelectionNightSnack(Long id, int capacity, long idBase) {
+        NightSnack nightSnack = openNightSnack(id, capacity);
+        ReflectionTestUtils.setField(nightSnack, "idBase", idBase);
         return nightSnack;
     }
 
     /** OPEN 상태의 학생회비 납부자 전용 야식 마차. */
-    public static NightSnack openNightSnackRequiringStudentCouncilFee(Long id, int capacity, int remaining) {
+    public static NightSnack openNightSnackRequiringStudentCouncilFee(Long id, int capacity) {
         NightSnack nightSnack = NightSnack.create(TEST_DATE, capacity, 0, defaultPeriod(), null, null, null, null, null, null, true);
         ReflectionTestUtils.setField(nightSnack, "id", id);
         ReflectionTestUtils.setField(nightSnack, "status", NightSnackStatus.OPEN);
-        ReflectionTestUtils.setField(nightSnack, "remaining", remaining);
         return nightSnack;
     }
 

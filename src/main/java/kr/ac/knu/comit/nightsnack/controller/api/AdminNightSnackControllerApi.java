@@ -84,7 +84,7 @@ public interface AdminNightSnackControllerApi {
     @ApiDoc(
             summary = "야식 마차 신청 오픈",
             description = "SCHEDULED 상태의 야식 마차를 OPEN으로 전환해 선착순 신청을 받기 시작합니다. "
-                    + "오픈 트리거를 관리자 수동 토글로 둘지 17:30 스케줄러로 둘지는 미확정입니다.",
+                    + "기간 시작 시 스케줄러가 자동 오픈하며, 이 API로 수동 오픈할 수도 있습니다.",
             descriptions = {
                     @FieldDesc(name = "nightSnackId", value = "오픈할 야식 마차 ID입니다.")
             },
@@ -214,16 +214,17 @@ public interface AdminNightSnackControllerApi {
 
     @ApiDoc(
             summary = "야식 마차 신청 성공 여부 조회",
-            description = "관리자가 특정 야식 마차에 대해 학번으로 신청 성공 여부를 조회합니다. "
+            description = "관리자가 학번으로 신청 당락을 조회합니다. PENDING과 REJECTED는 applied: false입니다. "
                     + "신청 내역이 없으면 applied: false를 반환하며, 예외를 던지지 않습니다. "
                     + "단, 서버 시간이 수령 마감 시각(pickupDeadline) 이상이면 신청 내역이 없어도 applied: true를 반환합니다.",
             descriptions = {
                     @FieldDesc(name = "nightSnackId", value = "조회할 야식 마차 ID입니다."),
                     @FieldDesc(name = "studentNumber", value = "조회할 학번입니다."),
-                    @FieldDesc(name = "applied", value = "신청 성공 여부입니다. 신청 내역이 있거나 수령 마감 시각 이후이면 true."),
+                    @FieldDesc(name = "applied", value = "신청 성공 여부입니다. ACCEPTED 신청이면 true. 신청 내역이 없는 경우에는 기존 수령 마감 이후 현장 배부 정책을 적용합니다."),
+                    @FieldDesc(name = "selectionStatus", value = "신청 당락입니다. PENDING / ACCEPTED / REJECTED. 신청 내역이 없으면 null."),
                     @FieldDesc(name = "source", value = "신청 구분입니다. GENERAL 또는 RESERVED. 신청 내역이 없으면 null."),
                     @FieldDesc(name = "status", value = "수령 상태입니다. 신청 내역이 없으면 null."),
-                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다. 신청 내역이 없으면 null.")
+                    @FieldDesc(name = "ticketToken", value = "ACCEPTED 신청에만 제공하는 QR 티켓입니다.")
             },
             errors = {
                     @ApiError(code = "FORBIDDEN", when = "관리자 권한이 없는 사용자가 요청할 때"),
@@ -237,6 +238,7 @@ public interface AdminNightSnackControllerApi {
                                 "applied": true,
                                 "source": "GENERAL",
                                 "status": "PENDING",
+                                "selectionStatus": "ACCEPTED",
                                 "ticketToken": "9f1c2e4a-7b8d-4c2a-9e3f-1a2b3c4d5e6f"
                               }
                             }

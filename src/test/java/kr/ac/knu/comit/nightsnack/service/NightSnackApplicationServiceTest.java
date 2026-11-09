@@ -44,33 +44,30 @@ class NightSnackApplicationServiceTest {
     private MemberService memberService;
 
     @Mock
-    private ReservationStrategy reservationStrategy;
+    private NightSnackInsertWriter reservationWriter;
 
     @InjectMocks
     private NightSnackApplicationService nightSnackApplicationService;
 
     @Test
-    @DisplayName("선점 성공하면 티켓 토큰과 순번을 반환한다")
+    @DisplayName("접수 성공하면 선정 대기 상태를 반환한다")
     void returnsTicketAndSequenceWhenReservationSucceeds() {
         // given
-        NightSnack beforeDecrement = NightSnackFixture.openNightSnack(10L, 100, 64);
-        NightSnack afterDecrement = NightSnackFixture.openNightSnack(10L, 100, 63);
+        NightSnack nightSnack = NightSnackFixture.openNightSnack(10L, 100);
         Member member = MemberFixture.member(1L, "applicant");
-        NightSnackApplication application = NightSnackApplication.general(member, beforeDecrement);
-        given(nightSnackRepository.findById(10L))
-                .willReturn(Optional.of(beforeDecrement), Optional.of(afterDecrement));
+        NightSnackApplication application = NightSnackApplication.general(member, nightSnack);
+        given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
         given(nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(1L, 10L)).willReturn(false);
         given(memberService.findMemberOrThrow(1L)).willReturn(member);
-        given(reservationStrategy.reserve(any(Member.class), any(NightSnack.class))).willReturn(application);
+        given(reservationWriter.reserve(any(Member.class), org.mockito.ArgumentMatchers.eq(10L))).willReturn(application);
 
         // when
         ApplyResponse response = nightSnackApplicationService.apply(10L, 1L, null);
 
         // then
-        assertThat(response.sequence()).isEqualTo(37);
-        assertThat(response.remaining()).isEqualTo(63);
-        assertThat(response.ticketToken()).isNotBlank();
-        then(reservationStrategy).should().reserve(any(Member.class), any(NightSnack.class));
+        assertThat(response.selectionStatus()).isEqualTo(kr.ac.knu.comit.nightsnack.domain.NightSnackSelectionStatus.PENDING);
+        assertThat(response.ticketToken()).isNull();
+        then(reservationWriter).should().reserve(any(Member.class), org.mockito.ArgumentMatchers.eq(10L));
     }
 
     @Test
@@ -85,7 +82,7 @@ class NightSnackApplicationServiceTest {
                 .extracting("errorCode")
                 .isEqualTo(NightSnackErrorCode.EVENT_NOT_FOUND);
 
-        then(reservationStrategy).should(never()).reserve(any(), any());
+        then(reservationWriter).should(never()).reserve(any(), any());
     }
 
     @Test
@@ -93,7 +90,7 @@ class NightSnackApplicationServiceTest {
     void throwsWhenAlreadyAppliedBeforeReserve() {
         // given
         given(nightSnackRepository.findById(10L))
-                .willReturn(Optional.of(NightSnackFixture.openNightSnack(10L, 100, 100)));
+                .willReturn(Optional.of(NightSnackFixture.openNightSnack(10L, 100)));
         given(nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(1L, 10L)).willReturn(true);
 
         // when & then
@@ -103,31 +100,29 @@ class NightSnackApplicationServiceTest {
                 .isEqualTo(NightSnackErrorCode.ALREADY_APPLIED);
 
         then(memberService).should(never()).findMemberOrThrow(any());
-        then(reservationStrategy).should(never()).reserve(any(), any());
+        then(reservationWriter).should(never()).reserve(any(), any());
     }
 
     @Test
     @DisplayName("학생회비 납부자 전용 야식 마차는 is_paid=1인 학번만 신청할 수 있다")
     void appliesWhenStudentCouncilFeePaid() {
         // given
-        NightSnack beforeDecrement = NightSnackFixture.openNightSnackRequiringStudentCouncilFee(10L, 100, 64);
-        NightSnack afterDecrement = NightSnackFixture.openNightSnackRequiringStudentCouncilFee(10L, 100, 63);
+        NightSnack nightSnack = NightSnackFixture.openNightSnackRequiringStudentCouncilFee(10L, 100);
         Member member = MemberFixture.member(1L, "applicant");
-        NightSnackApplication application = NightSnackApplication.general(member, beforeDecrement);
-        given(nightSnackRepository.findById(10L))
-                .willReturn(Optional.of(beforeDecrement), Optional.of(afterDecrement));
+        NightSnackApplication application = NightSnackApplication.general(member, nightSnack);
+        given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
         given(studentCouncilFeeRepository.existsPaidByStudentNumber("20230001")).willReturn(true);
         given(nightSnackApplicationRepository.existsByMemberIdAndNightSnackId(1L, 10L)).willReturn(false);
         given(memberService.findMemberOrThrow(1L)).willReturn(member);
-        given(reservationStrategy.reserve(any(Member.class), any(NightSnack.class))).willReturn(application);
+        given(reservationWriter.reserve(any(Member.class), org.mockito.ArgumentMatchers.eq(10L))).willReturn(application);
 
         // when
         ApplyResponse response = nightSnackApplicationService.apply(10L, 1L, "20230001");
 
         // then
-        assertThat(response.sequence()).isEqualTo(37);
+        assertThat(response.selectionStatus()).isEqualTo(kr.ac.knu.comit.nightsnack.domain.NightSnackSelectionStatus.PENDING);
         then(studentCouncilFeeRepository).should().existsPaidByStudentNumber("20230001");
-        then(reservationStrategy).should().reserve(any(Member.class), any(NightSnack.class));
+        then(reservationWriter).should().reserve(any(Member.class), org.mockito.ArgumentMatchers.eq(10L));
     }
 
     @Test
@@ -135,7 +130,7 @@ class NightSnackApplicationServiceTest {
     void throwsWhenStudentCouncilFeeNotPaid() {
         // given
         given(nightSnackRepository.findById(10L))
-                .willReturn(Optional.of(NightSnackFixture.openNightSnackRequiringStudentCouncilFee(10L, 100, 100)));
+                .willReturn(Optional.of(NightSnackFixture.openNightSnackRequiringStudentCouncilFee(10L, 100)));
         given(studentCouncilFeeRepository.existsPaidByStudentNumber("20230001")).willReturn(false);
 
         // when & then
@@ -146,6 +141,6 @@ class NightSnackApplicationServiceTest {
 
         then(nightSnackApplicationRepository).should(never()).existsByMemberIdAndNightSnackId(any(), any());
         then(memberService).should(never()).findMemberOrThrow(any());
-        then(reservationStrategy).should(never()).reserve(any(), any());
+        then(reservationWriter).should(never()).reserve(any(), any());
     }
 }

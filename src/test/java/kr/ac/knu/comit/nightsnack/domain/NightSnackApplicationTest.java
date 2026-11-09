@@ -24,7 +24,7 @@ class NightSnackApplicationTest {
         void createsPendingGeneralApplication() {
             // given
             Member member = MemberFixture.member(1L, "applicant");
-            NightSnack nightSnack = NightSnackFixture.openNightSnack(10L, 100, 100);
+            NightSnack nightSnack = NightSnackFixture.openNightSnack(10L, 100);
 
             // when
             NightSnackApplication application = NightSnackApplication.general(member, nightSnack);
@@ -42,7 +42,7 @@ class NightSnackApplicationTest {
         @Test
         @DisplayName("회원이 null이면 INVALID_REQUEST가 발생한다")
         void throwsWhenMemberIsNull() {
-            NightSnack nightSnack = NightSnackFixture.openNightSnack(10L, 100, 100);
+            NightSnack nightSnack = NightSnackFixture.openNightSnack(10L, 100);
 
             assertThatThrownBy(() -> NightSnackApplication.general(null, nightSnack))
                     .isInstanceOf(BusinessException.class)
@@ -92,8 +92,8 @@ class NightSnackApplicationTest {
         @DisplayName("PENDING 상태에서 confirm하면 CONFIRMED로 전이하고 confirmedAt을 기록한다")
         void transitionsFromPendingToConfirmed() {
             // given
-            NightSnackApplication application = NightSnackApplication.general(
-                    MemberFixture.member(1L, "applicant"), NightSnackFixture.openNightSnack(10L, 100, 100));
+            NightSnackApplication application = NightSnackApplication.reserved(
+                    NightSnackFixture.reservedNightSnack(10L, 100, 10), "2028000001");
 
             // when
             application.confirm();
@@ -107,8 +107,8 @@ class NightSnackApplicationTest {
         @DisplayName("이미 CONFIRMED된 신청을 다시 confirm하면 INVALID_REQUEST가 발생한다")
         void throwsWhenAlreadyConfirmed() {
             // given
-            NightSnackApplication application = NightSnackApplication.general(
-                    MemberFixture.member(1L, "applicant"), NightSnackFixture.openNightSnack(10L, 100, 100));
+            NightSnackApplication application = NightSnackApplication.reserved(
+                    NightSnackFixture.reservedNightSnack(10L, 100, 10), "2028000001");
             application.confirm();
 
             // when & then
@@ -118,4 +118,29 @@ class NightSnackApplicationTest {
                     .isEqualTo(CommonErrorCode.INVALID_REQUEST);
         }
     }
+    @Test
+    @DisplayName("선정 대기와 탈락 신청은 QR 수령을 허용하지 않는다")
+    void rejectsPickupWithoutSelection() {
+        // given: 아직 선정되지 않은 일반 신청을 준비한다.
+        NightSnackApplication application = NightSnackApplication.general(
+                MemberFixture.member(1L, "applicant"), NightSnackFixture.openNightSnack(10L, 100));
+        // when / then: 대기 및 탈락 모두 수령할 수 없다.
+        assertThat(application.getAvailableTicketToken()).isNull();
+        assertThatThrownBy(application::confirm).isInstanceOf(BusinessException.class);
+        org.springframework.test.util.ReflectionTestUtils.setField(application, "selectionStatus", NightSnackSelectionStatus.REJECTED);
+        assertThatThrownBy(application::confirm).isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("즉시 확정 구간의 신청은 추가 갱신 없이 티켓을 제공한다")
+    void providesTicketForInstantWinner() {
+        // given: 즉시 확정 구간 안의 신청을 준비한다.
+        NightSnack nightSnack = NightSnackFixture.instantSelectionNightSnack(10L, 100, 1000L);
+        NightSnackApplication application = NightSnackFixture.generalApplication(
+                1000L, nightSnack, MemberFixture.member(1L, "applicant"));
+        // when / then: 즉시 확정이 유지되고 티켓을 제공한다.
+        assertThat(application.getSelectionStatus()).isEqualTo(NightSnackSelectionStatus.ACCEPTED);
+        assertThat(application.getAvailableTicketToken()).isNotBlank();
+    }
+
 }

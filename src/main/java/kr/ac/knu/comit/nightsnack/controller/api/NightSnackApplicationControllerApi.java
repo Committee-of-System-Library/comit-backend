@@ -76,11 +76,12 @@ public interface NightSnackApplicationControllerApi {
     @ApiDoc(
             summary = "내 티켓 조회",
             description = "로그인한 사용자가 지정한 야식 마차에 신청한 티켓 정보를 조회합니다. "
-                    + "ticketToken을 QR 코드로 렌더링해 수령 시 제시합니다.",
+                    + "selectionStatus가 PENDING이면 이 API를 폴링하고, ACCEPTED일 때만 ticketToken을 QR로 표시합니다. REJECTED이면 탈락입니다.",
             descriptions = {
                     @FieldDesc(name = "nightSnackId", value = "조회할 야식 마차 ID입니다."),
                     @FieldDesc(name = "applicationId", value = "신청 ID입니다."),
-                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다."),
+                    @FieldDesc(name = "ticketToken", value = "ACCEPTED일 때만 제공하는 QR 티켓입니다. 나머지는 null입니다."),
+                    @FieldDesc(name = "selectionStatus", value = "신청 당락입니다. PENDING / ACCEPTED / REJECTED. status(수령 상태)와 별개입니다."),
                     @FieldDesc(name = "status", value = "티켓 상태입니다. (PENDING / CONFIRMED / NO_SHOW)"),
                     @FieldDesc(name = "nightSnackDate", value = "야식 마차 날짜입니다."),
                     @FieldDesc(name = "menu", value = "제공 메뉴입니다."),
@@ -100,6 +101,7 @@ public interface NightSnackApplicationControllerApi {
                                 "applicationId": 42,
                                 "ticketToken": "9f1c2e4a-7b8d-4c2a-9e3f-1a2b3c4d5e6f",
                                 "status": "PENDING",
+                                "selectionStatus": "ACCEPTED",
                                 "nightSnackDate": "2026-06-03",
                                 "menu": "떡볶이, 순대, 튀김",
                                 "pickupLocation": "학생회관 1층 로비",
@@ -119,18 +121,18 @@ public interface NightSnackApplicationControllerApi {
 
     @ApiDoc(
             summary = "야식 마차 선착순 신청",
-            description = "지정한 야식 마차에 선착순 신청합니다. 신청 성공 시 QR 수령 티켓 토큰과 신청 순번을 반환합니다. "
+            description = "지정한 야식 마차에 신청을 접수합니다. 일반 정원의 최대 50%는 즉시 ACCEPTED, 이후는 PENDING입니다. 스케줄러가 마감 후 ID 순으로 최종 선정합니다. "
                     + "동일 야식 마차에 1인 1회만 신청할 수 있습니다.",
             descriptions = {
                     @FieldDesc(name = "nightSnackId", value = "신청할 야식 마차 ID입니다."),
-                    @FieldDesc(name = "ticketToken", value = "QR 수령 티켓 값입니다."),
-                    @FieldDesc(name = "sequence", value = "몇 번째 신청자인지를 나타내는 순번입니다."),
-                    @FieldDesc(name = "remaining", value = "응답 시점의 잔여 수량입니다.")
+                    @FieldDesc(name = "ticketToken", value = "ACCEPTED일 때만 제공하는 QR 티켓입니다. 나머지는 null입니다."),
+                    @FieldDesc(name = "selectionStatus", value = "신청 당락입니다. PENDING / ACCEPTED / REJECTED. status(수령 상태)와 별개입니다."),
+                    @FieldDesc(name = "applicationId", value = "접수된 신청 ID입니다. 내 티켓 조회로 최종 결과를 확인합니다.")
             },
             errors = {
                     @ApiError(code = "EVENT_NOT_FOUND", when = "존재하지 않는 야식 마차 ID로 요청할 때"),
                     @ApiError(code = "EVENT_NOT_OPEN", when = "아직 오픈되지 않았거나 마감된 야식 마차에 신청할 때"),
-                    @ApiError(code = "EVENT_SOLD_OUT", when = "정원이 모두 소진되어 마감되었을 때"),
+                    @ApiError(code = "EVENT_SOLD_OUT", when = "일반 신청 정원이 0명일 때"),
                     @ApiError(code = "ALREADY_APPLIED", when = "이미 신청한 야식 마차에 다시 신청할 때"),
                     @ApiError(code = "STUDENT_COUNCIL_FEE_REQUIRED", when = "학생회비 납부자 전용 야식 마차에서 로그인 회원의 학번이 납부 상태가 아닐 때")
             },
@@ -139,9 +141,9 @@ public interface NightSnackApplicationControllerApi {
                             {
                               "result": "SUCCESS",
                               "data": {
-                                "ticketToken": "9f1c2e4a-7b8d-4c2a-9e3f-1a2b3c4d5e6f",
-                                "sequence": 37,
-                                "remaining": 63
+                                "applicationId": 42,
+                                "selectionStatus": "PENDING",
+                                "ticketToken": null
                               }
                             }
                             """

@@ -38,6 +38,7 @@ class NightSnackQueryServiceTest {
     @Mock
     private StudentCouncilFeeRepository studentCouncilFeeRepository;
 
+
     @InjectMocks
     private NightSnackQueryService nightSnackQueryService;
 
@@ -48,10 +49,12 @@ class NightSnackQueryServiceTest {
         @Test
         @DisplayName("기준일 당일을 포함해 가장 가까운 야식 마차를 반환한다")
         void returnsNearestUpcoming() {
-            NightSnack nightSnack = NightSnackFixture.openNightSnack(11L, 100, 63);
+            NightSnack nightSnack = NightSnackFixture.openNightSnack(11L, 100);
             given(nightSnackRepository
                     .findFirstByNightSnackDateGreaterThanEqualOrderByNightSnackDateAsc(BASE_DATE))
                     .willReturn(Optional.of(nightSnack));
+            given(nightSnackApplicationRepository.countByNightSnackIdAndSource(11L,
+                    kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationSource.GENERAL)).willReturn(37L);
 
             NightSnackResponse response = nightSnackQueryService.getUpcomingFrom(BASE_DATE);
 
@@ -64,7 +67,7 @@ class NightSnackQueryServiceTest {
         void passesBaseDateToRepository() {
             given(nightSnackRepository
                     .findFirstByNightSnackDateGreaterThanEqualOrderByNightSnackDateAsc(BASE_DATE))
-                    .willReturn(Optional.of(NightSnackFixture.openNightSnack(11L, 100, 63)));
+                    .willReturn(Optional.of(NightSnackFixture.openNightSnack(11L, 100)));
 
             nightSnackQueryService.getUpcomingFrom(BASE_DATE);
 

@@ -9,8 +9,8 @@ import kr.ac.knu.comit.main.service.MainService;
 import kr.ac.knu.comit.nightsnack.service.AdminNightSnackService;
 import kr.ac.knu.comit.nightsnack.service.NightSnackApplicationService;
 import kr.ac.knu.comit.nightsnack.service.NightSnackQueryService;
-import kr.ac.knu.comit.nightsnack.service.NightSnackReservationWriter;
-import kr.ac.knu.comit.nightsnack.service.TimeBasedReservationStrategy;
+import kr.ac.knu.comit.nightsnack.service.NightSnackInsertWriter;
+import kr.ac.knu.comit.nightsnack.service.NightSnackLifecycleService;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.ac.knu.comit.member.service.MemberActivityService;
 import kr.ac.knu.comit.member.domain.MemberRepository;
@@ -31,6 +31,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(properties = {
         "SPRING_PORT=0",
+        "comit.night-snack.scheduler-enabled=false",
         "MAX_FILE_SIZE=10MB",
         "MAX_REQUEST_SIZE=10MB",
         "DB_URL=jdbc:mysql://localhost:3306/test",
@@ -119,10 +120,10 @@ class ComitApplicationTests {
     NightSnackQueryService nightSnackQueryService;
 
     @MockitoBean
-    NightSnackReservationWriter nightSnackReservationWriter;
+    NightSnackInsertWriter nightSnackReservationWriter;
 
     @MockitoBean
-    TimeBasedReservationStrategy timeBasedReservationStrategy;
+    NightSnackLifecycleService nightSnackLifecycleService;
 
     @Test
     void contextLoads() {

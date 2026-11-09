@@ -31,7 +31,7 @@ class NightSnackInsertWriterTest {
         var now = java.time.LocalDateTime.now(clock);
         NightSnack event = NightSnack.create(LocalDate.now(clock), 100, 0,
                 Period.of(now.minusHours(1), now), null, null, null, null, null, null, false);
-        event.open();
+        event.open(1L);
         given(repository.findForApplication(10L)).willReturn(Optional.of(event));
         var writer = new NightSnackInsertWriter(repository, applications, clock);
         // when / then: 시간 경계에서 새 접수는 허용하지 않는다.

@@ -3,6 +3,8 @@ package kr.ac.knu.comit.nightsnack.domain;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -25,7 +27,27 @@ public interface NightSnackApplicationRepository extends JpaRepository<NightSnac
     List<String> findStudentNumbersByNightSnackId(@Param("nightSnackId") Long nightSnackId);
 
     Optional<NightSnackApplication> findByNightSnackIdAndStudentNumber(Long nightSnackId, String studentNumber);
-    /** OPEN 전에 조회하는 ID 하한. 미커밋·롤백으로 낮아져도 정원 초과를 만들지 않는다. */
+
+    /** OPEN 전에만 조회한다. 실제 다음 ID보다 작아도 즉시 확정 구간이 줄어들 뿐이다. */
     @Query(value = "SELECT COALESCE(MAX(id), 0) + 1 FROM night_snack_application", nativeQuery = true)
     long nextId();
+
+    long countByNightSnackIdAndSource(Long nightSnackId, NightSnackApplicationSource source);
+
+    @Query("""
+            SELECT a.id FROM NightSnackApplication a
+            WHERE a.nightSnack.id = :nightSnackId
+              AND a.source = kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationSource.GENERAL
+            ORDER BY a.id ASC
+            """)
+    List<Long> findGeneralCandidateIds(@Param("nightSnackId") Long nightSnackId, Pageable pageable);
+
+    /** 이미 확정된 기존 데이터는 보존하고, 대기 신청을 한 번의 UPDATE로 최종 선정한다. */
+    @Modifying(flushAutomatically = true)
+    @Query(value = """
+            UPDATE night_snack_application
+            SET selection_status = CASE WHEN id <= :lastAcceptedId THEN 'ACCEPTED' ELSE 'REJECTED' END
+            WHERE night_snack_id = :nightSnackId AND source = 'GENERAL' AND selection_status = 'PENDING'
+            """, nativeQuery = true)
+    int finalizeSelections(@Param("nightSnackId") Long nightSnackId, @Param("lastAcceptedId") long lastAcceptedId);
 }

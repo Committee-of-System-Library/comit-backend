@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.NightSnackErrorCode;
 import kr.ac.knu.comit.nightsnack.domain.NightSnack;
+import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationSource;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationRepository;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackRepository;
@@ -34,7 +35,8 @@ public class NightSnackQueryService {
         NightSnack nightSnack = nightSnackRepository
                 .findFirstByNightSnackDateGreaterThanEqualOrderByNightSnackDateAsc(date)
                 .orElseThrow(() -> new BusinessException(NightSnackErrorCode.EVENT_NOT_FOUND));
-        return NightSnackResponse.from(nightSnack);
+        return NightSnackResponse.from(nightSnack, nightSnackApplicationRepository
+                .countByNightSnackIdAndSource(nightSnack.getId(), NightSnackApplicationSource.GENERAL));
     }
 
     public MyTicketResponse getMyTicket(Long nightSnackId, Long memberId, String name) {
