@@ -15,17 +15,7 @@ import kr.ac.knu.comit.global.domain.Period;
 import kr.ac.knu.comit.global.exception.BusinessException;
 import kr.ac.knu.comit.global.exception.CommonErrorCode;
 
-/**
- * 선착순 신청 야식 마차(하루 단위). Discussion #96의 "모델 A"에 해당하며,
- * 정원과 잔여 수량을 DB 레벨에서 직접 관리한다.
- *
- * <p>동시성 처리는 "방안 1 — DB 원자적 UPDATE 선점"을 따른다. 즉 잔여 수량 감소는
- * 엔티티 setter가 아니라 {@link NightSnackRepository#decrementRemaining(Long)} 의 단일
- * 원자적 UPDATE로 처리한다. 이 엔티티의 {@code remaining} 필드는 조회/표시용 스냅샷이다.
- *
- * <p>{@link Period}는 오픈·마감 시각을 담는다. 스케줄러 또는 관리자가 이 시각을 기준으로
- * {@link #open()}/{@link #close()}를 호출해 상태를 전이한다.
- */
+/** 야식마차의 정원, 신청 기간과 접수 상태. 일반 잔여 수량은 신청 건수로 조회한다. */
 @Entity
 @Table(name = "night_snack")
 public class NightSnack {
@@ -40,11 +30,7 @@ public class NightSnack {
     @Column(nullable = false)
     private int capacity;
 
-    /** 일반 선착순 잔여 수량(= 일반분 {@code capacity - reservedCapacity} 의 잔여). 원자적 UPDATE로 감소한다. */
-    @Column(nullable = false)
-    private int remaining;
-
-    /** 신규 INSERT 경로의 즉시 확정 구간에 사용할 ID 하한. */
+    /** OPEN 전 저장한 신청 ID 하한. 최대 50%의 즉시 확정 구간에만 사용한다. */
     @Column(name = "id_base")
     private Long idBase;
 
@@ -52,7 +38,7 @@ public class NightSnack {
     @Column(name = "reserved_capacity", nullable = false)
     private int reservedCapacity;
 
-    /** 예약분 잔여 수량. 사전신청은 오픈 전 단일 관리자 흐름이라 일반분과 달리 원자적 UPDATE 없이 엔티티로 감소한다. */
+    /** 예약분 잔여 수량. 행사 배타 잠금을 보유한 사전신청 트랜잭션에서 감소한다. */
     @Column(name = "reserved_remaining", nullable = false)
     private int reservedRemaining;
 
@@ -111,7 +97,6 @@ public class NightSnack {
         nightSnack.capacity = capacity;
         nightSnack.reservedCapacity = reservedCapacity;
         nightSnack.reservedRemaining = reservedCapacity;
-        nightSnack.remaining = capacity - reservedCapacity;
         nightSnack.period = period;
         nightSnack.status = NightSnackStatus.SCHEDULED;
         nightSnack.title = title;
@@ -125,27 +110,13 @@ public class NightSnack {
         return nightSnack;
     }
 
-    /**
-     * 신청 오픈. SCHEDULED → OPEN 전이.
-     * 스케줄러가 {@code period.openAt} 시각에 호출하거나, 관리자가 수동으로 호출한다.
-     */
-    public void open() {
+    /** OPEN 전이와 ID 하한 저장은 행사 배타 잠금을 보유한 같은 트랜잭션에서 수행한다. */
+    public void open(long idBase) {
         if (this.status != NightSnackStatus.SCHEDULED) {
             throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
         }
         this.status = NightSnackStatus.OPEN;
-    }
-
-    /** 새 접수 경로는 OPEN 전이와 ID 하한 저장을 같은 배타 잠금 트랜잭션에서 수행한다. */
-    public void open(long idBase) {
-        open();
         this.idBase = idBase;
-    }
-
-    /** ID의 빈 번호는 즉시 확정 수만 줄인다. 최종 선정은 실제 신청 행을 기준으로 수행한다. */
-    public boolean isInstantAccepted(Long applicationId) {
-        return applicationId != null && idBase != null && applicationId >= idBase
-                && applicationId - idBase < generalCapacity() / 2;
     }
 
     public void close() {
@@ -169,25 +140,19 @@ public class NightSnack {
         return capacity - reservedCapacity;
     }
 
-    /**
-     * 사전신청으로 예약분을 {@code count} 만큼 선점한다(요구사항 4-3).
-     *
-     * <p>오픈 전 단일 관리자가 호출하는 흐름이라 경합이 없어 엔티티 필드 감소(JPA 변경 감지)로 처리한다.
-     * 일반분({@link NightSnackRepository#decrementRemaining})과 달리 원자적 UPDATE를 쓰지 않는다.
-     *
-     * @return 예약 잔여분을 넘기지 않고 선점에 성공하면 {@code true}.
-     */
+    /** ID의 빈 번호는 즉시 확정 수만 줄인다. 최종 선정은 실제 신청 행을 정렬해 수행한다. */
+    public boolean isInstantAccepted(Long applicationId) {
+        return applicationId != null && idBase != null && applicationId >= idBase
+                && applicationId - idBase < generalCapacity() / 2;
+    }
+
+    /** 관리자 예약 등록은 행사 배타 잠금을 보유한 상태에서 호출한다. */
     public boolean reserve(int count) {
         if (count <= 0 || count > reservedRemaining) {
             return false;
         }
         this.reservedRemaining -= count;
         return true;
-    }
-
-    /** 신청 순번(몇 번째) 계산용. 원자적 UPDATE 직후 갱신된 remaining 기준으로 호출한다. 일반분 기준 순번이다. */
-    public int sequenceFromRemaining() {
-        return generalCapacity() - remaining;
     }
 
     public Long getId() {
@@ -200,10 +165,6 @@ public class NightSnack {
 
     public int getCapacity() {
         return capacity;
-    }
-
-    public int getRemaining() {
-        return remaining;
     }
 
     public int getReservedCapacity() {

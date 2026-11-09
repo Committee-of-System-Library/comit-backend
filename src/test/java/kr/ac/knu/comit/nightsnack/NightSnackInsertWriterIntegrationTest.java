@@ -59,7 +59,7 @@ class NightSnackInsertWriterIntegrationTest {
         LocalDateTime now = LocalDateTime.now();
         NightSnack event = NightSnack.create(LocalDate.of(2037, 1, 1), 2, 0,
                 Period.of(now.minusMinutes(1), now.plusHours(1)), null, null, null, null, null, null, false);
-        event.open();
+        event.open(1L);
         event = events.save(event);
         Long eventId = event.getId();
         Member first = null;

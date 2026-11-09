@@ -23,13 +23,13 @@ public record NightSnackResponse(
         LocalDateTime pickupDeadline,
         boolean requiresStudentCouncilFee
 ) {
-    public static NightSnackResponse from(NightSnack nightSnack) {
+    public static NightSnackResponse from(NightSnack nightSnack, long generalApplicationCount) {
         return new NightSnackResponse(
                 nightSnack.getId(),
                 nightSnack.getNightSnackDate(),
                 nightSnack.getStatus(),
                 nightSnack.getCapacity(),
-                nightSnack.getRemaining(),
+                (int) Math.max(0L, nightSnack.generalCapacity() - generalApplicationCount),
                 nightSnack.getReservedCapacity(),
                 nightSnack.getReservedRemaining(),
                 nightSnack.getPeriod().getOpenAt(),

@@ -61,6 +61,10 @@ public class NightSnackApplication {
     @Column(nullable = false, length = 20)
     private NightSnackApplicationStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "selection_status", nullable = false, length = 20)
+    private NightSnackSelectionStatus selectionStatus;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -99,6 +103,8 @@ public class NightSnackApplication {
         application.source = source;
         application.ticketToken = UUID.randomUUID().toString();
         application.status = NightSnackApplicationStatus.PENDING;
+        application.selectionStatus = source == NightSnackApplicationSource.RESERVED
+                ? NightSnackSelectionStatus.ACCEPTED : NightSnackSelectionStatus.PENDING;
         application.createdAt = LocalDateTime.now();
         return application;
     }
@@ -107,11 +113,27 @@ public class NightSnackApplication {
      * QR 스캔 수령 처리. 다음 단계(수령 확인 API)에서 사용한다 — 초안에는 호출처가 없다.
      */
     public void confirm() {
-        if (this.status != NightSnackApplicationStatus.PENDING) {
+        if (getSelectionStatus() != NightSnackSelectionStatus.ACCEPTED
+                || this.status != NightSnackApplicationStatus.PENDING) {
             throw new BusinessException(CommonErrorCode.INVALID_REQUEST);
         }
         this.status = NightSnackApplicationStatus.CONFIRMED;
         this.confirmedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 즉시 확정은 불변 ID 구간에서 계산한다. 요청 경로는 INSERT만 수행하며,
+     * 스케줄러가 마감 시 최종 선정 상태를 저장한다.
+     */
+    public NightSnackSelectionStatus getSelectionStatus() {
+        if (selectionStatus == NightSnackSelectionStatus.PENDING && nightSnack.isInstantAccepted(id)) {
+            return NightSnackSelectionStatus.ACCEPTED;
+        }
+        return selectionStatus;
+    }
+
+    public String getAvailableTicketToken() {
+        return getSelectionStatus() == NightSnackSelectionStatus.ACCEPTED ? ticketToken : null;
     }
 
     public Long getId() {

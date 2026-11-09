@@ -4,12 +4,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplication;
 import kr.ac.knu.comit.nightsnack.domain.NightSnackApplicationStatus;
+import kr.ac.knu.comit.nightsnack.domain.NightSnackSelectionStatus;
 
 public record MyTicketResponse(
         String name,
         Long applicationId,
         String ticketToken,
         NightSnackApplicationStatus status,
+        NightSnackSelectionStatus selectionStatus,
         LocalDate nightSnackDate,
         String menu,
         String pickupLocation,
@@ -21,8 +23,9 @@ public record MyTicketResponse(
         return new MyTicketResponse(
                 name,
                 application.getId(),
-                application.getTicketToken(),
+                application.getAvailableTicketToken(),
                 application.getStatus(),
+                application.getSelectionStatus(),
                 application.getNightSnack().getNightSnackDate(),
                 application.getNightSnack().getMenu(),
                 application.getNightSnack().getPickupLocation(),

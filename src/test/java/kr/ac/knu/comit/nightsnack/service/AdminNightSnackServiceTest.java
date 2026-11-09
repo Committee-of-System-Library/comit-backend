@@ -61,6 +61,9 @@ class AdminNightSnackServiceTest {
     @Mock
     private Clock clock;
 
+    @Mock
+    private NightSnackLifecycleService lifecycleService;
+
     @InjectMocks
     private AdminNightSnackService adminNightSnackService;
 
@@ -73,7 +76,7 @@ class AdminNightSnackServiceTest {
         void registersNewStudentNumbers() {
             // given
             NightSnack nightSnack = NightSnackFixture.reservedNightSnack(10L, 100, 10);
-            given(nightSnackRepository.findByNightSnackDate(TEST_DATE)).willReturn(Optional.of(nightSnack));
+            given(nightSnackRepository.findByDateForUpdate(TEST_DATE)).willReturn(Optional.of(nightSnack));
             given(nightSnackApplicationRepository.findStudentNumbersByNightSnackId(10L)).willReturn(List.of());
             given(nightSnackApplicationRepository.save(any(NightSnackApplication.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
@@ -96,7 +99,7 @@ class AdminNightSnackServiceTest {
         void skipsAlreadyRegistered() {
             // given
             NightSnack nightSnack = NightSnackFixture.reservedNightSnack(10L, 100, 10);
-            given(nightSnackRepository.findByNightSnackDate(TEST_DATE)).willReturn(Optional.of(nightSnack));
+            given(nightSnackRepository.findByDateForUpdate(TEST_DATE)).willReturn(Optional.of(nightSnack));
             given(nightSnackApplicationRepository.findStudentNumbersByNightSnackId(10L))
                     .willReturn(List.of("2026000001"));
             given(nightSnackApplicationRepository.save(any(NightSnackApplication.class)))
@@ -118,7 +121,7 @@ class AdminNightSnackServiceTest {
         void normalizesWhitespaceAndDuplicates() {
             // given
             NightSnack nightSnack = NightSnackFixture.reservedNightSnack(10L, 100, 10);
-            given(nightSnackRepository.findByNightSnackDate(TEST_DATE)).willReturn(Optional.of(nightSnack));
+            given(nightSnackRepository.findByDateForUpdate(TEST_DATE)).willReturn(Optional.of(nightSnack));
             given(nightSnackApplicationRepository.findStudentNumbersByNightSnackId(10L)).willReturn(List.of());
             given(nightSnackApplicationRepository.save(any(NightSnackApplication.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
@@ -143,7 +146,7 @@ class AdminNightSnackServiceTest {
         void throwsWhenExceedingReservedCapacity() {
             // given
             NightSnack nightSnack = NightSnackFixture.reservedNightSnack(10L, 100, 2);
-            given(nightSnackRepository.findByNightSnackDate(TEST_DATE)).willReturn(Optional.of(nightSnack));
+            given(nightSnackRepository.findByDateForUpdate(TEST_DATE)).willReturn(Optional.of(nightSnack));
             given(nightSnackApplicationRepository.findStudentNumbersByNightSnackId(10L)).willReturn(List.of());
 
             // when & then
@@ -161,10 +164,10 @@ class AdminNightSnackServiceTest {
         @DisplayName("오픈 전(SCHEDULED)이 아니면 사전신청을 거부한다")
         void throwsWhenNotScheduled(NightSnackStatus status) {
             // given
-            // OPEN 중 예약은 @DynamicUpdate 부재로 remaining 컬럼을 덮어써 oversell을 유발할 수 있어 막아야 한다.
+            // 사전신청은 일반 접수 오픈 전에만 등록한다.
             NightSnack nightSnack = NightSnackFixture.reservedNightSnack(10L, 100, 10);
             ReflectionTestUtils.setField(nightSnack, "status", status);
-            given(nightSnackRepository.findByNightSnackDate(TEST_DATE)).willReturn(Optional.of(nightSnack));
+            given(nightSnackRepository.findByDateForUpdate(TEST_DATE)).willReturn(Optional.of(nightSnack));
 
             // when & then
             assertThatThrownBy(() -> adminNightSnackService.reserve(TEST_DATE, List.of("2026000001")))
@@ -179,7 +182,7 @@ class AdminNightSnackServiceTest {
         @DisplayName("존재하지 않는 날짜의 야식 마차면 EVENT_NOT_FOUND를 던진다")
         void throwsWhenNotFound() {
             // given
-            given(nightSnackRepository.findByNightSnackDate(NONEXISTENT_DATE)).willReturn(Optional.empty());
+            given(nightSnackRepository.findByDateForUpdate(NONEXISTENT_DATE)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> adminNightSnackService.reserve(NONEXISTENT_DATE, List.of("2026000001")))
@@ -193,7 +196,7 @@ class AdminNightSnackServiceTest {
         void throwsWhenAllBlank() {
             // given
             NightSnack nightSnack = NightSnackFixture.reservedNightSnack(10L, 100, 10);
-            given(nightSnackRepository.findByNightSnackDate(TEST_DATE)).willReturn(Optional.of(nightSnack));
+            given(nightSnackRepository.findByDateForUpdate(TEST_DATE)).willReturn(Optional.of(nightSnack));
 
             // when & then
             assertThatThrownBy(() -> adminNightSnackService.reserve(TEST_DATE, List.of("  ", "")))
@@ -261,6 +264,24 @@ class AdminNightSnackServiceTest {
             assertThat(response.source()).isEqualTo(NightSnackApplicationSource.RESERVED);
             assertThat(response.status()).isEqualTo(NightSnackApplicationStatus.PENDING);
             assertThat(response.ticketToken()).isNotBlank();
+        }
+
+        @Test
+        @DisplayName("선정 대기 신청은 접수되어 있어도 수령 자격과 QR을 제공하지 않는다")
+        void deniesPickupForPendingSelection() {
+            // given: 아직 선정되지 않은 일반 접수다.
+            NightSnack nightSnack = NightSnackFixture.scheduledNightSnack(10L, 100);
+            NightSnackApplication application = NightSnackFixture.generalApplication(1L, nightSnack,
+                    MemberFixture.member(1L, "pending"));
+            given(nightSnackRepository.findById(10L)).willReturn(Optional.of(nightSnack));
+            given(nightSnackApplicationRepository.findByNightSnackIdAndStudentNumber(10L, "2028000001"))
+                    .willReturn(Optional.of(application));
+            // when: 현장에서 신청 성공 여부를 확인한다.
+            ApplicationCheckResponse response = adminNightSnackService.checkApplication(10L, "2028000001");
+            // then: 접수 자체를 수령 자격으로 취급하지 않는다.
+            assertThat(response.applied()).isFalse();
+            assertThat(response.selectionStatus()).isEqualTo(kr.ac.knu.comit.nightsnack.domain.NightSnackSelectionStatus.PENDING);
+            assertThat(response.ticketToken()).isNull();
         }
 
         @Test
