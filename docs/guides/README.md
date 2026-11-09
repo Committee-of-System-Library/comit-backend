@@ -12,6 +12,8 @@
 | `feature-toggle.md` | Feature Toggle 유형, 수명, 설계 원칙, 테스트 전략 |
 | `java-comment-convention.md` | `@apiNote`, `@implNote` 기반 Java 주석 규칙 |
 | `sso-auth-flow.md` | Comit SSO 로그인, callback, 쿠키 인증, 프론트 연동 흐름 |
+| [night-snack-manual-test.md](./night-snack-manual-test.md) | 로컬 실행, 테스트 계정 SQL, 신청·폴링·스케줄러 마감 수동 검증 |
+| [how-to-test-nightsnack.md](./how-to-test-nightsnack.md) | 야식마차 자동 검증 명령과 검증 기록 |
 | `testing-strategy.md` | 테스트 층, 네이밍, fixture, `given/when/then` 작성 기준 |
 
 ## 작성 원칙

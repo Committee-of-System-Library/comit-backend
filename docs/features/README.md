@@ -27,6 +27,8 @@
   비로그인 포함 메인 페이지 단일 API — QNA/INFO/FREE 5개, NOTICE/EVENT 3개, 인기글 5개 반환
 - [member-deletion-policy.md](./member-deletion-policy.md)
   관리자 회원 삭제 시 비식별화, 작성자 표시, 좋아요/방문 기록 정리 정책
+- [night-snack-async-selection.md](./night-snack-async-selection.md)
+  야식마차 INSERT 접수, 50% 즉시 확정과 결과 대기, 스케줄러 마감·선정 설계
 - [post-comment-report.md](./post-comment-report.md)
   게시글·댓글 신고 접수, 자유 입력 사유, 중복 신고 방지, v1 범위 정의
 - [sso-registration-flow.md](./sso-registration-flow.md)
